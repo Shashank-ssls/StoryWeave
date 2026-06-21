@@ -1,0 +1,37 @@
+# --- Virtual environments (off the C: drive, never committed) ---
+.venv/
+.venv-ml/
+
+# --- Databases (SQLite is local source of truth, rebuildable; not committed) ---
+*.sqlite
+*.sqlite3
+*.db
+
+# --- Raw novel text (copyrighted / large; samples/ and labels/ ARE committed) ---
+data/raw/*
+!data/raw/.gitkeep
+
+# --- Secrets ---
+.env
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# --- Tooling caches ---
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# --- Frontend (Phase 8) ---
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# --- Vector store artifacts (rebuildable) ---
+.chroma/
+*.faiss

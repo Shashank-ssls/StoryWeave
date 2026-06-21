@@ -1,0 +1,33 @@
+# ---------------------------------------------------------------------------
+# StoryWeave — HEAVY NLP / ML dependencies (.venv-ml)
+# ---------------------------------------------------------------------------
+# This file documents the intended .venv-ml environment. It is NOT installed in
+# Phase 0. Phase 2 is the environment GATE: it stands up .venv-ml on Python 3.12,
+# installs these, proves a real GLiNER smoke extraction runs (GPU or CPU), and
+# THEN pins exact versions here.
+#
+# Why a separate venv: Python 3.14 (the .venv interpreter) historically lacks
+# wheels for torch / spaCy / GLiNER. .venv-ml pins Python 3.12, where these
+# wheels exist. ML imports in the package are lazy so the light .venv still
+# imports cleanly. ML tests use importorskip and are skipped on the light gate.
+#
+# Intended setup (Phase 2 will execute and pin):
+#   py -V:Astral/CPython3.12 -m venv .venv-ml      # or: uv venv --python 3.12 .venv-ml
+#   .venv-ml\Scripts\activate                       # Windows
+#   pip install -e .                                # the light app, into the ML venv too
+#   pip install -r requirements-ml.txt
+#
+# Hardware target: GTX 1650 (4 GB VRAM) with CPU + 16 GB RAM fallback.
+
+# --- Extraction floor (Phase 2) ---
+gliner                 # zero-shot NER — the extraction FLOOR
+torch                  # CPU build by default; CUDA build chosen at Phase 2 gate
+
+# --- Vector search (Phase 4) ---
+sentence-transformers  # chunk embeddings
+chromadb               # dev vector backend
+faiss-cpu              # scale vector backend
+
+# --- Optional LLM enhancement layer (Phase 7; OFF by default) ---
+# Pins decided at the Phase 7 GPU->CPU->Colab go/no-go gate.
+# llama-cpp-python     # local quantized inference (candidate)
