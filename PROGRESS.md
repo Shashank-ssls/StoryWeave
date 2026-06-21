@@ -3,7 +3,7 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 0 — Scaffold, schema, git, backup.** Status: **code complete & green; awaiting GitHub push** (no `gh` CLI on this machine — push commands handed to the user).
+**Phase 0 — Scaffold, schema, git, backup.** Status: **DONE & pushed.** Remote: `https://github.com/Shashank-ssls/StoryWeave.git` (`main` tracking `origin/main`). Next: Phase 1.
 
 ## Done
 - Package scaffold: `storyweave/{config,db,ingest,nlp,graph,search,query,api,cli}` + `frontend/ eval/ tests/ data/{raw,samples,labels}/ docker/`.
@@ -24,8 +24,7 @@
 - `storyweave version` → `0.1.0`; `storyweave info` → `llm_enabled: False`.
 
 ## In-progress / next
-- **Blocking:** create the PRIVATE GitHub repo + push (commands in the Phase-0 handoff). No `gh` CLI here.
-- After push: **Phase 1 — Ingestion & data model** (cleaner, splitter, offset-exact chunking, idempotent `storyweave ingest`, per-work `storyweave.toml`, CC0 sample novel).
+- **Phase 1 — Ingestion & data model** (cleaner, splitter, offset-exact chunking, idempotent `storyweave ingest`, per-work `storyweave.toml`, CC0 sample novel).
 
 ## Known issues / TODOs
 - Starlette TestClient emits a deprecation warning (httpx vs httpx2). Cosmetic; revisit if it becomes an error.
