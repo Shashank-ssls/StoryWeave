@@ -110,6 +110,40 @@ class Work(BaseModel):
     title: str
 
 
+# --------------------------------------------------------------------------- #
+# Source-data layer (Phase 1). Chapters + chunks are the raw ingested text from
+# which everything else is derived. They are NOT graph elements, so they carry no
+# reveal stamps — the reveal mechanism lives on nodes/edges/properties. Each row
+# carries a content_hash for idempotent re-ingest.
+# --------------------------------------------------------------------------- #
+
+
+class Chapter(BaseModel):
+    id: int | None = None
+    work_id: int
+    ordinal: int  # the reader-facing chapter number (drives the fence elsewhere)
+    title: str | None = None
+    clean_text: str  # canonical cleaned text; chunk offsets index into THIS
+    content_hash: str
+    source_path: str | None = None
+
+
+class Chunk(BaseModel):
+    """A sentence-aligned slice of a chapter's clean_text.
+
+    Hard invariant (Phase 1): ``chapter.clean_text[char_start:char_end] == text``.
+    """
+
+    id: int | None = None
+    chapter_id: int
+    work_id: int
+    ordinal: int  # position within the chapter
+    char_start: int
+    char_end: int
+    text: str
+    content_hash: str
+
+
 class Node(BaseModel):
     id: int | None = None
     work_id: int
@@ -160,6 +194,8 @@ __all__ = [
     "TIER1_RELATIONS",
     "TIER2_RELATIONS",
     "TIER3_RELATIONS",
+    "Chapter",
+    "Chunk",
     "Edge",
     "ExtractionMethod",
     "Node",

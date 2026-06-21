@@ -18,6 +18,8 @@ from types import TracebackType
 
 from storyweave.db.models import (
     ALL_RELATIONS,
+    Chapter,
+    Chunk,
     Edge,
     Node,
     NodeProperty,
@@ -83,6 +85,31 @@ CREATE TABLE IF NOT EXISTS node_properties (
     evidence_span       TEXT
 );
 
+-- Source-data layer (Phase 1): the raw ingested text. Not graph elements, so no
+-- reveal stamps. content_hash drives idempotent re-ingest.
+CREATE TABLE IF NOT EXISTS chapters (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    work_id       INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+    ordinal       INTEGER NOT NULL,
+    title         TEXT,
+    clean_text    TEXT NOT NULL,
+    content_hash  TEXT NOT NULL,
+    source_path   TEXT,
+    UNIQUE (work_id, ordinal)
+);
+
+CREATE TABLE IF NOT EXISTS chunks (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    chapter_id    INTEGER NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+    work_id       INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+    ordinal       INTEGER NOT NULL,
+    char_start    INTEGER NOT NULL,
+    char_end      INTEGER NOT NULL,
+    text          TEXT NOT NULL,
+    content_hash  TEXT NOT NULL,
+    UNIQUE (chapter_id, ordinal)
+);
+
 CREATE INDEX IF NOT EXISTS idx_nodes_work        ON nodes(work_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_revealed    ON nodes(revealed_chapter);
 CREATE INDEX IF NOT EXISTS idx_edges_work        ON edges(work_id);
@@ -90,6 +117,9 @@ CREATE INDEX IF NOT EXISTS idx_edges_revealed    ON edges(revealed_chapter);
 CREATE INDEX IF NOT EXISTS idx_edges_endpoints   ON edges(source_id, target_id);
 CREATE INDEX IF NOT EXISTS idx_props_node        ON node_properties(node_id);
 CREATE INDEX IF NOT EXISTS idx_props_revealed    ON node_properties(revealed_chapter);
+CREATE INDEX IF NOT EXISTS idx_chapters_work     ON chapters(work_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_chapter    ON chunks(chapter_id);
+CREATE INDEX IF NOT EXISTS idx_chunks_work       ON chunks(work_id);
 """
 
 
@@ -139,6 +169,93 @@ class Repository:
     def get_work(self, work_id: int) -> Work | None:
         row = self.conn.execute("SELECT * FROM works WHERE id = ?", (work_id,)).fetchone()
         return Work(**dict(row)) if row else None
+
+    def get_work_by_slug(self, slug: str) -> Work | None:
+        row = self.conn.execute("SELECT * FROM works WHERE slug = ?", (slug,)).fetchone()
+        return Work(**dict(row)) if row else None
+
+    def get_or_create_work(self, slug: str, title: str) -> int:
+        existing = self.get_work_by_slug(slug)
+        if existing is not None and existing.id is not None:
+            return existing.id
+        return self.create_work(Work(slug=slug, title=title))
+
+    # --- chapters (Phase 1) ---------------------------------------------- #
+
+    def get_chapter_by_ordinal(self, work_id: int, ordinal: int) -> Chapter | None:
+        row = self.conn.execute(
+            "SELECT * FROM chapters WHERE work_id = ? AND ordinal = ?",
+            (work_id, ordinal),
+        ).fetchone()
+        return Chapter(**dict(row)) if row else None
+
+    def add_chapter(self, chapter: Chapter) -> int:
+        cur = self.conn.execute(
+            """INSERT INTO chapters
+                 (work_id, ordinal, title, clean_text, content_hash, source_path)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                chapter.work_id,
+                chapter.ordinal,
+                chapter.title,
+                chapter.clean_text,
+                chapter.content_hash,
+                chapter.source_path,
+            ),
+        )
+        self.conn.commit()
+        return int(cur.lastrowid or 0)
+
+    def delete_chapter(self, chapter_id: int) -> None:
+        """Delete a chapter; its chunks cascade away (used on content change)."""
+        self.conn.execute("DELETE FROM chapters WHERE id = ?", (chapter_id,))
+        self.conn.commit()
+
+    def list_chapters(self, work_id: int) -> list[Chapter]:
+        rows = self.conn.execute(
+            "SELECT * FROM chapters WHERE work_id = ? ORDER BY ordinal",
+            (work_id,),
+        ).fetchall()
+        return [Chapter(**dict(r)) for r in rows]
+
+    def count_chapters(self, work_id: int) -> int:
+        row = self.conn.execute(
+            "SELECT COUNT(*) AS n FROM chapters WHERE work_id = ?", (work_id,)
+        ).fetchone()
+        return int(row["n"])
+
+    # --- chunks (Phase 1) ------------------------------------------------- #
+
+    def add_chunk(self, chunk: Chunk) -> int:
+        cur = self.conn.execute(
+            """INSERT INTO chunks
+                 (chapter_id, work_id, ordinal, char_start, char_end, text, content_hash)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (
+                chunk.chapter_id,
+                chunk.work_id,
+                chunk.ordinal,
+                chunk.char_start,
+                chunk.char_end,
+                chunk.text,
+                chunk.content_hash,
+            ),
+        )
+        self.conn.commit()
+        return int(cur.lastrowid or 0)
+
+    def list_chunks(self, chapter_id: int) -> list[Chunk]:
+        rows = self.conn.execute(
+            "SELECT * FROM chunks WHERE chapter_id = ? ORDER BY ordinal",
+            (chapter_id,),
+        ).fetchall()
+        return [Chunk(**dict(r)) for r in rows]
+
+    def count_chunks(self, work_id: int) -> int:
+        row = self.conn.execute(
+            "SELECT COUNT(*) AS n FROM chunks WHERE work_id = ?", (work_id,)
+        ).fetchone()
+        return int(row["n"])
 
     # --- nodes ----------------------------------------------------------- #
 

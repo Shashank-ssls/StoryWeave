@@ -1,0 +1,25 @@
+# Per-work config for the bundled CC0 sample "The Hollow Crown".
+# Demonstrates that novel-specific knobs are DATA, not code (CLAUDE.md rule).
+
+title = "The Hollow Crown"
+slug = "the-hollow-crown"
+
+[cleaning]
+dehyphenate = true
+single_newline_is_paragraph = false
+# Strip translator notes, navigation lines, and ad/patreon lines. Each removed
+# line is logged in the ingest report, never dropped silently.
+cruft_patterns = [
+    "^\\[T/N:",
+    "<<\\s*Previous",
+    "(?i)read ahead",
+]
+
+[splitting]
+# One .txt file per chapter; the heading line inside each file becomes the title.
+chapter_mode = "file"
+first_chapter_number = 1
+
+[chunking]
+max_chars = 600
+overlap_sentences = 1
