@@ -3,7 +3,7 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 7b — LLM go/no-go gate.** Status: **GO, green** (push pending). Local LLM path proven on both devices via Ollama; chosen path wired behind `llm_enabled` (OFF by default). NO 7c inference code yet. Next: Phase 7c (Tier-3 identity inference) or Phase 8 (frontend).
+**Phase 7b — LLM go/no-go gate.** Status: **GO, green & pushed** (commit `187962d`). Local LLM path proven on both devices via Ollama; chosen path wired behind `llm_enabled` (OFF by default). NO 7c inference code yet. Next: Phase 7c (Tier-3 identity inference) or Phase 8 (frontend).
 
 ## Done (Phase 7b — LLM go/no-go gate, NOT a feature)
 - **Runner = Ollama** (no-installer zip under gitignored `tools/`, server bound to 127.0.0.1; models cached to F: via `OLLAMA_MODELS=.llm-cache/ollama-models`). Chosen over a custom CUDA llama-cpp-python build because the zip needs no admin/service, bundles CUDA runners that auto partial-offload on the 4 GB card, and exposes an OpenAI-compatible `/v1` endpoint + eval timing (measured tok/s, not guessed). **C: stayed clean** (only a 6 KB Ollama keypair; zero model weights on C:); 6.3 GB of GGUF weights live on F:.
