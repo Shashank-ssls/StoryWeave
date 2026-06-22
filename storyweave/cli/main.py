@@ -111,6 +111,67 @@ def extract(
     typer.echo(report.summary())
 
 
+@app.command()
+def relate(
+    slug: Annotated[str, typer.Argument(help="Work slug to build Tier-1 relations for.")],
+    config: Annotated[Path | None, typer.Option(help="storyweave.toml overrides.")] = None,
+    db: Annotated[Path | None, typer.Option(help="SQLite path override.")] = None,
+) -> None:
+    """Build Tier-1 structural relationships (proximity/rule, zero LLM). Idempotent."""
+    from storyweave.config import get_settings
+    from storyweave.db.repository import Repository
+    from storyweave.graph.builder import build_relationships
+    from storyweave.ingest.work_config import load_work_config
+
+    db_path = db or get_settings().db_path
+    work_config = load_work_config(config)
+    with Repository(db_path) as repo:
+        repo.initialize_schema()
+        work = repo.get_work_by_slug(slug)
+        if work is None or work.id is None:
+            typer.echo(f"error: no work with slug '{slug}'", err=True)
+            raise typer.Exit(code=1)
+        report = build_relationships(work.id, repo, work_config)
+    typer.echo(report.summary())
+
+
+@app.command()
+def graph(
+    slug: Annotated[str, typer.Argument(help="Work slug.")],
+    chapter: Annotated[int, typer.Option("--chapter", "-n", help="Reading position N (fence).")],
+    out: Annotated[Path | None, typer.Option(help="Write Cytoscape JSON here.")] = None,
+    db: Annotated[Path | None, typer.Option(help="SQLite path override.")] = None,
+) -> None:
+    """Emit the fenced graph at chapter N as Cytoscape JSON."""
+    import json
+
+    from storyweave.config import get_settings
+    from storyweave.db.repository import Repository
+    from storyweave.graph.serialize import graph_json
+
+    if chapter < 0:
+        typer.echo("error: --chapter must be >= 0", err=True)
+        raise typer.Exit(code=1)
+
+    db_path = db or get_settings().db_path
+    with Repository(db_path) as repo:
+        repo.initialize_schema()
+        work = repo.get_work_by_slug(slug)
+        if work is None or work.id is None:
+            typer.echo(f"error: no work with slug '{slug}'", err=True)
+            raise typer.Exit(code=1)
+        payload = graph_json(repo, work.id, chapter)
+
+    text = json.dumps(payload, indent=2, ensure_ascii=False)
+    if out is not None:
+        out.write_text(text, encoding="utf-8")
+        n_nodes = len(payload["elements"]["nodes"])
+        n_edges = len(payload["elements"]["edges"])
+        typer.echo(f"wrote {out} ({n_nodes} nodes, {n_edges} edges at n={chapter})")
+    else:
+        typer.echo(text)
+
+
 def main() -> None:
     """Console-script entry point."""
     app()

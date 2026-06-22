@@ -390,6 +390,49 @@ class Repository:
         self.conn.commit()
         return int(cur.lastrowid or 0)
 
+    def list_edges(self, work_id: int) -> list[Edge]:
+        rows = self.conn.execute(
+            "SELECT * FROM edges WHERE work_id = ? ORDER BY id", (work_id,)
+        ).fetchall()
+        return [Edge(**dict(r)) for r in rows]
+
+    def count_edges(self, work_id: int) -> int:
+        row = self.conn.execute(
+            "SELECT COUNT(*) AS n FROM edges WHERE work_id = ?", (work_id,)
+        ).fetchone()
+        return int(row["n"])
+
+    def clear_edges(self, work_id: int) -> None:
+        """Drop all edges for a work (relations are derived + idempotently rebuilt)."""
+        self.conn.execute("DELETE FROM edges WHERE work_id = ?", (work_id,))
+        self.conn.commit()
+
+    # --- fenced reads (the spoiler fence enforced at the SQL level) ------- #
+    # These are the SANCTIONED queries that query/fence.py wraps. Visibility keys on
+    # revealed_chapter; edges additionally require BOTH endpoints to be revealed.
+
+    def list_nodes_revealed(self, work_id: int, chapter: int) -> list[Node]:
+        rows = self.conn.execute(
+            "SELECT * FROM nodes WHERE work_id = ? AND revealed_chapter <= ? ORDER BY id",
+            (work_id, chapter),
+        ).fetchall()
+        return [Node(**dict(r)) for r in rows]
+
+    def list_edges_revealed(self, work_id: int, chapter: int) -> list[Edge]:
+        rows = self.conn.execute(
+            """SELECT e.*
+                 FROM edges e
+                 JOIN nodes s ON e.source_id = s.id
+                 JOIN nodes t ON e.target_id = t.id
+                WHERE e.work_id = ?
+                  AND e.revealed_chapter <= ?
+                  AND s.revealed_chapter <= ?   -- both-endpoints rule, in SQL
+                  AND t.revealed_chapter <= ?
+                ORDER BY e.id""",
+            (work_id, chapter, chapter, chapter),
+        ).fetchall()
+        return [Edge(**dict(r)) for r in rows]
+
     # --- node properties ------------------------------------------------- #
 
     def add_node_property(self, prop: NodeProperty) -> int:

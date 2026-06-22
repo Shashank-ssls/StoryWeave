@@ -55,6 +55,14 @@ class ExtractionConfig(BaseModel):
     extra_labels: dict[str, str] = Field(default_factory=dict)
 
 
+class RelationConfig(BaseModel):
+    # Two entities co-occurring within this many characters (gap between their
+    # mention spans, same chapter) become a candidate Tier-1 edge.
+    window_chars: int = 250
+    # Minimum number of co-occurrences before an edge is kept (noise floor).
+    min_cooccurrences: int = 1
+
+
 class WorkConfig(BaseModel):
     title: str | None = None
     slug: str | None = None
@@ -62,6 +70,7 @@ class WorkConfig(BaseModel):
     splitting: SplittingConfig = Field(default_factory=SplittingConfig)
     chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
     extraction: ExtractionConfig = Field(default_factory=ExtractionConfig)
+    relations: RelationConfig = Field(default_factory=RelationConfig)
 
 
 def load_work_config(path: Path | str | None) -> WorkConfig:

@@ -17,6 +17,7 @@ dependencies = [
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
     "typer>=0.12",
+    "networkx>=3.3",
 ]
 
 [project.optional-dependencies]
@@ -52,7 +53,10 @@ files = ["storyweave", "tests"]
 [[tool.mypy.overrides]]
 # ML libraries (GLiNER, torch, sentence-transformers) ship no stubs; ignored here
 # so the light gate stays clean. These imports are lazy and live in .venv-ml.
-module = ["gliner.*", "torch.*", "sentence_transformers.*", "chromadb.*", "faiss.*"]
+module = [
+    "gliner.*", "torch.*", "sentence_transformers.*", "chromadb.*", "faiss.*",
+    "networkx.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

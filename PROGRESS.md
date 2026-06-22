@@ -3,7 +3,18 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 2 — GLiNER entity extraction (the floor).** Status: **DONE & green; ready to push.** Environment gate passed (`.venv-ml` 3.12 + GLiNER + torch, model cache on F:). Next: Phase 3 (Tier-1 relationships + graph projection).
+**Phase 3 — Tier-1 relationships + graph projection.** Status: **DONE & green; ready to push.** Next: Phase 4 (vector store + RAG search). Phase 3 is fully light-venv (no GLiNER): it operates on entities/mentions from Phase 2.
+
+## Done (Phase 3)
+- `query/fence.py`: the spoiler-fence chokepoint (`visible_nodes`/`visible_edges`). Sole sanctioned caller of the revealed-chapter SQL; never post-filters in Python.
+- `db/repository.py`: `list_nodes_revealed` / `list_edges_revealed` apply the fence at the SQL level — the **both-endpoints rule** is a JOIN condition (`s.revealed_chapter<=N AND t.revealed_chapter<=N`). Plus edge CRUD: `list/count/clear_edges`.
+- `graph/builder.py`: Tier-1 relationship extraction by co-occurrence within a configurable char window (same chapter). Explainable type-pair rule table → MemberOf/LocatedIn/HasAbility/OwnsItem/HasTitle/ParticipatedIn/AffiliatedWith, a lexical cue promoting MemberOf→LeaderOf, and `RelatedTo` as the never-drop fallback. Every edge: tier=1, method=rule, evidence quote, `first_seen==revealed==earliest co-occurrence chapter`. Idempotent (clear+rebuild).
+- `graph/serialize.py`: SQLite → NetworkX `DiGraph` (fenced via `query/fence.py`) → Cytoscape `elements` JSON carrying type/subtype/reveal stamps.
+- `ingest/work_config.py`: `RelationConfig` (window_chars=250, min_cooccurrences=1) — knobs as data.
+- `cli`: `storyweave relate <slug>` and `storyweave graph <slug> -n N [--out]` (negative N → error).
+- `networkx>=3.3` added to light deps (pure-Python, fine on 3.14).
+- Tests (+13): `test_relate.py` (rule table, RelatedTo fallback, window exclusion, idempotency), `test_serialize.py` (Cytoscape shape + fenced), and **`test_fence.py` — the P0 both-endpoints regression** (edge to a ch5 node invisible at N=3; edge-level reveal independent of endpoints; serialized graph fenced).
+- Demo on sample: extract→relate = **189 Tier-1 edges**; fenced graph grows **n=1: 15 nodes/64 edges → n=4: 38 nodes/189 edges**; Cytoscape JSON validated; zero LLM.
 
 ## Done (Phase 2)
 - **Environment gate PASSED.** `.venv-ml` (Python 3.12) created; installed `torch==2.12.1+cpu`, `gliner==0.2.27`, `transformers==5.6.2`, `huggingface_hub==1.20.1`; real smoke extraction works on CPU (Wren→Character 0.98, Aldercross→Place, Coil→Organization). Versions pinned in `requirements-ml.txt`.
@@ -65,6 +76,12 @@
 - `pytest` → 9 passed.
 - `storyweave version` → `0.1.0`; `storyweave info` → `llm_enabled: False`.
 
+## Gate result (Phase 3)
+- `ruff check .` → All checks passed.
+- `mypy` (strict) → Success, 39 source files.
+- `pytest` (light `.venv`) → 41 passed, 2 skipped.
+- P0 fence regression (`test_fence.py`) green; Cytoscape JSON validated; graph fenced & grows with N.
+
 ## Gate result (Phase 2)
 - `ruff check .` → All checks passed.
 - `mypy` (strict) → Success, 34 source files.
@@ -74,7 +91,7 @@
 - CLI: `storyweave extract the-hollow-crown` → 89 mentions → 38 entities (7/8 types); re-run identical (idempotent).
 
 ## In-progress / next
-- **Phase 3 — Tier-1 relationships + graph projection.** Structural relations (Tier-1 list + RelatedTo fallback) via proximity/rules over canonical entities, with method+evidence+reveal stamps; `graph/builder.py` (SQLite→NetworkX, fenced by N) + `graph/serialize.py` (→Cytoscape JSON). Edge visible only if both endpoints visible at N.
+- **Phase 4 — Vector store + RAG search.** Embed chunks (sentence-transformers, batchable, `--device`), each vector stamped with reveal + work_id; one adapter interface, Chroma (dev) + FAISS (scale); RAG retrieves fenced top-k → cited answer (extractive default + opt-in LLM compose). Fencing must route through `query/fence.py` at the index level (extend it for vectors).
 
 ## Known issues / TODOs
 - Starlette TestClient emits a deprecation warning (httpx vs httpx2). Cosmetic; revisit if it becomes an error.
@@ -97,3 +114,6 @@
 - **Phase 2 (clustering):** string-based canonicalization only (surface variants), NOT semantic identity — Wren≠Caelum here on purpose; identity is Tier-3, fenced, Phase 7.
 - **Phase 2 (extraction idempotency):** mentions+nodes are derived; a re-run clears and rebuilds (no dup nodes).
 - **Phase 2 (sample):** ch01 gained a named phenomenon "the Glasswound" so the CC0 corpus exercises the signature Concept type (GLiNER tags it Concept ~0.45, above the 0.4 threshold).
+- **Phase 3 (fence at SQL level):** the both-endpoints rule is a JOIN in `repository.list_edges_revealed`, never a Python post-filter; `query/fence.py` is the only sanctioned caller. Phase 5 will consolidate search fencing here too.
+- **Phase 3 (rule edges reveal == first_seen):** a structural co-occurrence edge is known to the reader exactly when both entities have co-occurred, so no reveal shift; secret/identity reveal-shifting is Tier-3/LLM (Phase 7).
+- **Phase 3 (edges are derived):** like mentions/nodes, edges are rebuilt idempotently (clear+rebuild) — SQLite chapters are the only non-derived source.
