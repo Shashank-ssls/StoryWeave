@@ -37,5 +37,15 @@ sentence-transformers==5.6.0   # chunk embeddings (all-MiniLM-L6-v2, 384-dim)
 chromadb==1.5.9                # on-disk vector backend (dev)
 # faiss-cpu                     # scale backend (deferred; Chroma covers dev/demo)
 
-# --- Optional LLM enhancement layer (Phase 7; OFF by default; pins at that gate) ---
+# --- Phase 7a: GLiNER-RelEx for Tier-2 social relations (CPU, no VRAM risk) ---
+# Relation extraction ships INSIDE the gliner package already pinned above — no new
+# framework. gliner==0.2.27 exposes GLiNER.inference(..., relations=[...],
+# return_relations=True) which the v1.0 GCN relex checkpoints below use directly.
+# The MODEL is the only new artifact; it caches to F: (.hf-cache) like every weight.
+# Smoke-tested green on CPU at the 7a gate (84s cold load, 870M):
+#   Lady Veris --[betrayed]--> Coil (1.00); Prince Caelum --[mentor of]--> Wren (0.93)
+# Pinned checkpoint (smallest, CPU-friendly): knowledgator/gliner-relex-base-v1.0
+#   (set STORYWEAVE_RELEX_MODEL / RelationConfig.relex_model to override).
+
+# --- Optional LLM enhancement layer (Phase 7b/7c; OFF by default; pins at that gate) ---
 # llama-cpp-python

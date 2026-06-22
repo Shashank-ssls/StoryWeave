@@ -425,6 +425,21 @@ class Repository:
         self.conn.execute("DELETE FROM edges WHERE work_id = ?", (work_id,))
         self.conn.commit()
 
+    def clear_edges_by_tier(self, work_id: int, tier: RelationTier) -> None:
+        """Drop only one tier's edges (lets Tier-2 rebuild without disturbing Tier-1)."""
+        self.conn.execute(
+            "DELETE FROM edges WHERE work_id = ? AND tier = ?", (work_id, tier.value)
+        )
+        self.conn.commit()
+
+    def list_edges_by_tier(self, work_id: int, tier: RelationTier) -> list[Edge]:
+        """All edges of a work at one tier (unfenced; for rebuilds + eval, not clients)."""
+        rows = self.conn.execute(
+            "SELECT * FROM edges WHERE work_id = ? AND tier = ? ORDER BY id",
+            (work_id, tier.value),
+        ).fetchall()
+        return [Edge(**dict(r)) for r in rows]
+
     # --- fenced reads (the spoiler fence enforced at the SQL level) ------- #
     # These are the SANCTIONED queries that query/fence.py wraps. Visibility keys on
     # revealed_chapter; edges additionally require BOTH endpoints to be revealed.

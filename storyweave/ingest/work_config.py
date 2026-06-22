@@ -56,11 +56,18 @@ class ExtractionConfig(BaseModel):
 
 
 class RelationConfig(BaseModel):
+    # --- Tier-1 structural (Phase 3): co-occurrence rules, zero ML. ---
     # Two entities co-occurring within this many characters (gap between their
     # mention spans, same chapter) become a candidate Tier-1 edge.
     window_chars: int = 250
     # Minimum number of co-occurrences before an edge is kept (noise floor).
     min_cooccurrences: int = 1
+
+    # --- Tier-2 social (Phase 7a): GLiNER-RelEx overrides (knobs are data). ---
+    # None -> fall back to the global Settings.relex_* values.
+    relex_model: str | None = None
+    relex_ner_threshold: float | None = None
+    relex_rel_threshold: float | None = None
 
 
 class WorkConfig(BaseModel):

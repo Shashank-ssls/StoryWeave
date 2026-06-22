@@ -1,0 +1,22 @@
+{
+  "work_slug": "the-hollow-crown",
+  "note": "Hand-labeled Tier-2 SOCIAL relations stated in chapters 1-4 (reader-knowledge). Used to benchmark learned GLiNER-RelEx against the Phase-3 co-occurrence rules. Endpoints are canonical entities; `aliases` lists the surface variants the floor may name a node, so scoring is name-robust. Symmetric (Ally/Family) and inverse (Child=Parent, Student=Mentor) relations are normalized by the scorer.",
+  "aliases": {
+    "Wren": ["Wren", "the boy", "the thief"],
+    "Caelum": ["Caelum", "Prince Caelum", "Prince Caelum Veyle"],
+    "Coil": ["the Coil", "Coil"],
+    "Veris": ["Lady Veris", "Veris"],
+    "Maela": ["Queen Maela", "Maela", "the old queen"],
+    "Dunmore": ["Ser Dunmore", "Dunmore"],
+    "Halvard": ["Regent Halvard Veyle", "Halvard Veyle", "Halvard"]
+  },
+  "relations": [
+    {"source": "Wren", "relation": "Serves", "target": "Coil", "evidence": "He worked for the Coil, the thieves' guild"},
+    {"source": "Maela", "relation": "Parent", "target": "Caelum", "evidence": "Prince Caelum Veyle, only son of Queen Maela"},
+    {"source": "Veris", "relation": "Ally", "target": "Maela", "evidence": "Maela was my friend"},
+    {"source": "Dunmore", "relation": "Serves", "target": "Maela", "evidence": "Dunmore had served the old queen once"},
+    {"source": "Halvard", "relation": "Family", "target": "Caelum", "evidence": "Wren's uncle, Regent Halvard Veyle"},
+    {"source": "Halvard", "relation": "Betrayed", "target": "Caelum", "evidence": "Halvard had slipped the crown onto his own head"},
+    {"source": "Veris", "relation": "Ally", "target": "Wren", "evidence": "Help me, and I will help you take it back"}
+  ]
+}

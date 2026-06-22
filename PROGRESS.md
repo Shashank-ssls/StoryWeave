@@ -3,7 +3,21 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 6 — API (FastAPI).** Status: **DONE, green & pushed** (commit `2217a35`). Next: Phase 7 (optional LLM, VRAM-gated) or Phase 8 (frontend). All routes fenced + light-venv only.
+**Phase 7a — Tier-2 social relations (GLiNER-RelEx, CPU).** Status: **DONE, green** (push pending). Next: Phase 7b (LLM go/no-go, VRAM-gated) or Phase 8 (frontend).
+
+> **Phase 7 is split into THREE independently-gated sub-phases** (not one monolithic LLM stage): **7a** GLiNER-RelEx Tier-2 social relations (CPU, no VRAM risk — DONE); **7b** the LLM GPU→CPU→Colab go/no-go + Tier-2 disambiguation/junk rejection; **7c** Tier-3 identity inference (the Wren==Caelum / Zhou Mingrui⇄Klein showcase, reveal-shifting). Each ends green + pushed before the next.
+
+## Done (Phase 7a)
+- **Environment gate PASSED (CPU, no new framework).** Relation extraction ships inside the already-pinned `gliner==0.2.27`: `GLiNER.inference(..., relations=[...], return_relations=True)`. Checkpoint `knowledgator/gliner-relex-base-v1.0` (870M, v1.0 GCN/adjacency arch) loads + runs on CPU (84s cold load); weights cache to F: (one C: README leak detected + deleted). Smoke: `Lady Veris --betrayed--> Coil` (1.00), `Prince Caelum --mentor of--> Wren` (0.93). Pinned in `requirements-ml.txt`. (Note: `gliner-token-relex-v1.0` / `-relex-large-v0.5` from the brief don't exist / use the OLD two-pass API; the real repos are `gliner-relex-{base,large,multi}-v1.0`.)
+- `nlp/relex.py`: `RelexExtractor` (lazy gliner import, `.venv-ml`) maps relex outputs onto the Tier-2 vocab via a prompt→relation table (`RELATION_PROMPTS`, e.g. "betrayed"→Betrayed, "mother of"→Parent); `RelexProtocol` lets tests inject a fake. `extract_social_relations` **anchors** each relation's head/tail surfaces to the canonical nodes the GLiNER floor already grounded (normalized-surface→node_id vote from the `mentions` table) — **relex never invents nodes**, it only adds edges between existing entities. Symmetric relations (Ally/Family/…) are stored order-independent.
+- **Persistence + fence (no new path):** Tier-2 edges go through `repository.add_edge` with `tier=2`, `method='gliner'` (it IS a GLiNER model → no schema migration), evidence span, and Tier-1 reveal stamps (`revealed==first_seen==chunk's chapter`). They flow through the existing `edges` table → `list_edges_revealed` → `query/fence.py` unchanged; the Phase-5 P0 fence suite still passes untouched. Idempotent: `clear_edges_by_tier(work, SOCIAL)` rebuilds only Tier-2, leaving Tier-1 intact.
+- **Graceful degradation IS tested (rule #4):** if the relex model can't load or fails mid-run, `extract_social_relations` returns a `degraded` report and leaves the Tier-1 floor + its fenced graph fully intact (`test_graceful_degradation_keeps_the_floor`).
+- `cli`: `storyweave social <slug> [--model --config --db]` (lazy ML import; degrades cleanly).
+- `config`/`work_config`: `relex_model`/`relex_device`/`relex_ner_threshold`/`relex_rel_threshold` (global) + per-work `RelationConfig` overrides (knobs are data).
+- **BENCHMARK (interview gold) — `eval/relex_eval.py` + `data/labels/the-hollow-crown_relations.json`** (7 hand-labeled Tier-2 social relations across ch1–4, with an alias map so scoring is name-robust; symmetric + inverse relations normalized). Measured on the CC0 sample:
+  - **Learned GLiNER-RelEx (Tier-2):** ALL **P=0.67 R=0.29 F1=0.40** (tp=2, fp=1, fn=5). Perfect on `Parent` (Maela→Caelum, 1.00) and recovers `Serves` (Wren→Coil); 13 Tier-2 edges produced graph-wide. Misses `Ally`/`Betrayed`/`Family` (base model, hard literary MTL-style prose, strict triple match).
+  - **Hand-written co-occurrence rules (Tier-1) on the SAME social gold:** ALL **F1=0.00** — *by construction*: proximity rules can only emit structural labels (`RelatedTo`/`MemberOf`/`LeaderOf`), never social ones. **But Tier-1 pair coverage = 4/6**: rules connect 4 of 6 gold social pairs by *some* edge. **Deliverable insight:** rules find *that* two entities relate; the learned layer is what names *how* (Serves vs Betrayed vs Parent) — the two are complementary, neither alone is complete.
+- Tests (`test_relex.py`, +8): prompt-map ⊆ Tier-2 vocab; anchor+persist+stamp; **no phantom node** for unanchored spans; symmetric dedup; **Tier-1 untouched + Tier-2 idempotent**; **Tier-2 edge passes the both-endpoints fence** (hidden until late endpoint revealed); **graceful degradation**; + 1 ML-gated real-relex smoke (`.venv-ml`).
 
 ## Done (Phase 6)
 - `api/app.py`: fenced routes, thin (validate → fence → serialize → typed response). `n` is a mandatory `Query(..., ge=0)` so missing/negative → **422** automatically.
@@ -106,6 +120,13 @@
 - `pytest` → 9 passed.
 - `storyweave version` → `0.1.0`; `storyweave info` → `llm_enabled: False`.
 
+## Gate result (Phase 7a)
+- `ruff check .` → All checks passed.
+- `mypy` (strict) → Success (32 storyweave source files reported by the run; eval clean too).
+- `pytest` (light `.venv`) → 71 passed, 5 skipped (ML-gated tests skip without ML). Full relex orchestration (anchor/persist/idempotency/fence/degradation) runs with zero ML.
+- `pytest` (`.venv-ml`, `test_relex.py`) → 8 passed (incl. real GLiNER-RelEx smoke). C: stays clean; relex weights on F: (870M).
+- Benchmark (`eval/relex_eval.py`) → learned Tier-2 ALL F1=0.40 (Parent 1.00, Serves 0.67); rules F1=0.00 on social gold but 4/6 pair coverage — the complementarity is the deliverable.
+
 ## Gate result (Phase 6)
 - `ruff check .` → All checks passed.
 - `mypy` (strict) → Success, 46 source files.
@@ -140,10 +161,12 @@
 - CLI: `storyweave extract the-hollow-crown` → 89 mentions → 38 entities (7/8 types); re-run identical (idempotent).
 
 ## In-progress / next
-- **EARLY-EXIT CHECKPOINT still open (SPEC §8).** Phases 0–6 = complete, fully-local product with an HTTP API. Decide before continuing:
-  - **Phase 7 — LLM enhancement (optional, VRAM-gated):** Tier-2 social + Tier-3 identity inference (reveal-shifting), junk rejection; OFF by default; graceful degradation IS the test. First action = GPU→CPU→Colab go/no-go.
-  - **Phase 8 — Frontend** (React/Vite/Cytoscape, chapter slider/bloom, multi-novel, in-app ingest); **Phase 9 — packaging/CI/README**.
-- Routes not yet built (not requested this phase): `POST /ingest`, delete-work. Add when wiring the frontend (Phase 8) or if needed earlier.
+- **Phase 7a DONE (CPU, no VRAM risk).** Decide the next step:
+  - **Phase 7b — LLM go/no-go (VRAM-gated):** first action = small quantized model GPU→CPU→Colab go/no-go on the GTX 1650; then LLM-based Tier-2 disambiguation (Hermes-language vs deity) + junk rejection. OFF by default; graceful degradation IS the test.
+  - **Phase 7c — Tier-3 identity inference:** the showcase (Wren==Caelum SECRET_IDENTITY, reveal-shifting on `revealed_chapter`). Schema already exists; relex/LLM infers it; fence already handles identity edges (Phase 5 proven).
+  - **Phase 8 — Frontend**; **Phase 9 — packaging/CI/README**.
+- Routes not yet built: `POST /ingest`, delete-work, and a Tier filter on `/graph` so the frontend can toggle structural vs social. Add when wiring the frontend (Phase 8).
+- **Benchmark improvement ideas (7b/later):** try `gliner-relex-large-v1.0`/`-multi-v1.0`; tune `relex_rel_threshold`; richer prompt phrasing per relation; label-description prompts (the v1.0 API supports dict labels) to lift Ally/Betrayed recall.
 
 ## Known issues / TODOs
 - Starlette TestClient emits a deprecation warning (httpx vs httpx2). Cosmetic; revisit if it becomes an error.
@@ -179,3 +202,10 @@
 - **Phase 6 (no ML in API):** Embedder/Chroma are injected via FastAPI dependencies and load ML lazily; tests override them with a fake embedder + in-memory store, so the API is fully testable (and runnable) under the light `.venv`.
 - **Phase 6 (mandatory n):** every data route uses a required `Query(..., ge=0)`; FastAPI returns 422 for missing/negative n with no custom code. `q` is `Query(min_length=1)`.
 - **Phase 6 (sqlite threads):** `Repository` uses `check_same_thread=False` for FastAPI's threadpool; safe because each request gets its own repo (no concurrent sharing).
+- **Phase 7a (no new framework):** relation extraction is already in `gliner==0.2.27` (`GLiNER.inference(relations=..., return_relations=True)`) — no gliner upgrade, Phase-2 floor pin untouched. The only new artifact is the model `gliner-relex-base-v1.0` (cached to F:).
+- **Phase 7a (provenance = gliner, no migration):** Tier-2 edges use `method='gliner'` (it is a GLiNER model) so the Phase-0 CHECK constraint `('gliner','rule','llm')` is unchanged; `tier=2` is what separates them from Tier-1 `method='rule'` edges. (LLM-inferred Tier-2/Tier-3 in 7b/7c will use `method='llm'`.)
+- **Phase 7a (anchor, don't invent):** relex spans are re-grounded to the floor's canonical nodes via a normalized-surface→node_id vote over `mentions`; an unanchored span yields no edge. Keeps the 8-type node set authoritative and avoids phantom nodes.
+- **Phase 7a (reveal == first_seen for stated relations):** a social relation written in the prose is reader-known when read, so no reveal shift here; reveal-shifting (secrets/identity) is Tier-3 (7c).
+- **Phase 7a (idempotent, tier-scoped):** `clear_edges_by_tier(work, SOCIAL)` rebuilds only Tier-2, so re-running `social` never disturbs the Tier-1 floor and never duplicates.
+- **Phase 7a (graceful degradation is enhancement, not dependency):** model load/inference failure → `degraded` report, Tier-1 floor + fence untouched (rule #4), covered by a permanent test.
+- **Phase 7a (benchmark = the deliverable):** learned RE recovers social relations (Parent 1.00, Serves) that hand-written co-occurrence rules cannot label at all (rules F1=0 on social gold, yet 4/6 pair coverage). Complementary, not competing — quantified on the CC0 sample.

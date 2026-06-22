@@ -136,6 +136,39 @@ def relate(
 
 
 @app.command()
+def social(
+    slug: Annotated[str, typer.Argument(help="Work slug to build Tier-2 social relations for.")],
+    config: Annotated[Path | None, typer.Option(help="storyweave.toml overrides.")] = None,
+    model: Annotated[str | None, typer.Option(help="GLiNER-RelEx model id override.")] = None,
+    db: Annotated[Path | None, typer.Option(help="SQLite path override.")] = None,
+) -> None:
+    """Add Tier-2 social relations via GLiNER-RelEx (enhancement; Tier-1 floor untouched).
+
+    Requires the .venv-ml environment. Idempotent: rebuilds only Tier-2 edges. If the
+    relex model is unavailable the work degrades cleanly to the Phase 3 Tier-1 floor.
+    """
+    from storyweave.config import get_settings
+    from storyweave.db.repository import Repository
+    from storyweave.ingest.work_config import load_work_config
+    from storyweave.nlp.relex import extract_social_relations
+
+    settings = get_settings()
+    db_path = db or settings.db_path
+    work_config = load_work_config(config)
+    if model is not None:
+        work_config.relations.relex_model = model
+
+    with Repository(db_path) as repo:
+        repo.initialize_schema()
+        work = repo.get_work_by_slug(slug)
+        if work is None or work.id is None:
+            typer.echo(f"error: no work with slug '{slug}' (ingest + extract first)", err=True)
+            raise typer.Exit(code=1)
+        report = extract_social_relations(work.id, repo, work_config, settings)
+    typer.echo(report.summary())
+
+
+@app.command()
 def graph(
     slug: Annotated[str, typer.Argument(help="Work slug.")],
     chapter: Annotated[int, typer.Option("--chapter", "-n", help="Reading position N (fence).")],

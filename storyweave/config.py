@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     gliner_threshold: float = 0.4
     gliner_device: str = "cpu"  # "cuda" to use the GPU (4 GB VRAM fits the small model)
 
+    # --- Tier-2 relation extraction (Phase 7a): GLiNER-RelEx, CPU, no VRAM risk. ---
+    # It is a GLiNER model, so it honours the same F: cache discipline as gliner_model.
+    # This is ENHANCEMENT, never a dependency (rule #4): absent it, the graph degrades
+    # cleanly to the Phase 3/5 Tier-1 floor.
+    relex_model: str = "knowledgator/gliner-relex-base-v1.0"
+    relex_device: str = "cpu"
+    relex_ner_threshold: float = 0.3  # entity span recall (model card: 0.3–0.5)
+    relex_rel_threshold: float = 0.5  # relation confidence (model card: 0.5+)
+
     # --- Vector search (Phase 4) ---
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"  # 384-dim, CPU-fine
     embedding_device: str = "cpu"
