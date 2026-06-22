@@ -51,7 +51,10 @@ class Settings(BaseSettings):
     relex_model: str = "knowledgator/gliner-relex-base-v1.0"
     relex_device: str = "cpu"
     relex_ner_threshold: float = 0.3  # entity span recall (model card: 0.3–0.5)
-    relex_rel_threshold: float = 0.5  # relation confidence (model card: 0.5+)
+    # Precision-favoring default chosen by the Phase-7a sweep (P=1.00, F1=0.44 vs 0.40
+    # at 0.50). A wrong social edge is worse than a missing one in a spoiler graph;
+    # per-work storyweave.toml can override. (model card range: 0.5–0.9)
+    relex_rel_threshold: float = 0.6
 
     # --- Vector search (Phase 4) ---
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"  # 384-dim, CPU-fine

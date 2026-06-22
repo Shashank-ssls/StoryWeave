@@ -3,7 +3,7 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 7a — Tier-2 social relations (GLiNER-RelEx, CPU).** Status: **DONE, green & pushed** (commit `edcf3ff`). Next: Phase 7b (LLM go/no-go, VRAM-gated) or Phase 8 (frontend).
+**Phase 7a — Tier-2 social relations (GLiNER-RelEx, CPU)** + **measure-driven tuning pass**. Status: **DONE, green** (push pending). Tuning lifted the operating point to **P=1.00, F1 0.40→0.44**. Next: Phase 7b (LLM go/no-go, VRAM-gated) or Phase 8 (frontend).
 
 > **Phase 7 is split into THREE independently-gated sub-phases** (not one monolithic LLM stage): **7a** GLiNER-RelEx Tier-2 social relations (CPU, no VRAM risk — DONE); **7b** the LLM GPU→CPU→Colab go/no-go + Tier-2 disambiguation/junk rejection; **7c** Tier-3 identity inference (the Wren==Caelum / Zhou Mingrui⇄Klein showcase, reveal-shifting). Each ends green + pushed before the next.
 
@@ -18,6 +18,23 @@
   - **Learned GLiNER-RelEx (Tier-2):** ALL **P=0.67 R=0.29 F1=0.40** (tp=2, fp=1, fn=5). Perfect on `Parent` (Maela→Caelum, 1.00) and recovers `Serves` (Wren→Coil); 13 Tier-2 edges produced graph-wide. Misses `Ally`/`Betrayed`/`Family` (base model, hard literary MTL-style prose, strict triple match).
   - **Hand-written co-occurrence rules (Tier-1) on the SAME social gold:** ALL **F1=0.00** — *by construction*: proximity rules can only emit structural labels (`RelatedTo`/`MemberOf`/`LeaderOf`), never social ones. **But Tier-1 pair coverage = 4/6**: rules connect 4 of 6 gold social pairs by *some* edge. **Deliverable insight:** rules find *that* two entities relate; the learned layer is what names *how* (Serves vs Betrayed vs Parent) — the two are complementary, neither alone is complete.
 - Tests (`test_relex.py`, +8): prompt-map ⊆ Tier-2 vocab; anchor+persist+stamp; **no phantom node** for unanchored spans; symmetric dedup; **Tier-1 untouched + Tier-2 idempotent**; **Tier-2 edge passes the both-endpoints fence** (hidden until late endpoint revealed); **graceful degradation**; + 1 ML-gated real-relex smoke (`.venv-ml`).
+
+## Done (Phase 7a — tuning pass: measure-driven recall/precision)
+Goal: lift Tier-2 recall (Ally/Betrayed/Family were 0) without collapsing precision; every change proven on `eval/relex_eval.py` (added `--sweep`/`--dump` diagnostic: one low-threshold inference pass, post-filtered in memory — a full sweep costs one model load, not N).
+
+- **BEFORE → AFTER (the-hollow-crown social gold, base `relex-base-v1.0`):**
+
+  | | P | R | F1 | per-relation recall |
+  |---|---|---|---|---|
+  | **before** (thr 0.50) | 0.67 | 0.29 | **0.40** | Parent 1.0, Serves 0.5; Ally/Betrayed/Family 0 |
+  | **after** (thr 0.60) | **1.00** | 0.29 | **0.44** | Parent 1.0, Serves 0.5; Ally/Betrayed/Family 0 |
+
+  Headline win: **precision 0.67→1.00, F1 0.40→0.44** — at the shipped operating point relex makes **zero false-positive social claims** (8 Tier-2 edges graph-wide, down from 13). For a spoiler graph a wrong edge is worse than a missing one, so precision is the right axis to tune.
+- **Lever 1 — threshold sweep (shipped).** `relation_threshold` 0.30→0.90: F1 peaks at a P=1.00 plateau from **0.60** (knee = max recall at P=1.0). Chosen 0.60. Lives in the sample `storyweave.toml` `[relations] relex_rel_threshold` (per-work knob) + the global default bumped 0.5→0.6 (precision-favoring). **Sweep table (base):** thr 0.50 → P0.67/F1 0.40; **0.60 → P1.00/F1 0.44**; 0.70–0.80 → P1.00/F1 0.44; 0.90 → F1 0.25.
+- **Lever 2 — richer prompts (tested, REVERTED).** Expanded `RELATION_PROMPTS` with synonyms for the missed relations (betrayed→{turned against, usurped, conspired against}; Family→{kin of, related to}; Ally→{fights alongside, …}). Re-swept: **headline F1 unchanged (0.44), Ally/Betrayed/Family still 0 at every threshold.** Reverted (no number moved → doesn't ship). The `--dump` diagnostic shows why: the misses are **coreference** ("Maela was *my* friend" → Veris; "Help *me*" → Veris/Wren) and **implication** ("slipped the crown onto his own head" = betrayal, never the word) — not phrasing. That is squarely the LLM layer's job (7b/7c with coref + inference).
+- **Lever 3 — larger checkpoint (tested, NOT shipped).** `gliner-relex-large-v1.0` (downloaded to F:, C: verified clean): **recovers Family (0→1.0) and full Serves recall, R 0.29→0.57** — but only at thr 0.30 where **precision collapses to 0.36**. At thr 0.60: P0.43/R0.43/F1 0.43. It violates the "without collapsing precision" constraint and never recovers Ally/Betrayed, so **base stays pinned**; large is kept on disk for 7b experiments. Decision recorded.
+- **Net:** the threshold knob is the only lever that moved the shipped number (F1 0.40→0.44, P→1.00). The Ally/Betrayed ceiling is a coref/inference limit, explicitly deferred to the LLM layer — not a 7a tuning gap.
+- Constraints held: **P0 fence suite unchanged & green**; graceful-degradation test green; light `.venv` green (importorskip); both venvs ruff + mypy clean; all knobs are config/TOML data (no `if`-branches); LotM stayed local (benchmark on the CC0 sample only).
 
 ## Done (Phase 6)
 - `api/app.py`: fenced routes, thin (validate → fence → serialize → typed response). `n` is a mandatory `Query(..., ge=0)` so missing/negative → **422** automatically.
@@ -120,12 +137,12 @@
 - `pytest` → 9 passed.
 - `storyweave version` → `0.1.0`; `storyweave info` → `llm_enabled: False`.
 
-## Gate result (Phase 7a)
-- `ruff check .` → All checks passed.
-- `mypy` (strict) → Success (32 storyweave source files reported by the run; eval clean too).
-- `pytest` (light `.venv`) → 71 passed, 5 skipped (ML-gated tests skip without ML). Full relex orchestration (anchor/persist/idempotency/fence/degradation) runs with zero ML.
-- `pytest` (`.venv-ml`, `test_relex.py`) → 8 passed (incl. real GLiNER-RelEx smoke). C: stays clean; relex weights on F: (870M).
-- Benchmark (`eval/relex_eval.py`) → learned Tier-2 ALL F1=0.40 (Parent 1.00, Serves 0.67); rules F1=0.00 on social gold but 4/6 pair coverage — the complementarity is the deliverable.
+## Gate result (Phase 7a, incl. tuning pass)
+- `ruff check .` → All checks passed (storyweave + tests + eval).
+- `mypy` (strict) → Success, 32 storyweave source files (eval clean too).
+- `pytest` (light `.venv`) → 71 passed, 5 skipped (ML-gated skip without ML). Full relex orchestration (anchor/persist/idempotency/fence/degradation) runs with zero ML.
+- `pytest` (`.venv-ml`, `test_relex.py` + `test_fence.py`) → 15 passed (incl. real GLiNER-RelEx smoke + the **unchanged P0 fence suite**). C: stays clean; relex weights on F:.
+- Benchmark (`eval/relex_eval.py`) → after tuning: learned Tier-2 **ALL P=1.00 R=0.29 F1=0.44** (Parent 1.00, Serves 0.67, zero FPs); rules F1=0.00 on social gold but 4/6 pair coverage — complementarity stands. `--sweep`/`--dump` diagnostics added.
 
 ## Gate result (Phase 6)
 - `ruff check .` → All checks passed.
@@ -166,7 +183,7 @@
   - **Phase 7c — Tier-3 identity inference:** the showcase (Wren==Caelum SECRET_IDENTITY, reveal-shifting on `revealed_chapter`). Schema already exists; relex/LLM infers it; fence already handles identity edges (Phase 5 proven).
   - **Phase 8 — Frontend**; **Phase 9 — packaging/CI/README**.
 - Routes not yet built: `POST /ingest`, delete-work, and a Tier filter on `/graph` so the frontend can toggle structural vs social. Add when wiring the frontend (Phase 8).
-- **Benchmark improvement ideas (7b/later):** try `gliner-relex-large-v1.0`/`-multi-v1.0`; tune `relex_rel_threshold`; richer prompt phrasing per relation; label-description prompts (the v1.0 API supports dict labels) to lift Ally/Betrayed recall.
+- **Benchmark improvement ideas (7b/later):** the 7a tuning pass settled the GLiNER-RelEx ceiling — threshold tuned (0.60, P=1.00), richer prompts tested (no gain, reverted), `relex-large-v1.0` tested (recovers Family/recall but precision→0.36, not shipped). The residual misses (Ally/Betrayed via pronoun coref + implication) need the **LLM layer (7b/7c)**: coreference resolution + relation inference, not more relex tuning. `relex-large-v1.0` weights are already on F: if a recall-favoring mode is wanted later.
 
 ## Known issues / TODOs
 - Starlette TestClient emits a deprecation warning (httpx vs httpx2). Cosmetic; revisit if it becomes an error.
@@ -209,3 +226,5 @@
 - **Phase 7a (idempotent, tier-scoped):** `clear_edges_by_tier(work, SOCIAL)` rebuilds only Tier-2, so re-running `social` never disturbs the Tier-1 floor and never duplicates.
 - **Phase 7a (graceful degradation is enhancement, not dependency):** model load/inference failure → `degraded` report, Tier-1 floor + fence untouched (rule #4), covered by a permanent test.
 - **Phase 7a (benchmark = the deliverable):** learned RE recovers social relations (Parent 1.00, Serves) that hand-written co-occurrence rules cannot label at all (rules F1=0 on social gold, yet 4/6 pair coverage). Complementary, not competing — quantified on the CC0 sample.
+- **Phase 7a tuning (precision over recall for a spoiler graph):** chose `relex_rel_threshold=0.60` (the P=1.00 knee) over recall-maximizing settings — a false social edge is worse than a missing one when the graph is reader-facing. F1 0.40→0.44, precision 0.67→1.00, zero FP social edges. Knob lives in `storyweave.toml`; global default also 0.6.
+- **Phase 7a tuning (negative results are results):** richer prompts and `relex-large-v1.0` were both measured and rejected — prompts moved nothing (Ally/Betrayed/Family are coref/implication, not phrasing); large recovered Family + recall but collapsed precision to 0.36. Recorded so the ceiling is understood, not re-litigated. The remaining recall is an LLM-layer (7b/7c) job.

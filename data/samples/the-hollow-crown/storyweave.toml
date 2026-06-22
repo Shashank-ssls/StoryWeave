@@ -23,3 +23,11 @@ first_chapter_number = 1
 [chunking]
 max_chars = 600
 overlap_sentences = 1
+
+[relations]
+# Tier-2 (GLiNER-RelEx) operating point, chosen by the Phase-7a improvement sweep
+# (eval/relex_eval.py --sweep). At 0.60 precision is 1.00 with F1=0.44 (vs 0.40 at
+# the 0.50 default); below 0.60 false-positive social edges creep in. For a
+# spoiler-aware reader graph a wrong relation is worse than a missing one, so we tune
+# for precision. Knob is DATA (per-work), never hardcoded.
+relex_rel_threshold = 0.6
