@@ -3,7 +3,7 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 6 — API (FastAPI).** Status: **DONE & green; ready to push.** Next: Phase 7 (optional LLM, VRAM-gated) or Phase 8 (frontend). All routes fenced + light-venv only.
+**Phase 6 — API (FastAPI).** Status: **DONE, green & pushed** (commit `2217a35`). Next: Phase 7 (optional LLM, VRAM-gated) or Phase 8 (frontend). All routes fenced + light-venv only.
 
 ## Done (Phase 6)
 - `api/app.py`: fenced routes, thin (validate → fence → serialize → typed response). `n` is a mandatory `Query(..., ge=0)` so missing/negative → **422** automatically.
