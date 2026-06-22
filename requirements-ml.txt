@@ -1,33 +1,41 @@
 # ---------------------------------------------------------------------------
-# StoryWeave — HEAVY NLP / ML dependencies (.venv-ml)
+# StoryWeave — HEAVY NLP / ML dependencies (.venv-ml, Python 3.12)
 # ---------------------------------------------------------------------------
-# This file documents the intended .venv-ml environment. It is NOT installed in
-# Phase 0. Phase 2 is the environment GATE: it stands up .venv-ml on Python 3.12,
-# installs these, proves a real GLiNER smoke extraction runs (GPU or CPU), and
-# THEN pins exact versions here.
+# Why a separate venv: Python 3.14 (the .venv interpreter) lacks wheels for
+# torch/GLiNER. .venv-ml pins Python 3.12 where these wheels exist. ML imports in
+# the package are LAZY so the light .venv still imports cleanly; ML tests use
+# importorskip and are skipped on the light gate.
 #
-# Why a separate venv: Python 3.14 (the .venv interpreter) historically lacks
-# wheels for torch / spaCy / GLiNER. .venv-ml pins Python 3.12, where these
-# wheels exist. ML imports in the package are lazy so the light .venv still
-# imports cleanly. ML tests use importorskip and are skipped on the light gate.
+# Setup (Windows):
+#   "<python3.12>" -m venv .venv-ml
+#   .venv-ml\Scripts\python -m pip install -U pip
+#   .venv-ml\Scripts\python -m pip install -e .
+#   .venv-ml\Scripts\python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   .venv-ml\Scripts\python -m pip install -r requirements-ml.txt
 #
-# Intended setup (Phase 2 will execute and pin):
-#   py -V:Astral/CPython3.12 -m venv .venv-ml      # or: uv venv --python 3.12 .venv-ml
-#   .venv-ml\Scripts\activate                       # Windows
-#   pip install -e .                                # the light app, into the ML venv too
-#   pip install -r requirements-ml.txt
+# MODEL CACHE — MUST live on the project drive (F:), never C: (CLAUDE.md §3).
+# The app sets this automatically (storyweave.config.Settings.hf_home ->
+# <repo>/.hf-cache, applied via storyweave.nlp.extractor.configure_hf_cache before
+# any HuggingFace import). For manual/ad-hoc runs in a shell, set it yourself:
+#   set    HF_HOME=F:\Dev\...\storyweave\.hf-cache            (cmd)
+#   $env:HF_HOME = "F:\Dev\...\storyweave\.hf-cache"          (PowerShell)
+#   export HF_HOME="F:/Dev/.../storyweave/.hf-cache"          (bash)
+# On Windows also keep HF_HUB_DISABLE_SYMLINKS=1 (avoids WinError 1314 without
+# Developer Mode/admin). The .hf-cache dir is gitignored.
 #
-# Hardware target: GTX 1650 (4 GB VRAM) with CPU + 16 GB RAM fallback.
+# Hardware target: GTX 1650 (4 GB VRAM) with CPU + 16 GB RAM fallback. The Phase-2
+# gate ran on CPU; the small model also fits the GPU (gliner_device="cuda").
 
-# --- Extraction floor (Phase 2) ---
-gliner                 # zero-shot NER — the extraction FLOOR
-torch                  # CPU build by default; CUDA build chosen at Phase 2 gate
+# --- Pinned at the Phase 2 environment gate (verified working on CPU) ---
+torch==2.12.1                 # installed from the cpu index-url (see Setup above)
+gliner==0.2.27                # zero-shot NER — the extraction FLOOR
+transformers==5.6.2           # GLiNER backbone (deberta-v3-small)
+huggingface_hub==1.20.1       # weight downloads -> F: cache
 
-# --- Vector search (Phase 4) ---
-sentence-transformers  # chunk embeddings
-chromadb               # dev vector backend
-faiss-cpu              # scale vector backend
+# --- Vector search (Phase 4; pins finalized then) ---
+# sentence-transformers
+# chromadb
+# faiss-cpu
 
-# --- Optional LLM enhancement layer (Phase 7; OFF by default) ---
-# Pins decided at the Phase 7 GPU->CPU->Colab go/no-go gate.
-# llama-cpp-python     # local quantized inference (candidate)
+# --- Optional LLM enhancement layer (Phase 7; OFF by default; pins at that gate) ---
+# llama-cpp-python

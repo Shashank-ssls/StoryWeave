@@ -45,12 +45,23 @@ class ChunkingConfig(BaseModel):
     overlap_sentences: int = 1
 
 
+class ExtractionConfig(BaseModel):
+    # Override the global GLiNER model/threshold per work if needed (knobs are data).
+    model: str | None = None
+    threshold: float | None = None
+    device: str | None = None
+    # Optional per-work extra label prompts mapped to a canonical 8-type name, e.g.
+    # {"power system": "Concept"}. Helps recall for genre-specific common nouns.
+    extra_labels: dict[str, str] = Field(default_factory=dict)
+
+
 class WorkConfig(BaseModel):
     title: str | None = None
     slug: str | None = None
     cleaning: CleaningConfig = Field(default_factory=CleaningConfig)
     splitting: SplittingConfig = Field(default_factory=SplittingConfig)
     chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
+    extraction: ExtractionConfig = Field(default_factory=ExtractionConfig)
 
 
 def load_work_config(path: Path | str | None) -> WorkConfig:

@@ -35,3 +35,6 @@ frontend/.vite/
 # --- Vector store artifacts (rebuildable) ---
 .chroma/
 *.faiss
+
+# --- Model weights cache (HuggingFace; large, on F:, re-downloadable) ---
+.hf-cache/

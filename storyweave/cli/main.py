@@ -70,6 +70,47 @@ def ingest(
         typer.echo(f"  warning: {warning}", err=True)
 
 
+@app.command()
+def extract(
+    slug: Annotated[str, typer.Argument(help="Work slug to extract entities for.")],
+    config: Annotated[
+        Path | None, typer.Option(help="storyweave.toml with extraction overrides.")
+    ] = None,
+    model: Annotated[str | None, typer.Option(help="GLiNER model id override.")] = None,
+    threshold: Annotated[float | None, typer.Option(help="GLiNER score threshold.")] = None,
+    device: Annotated[str | None, typer.Option(help="cpu or cuda.")] = None,
+    db: Annotated[Path | None, typer.Option(help="SQLite path override.")] = None,
+) -> None:
+    """Run the GLiNER floor over an ingested work: mentions -> canonical entities.
+
+    Requires the .venv-ml environment (GLiNER + torch). Idempotent.
+    """
+    from storyweave.config import get_settings
+    from storyweave.db.repository import Repository
+    from storyweave.ingest.work_config import load_work_config
+    from storyweave.nlp.pipeline import extract_work
+
+    settings = get_settings()
+    db_path = db or settings.db_path
+    work_config = load_work_config(config)
+    if model is not None:
+        work_config.extraction.model = model
+    if threshold is not None:
+        work_config.extraction.threshold = threshold
+    if device is not None:
+        work_config.extraction.device = device
+
+    with Repository(db_path) as repo:
+        repo.initialize_schema()
+        work = repo.get_work_by_slug(slug)
+        if work is None or work.id is None:
+            typer.echo(f"error: no work with slug '{slug}' (ingest it first)", err=True)
+            raise typer.Exit(code=1)
+        report = extract_work(work.id, repo, work_config, settings)
+
+    typer.echo(report.summary())
+
+
 def main() -> None:
     """Console-script entry point."""
     app()

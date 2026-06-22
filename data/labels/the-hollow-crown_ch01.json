@@ -1,0 +1,15 @@
+{
+  "work_slug": "the-hollow-crown",
+  "chapter_ordinal": 1,
+  "note": "Hand-labeled reader-knowledge entities for ch01. Includes a Concept-type entity (the transmigration-vision phenomenon). Matching is at the (normalized surface, type) level.",
+  "entities": [
+    {"text": "Wren", "type": "Character"},
+    {"text": "Aldercross", "type": "Place"},
+    {"text": "the Bent Nail", "type": "Place"},
+    {"text": "House Veyle", "type": "Organization"},
+    {"text": "the Coil", "type": "Organization"},
+    {"text": "the watch", "type": "Organization"},
+    {"text": "signet ring", "type": "Item"},
+    {"text": "the Glasswound", "type": "Concept"}
+  ]
+}

@@ -144,6 +144,28 @@ class Chunk(BaseModel):
     content_hash: str
 
 
+class Mention(BaseModel):
+    """A raw GLiNER candidate (Phase 2), persisted BEFORE alias clustering.
+
+    Offsets index into the chapter's clean_text. ``node_id`` is backfilled once the
+    mention is clustered into a canonical entity (node).
+    """
+
+    id: int | None = None
+    work_id: int
+    chapter_id: int
+    chapter_ordinal: int
+    ordinal: int  # index within the chapter's candidate list
+    surface: str
+    type: NodeType
+    subtype: str | None = None
+    char_start: int
+    char_end: int
+    score: float
+    extraction_method: ExtractionMethod = ExtractionMethod.GLINER
+    node_id: int | None = None
+
+
 class Node(BaseModel):
     id: int | None = None
     work_id: int
@@ -198,6 +220,7 @@ __all__ = [
     "Chunk",
     "Edge",
     "ExtractionMethod",
+    "Mention",
     "Node",
     "NodeProperty",
     "NodeType",

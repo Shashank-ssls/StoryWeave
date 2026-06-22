@@ -12,6 +12,11 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Model weights cache lives on the PROJECT drive (F:), never on C: (env discipline,
+# CLAUDE.md §3). Default is repo-root/.hf-cache; override with STORYWEAVE_HF_HOME.
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+_DEFAULT_HF_HOME = _REPO_ROOT / ".hf-cache"
+
 
 class Settings(BaseSettings):
     """Runtime configuration. All knobs are overridable via ``STORYWEAVE_*`` env vars."""
@@ -30,6 +35,14 @@ class Settings(BaseSettings):
     # --- API ---
     api_host: str = "127.0.0.1"
     api_port: int = 8000
+
+    # --- ML / models (off the C: drive) ---
+    hf_home: Path = _DEFAULT_HF_HOME
+    # Windows needs Developer Mode/admin for symlinks; copying avoids WinError 1314.
+    hf_disable_symlinks: bool = True
+    gliner_model: str = "urchade/gliner_small-v2.1"
+    gliner_threshold: float = 0.4
+    gliner_device: str = "cpu"  # "cuda" to use the GPU (4 GB VRAM fits the small model)
 
     # --- LLM enhancement layer (rule #4 + #5): OFF by default. ---
     # When False, the pipeline runs the GLiNER floor only and makes no outbound calls.

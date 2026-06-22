@@ -21,6 +21,7 @@ from storyweave.db.models import (
     Chapter,
     Chunk,
     Edge,
+    Mention,
     Node,
     NodeProperty,
     NodeType,
@@ -110,6 +111,24 @@ CREATE TABLE IF NOT EXISTS chunks (
     UNIQUE (chapter_id, ordinal)
 );
 
+-- Raw GLiNER candidate mentions (Phase 2), persisted before clustering. Offsets
+-- index into the chapter's clean_text. node_id is backfilled after clustering.
+CREATE TABLE IF NOT EXISTS mentions (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    work_id           INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+    chapter_id        INTEGER NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+    chapter_ordinal   INTEGER NOT NULL,
+    ordinal           INTEGER NOT NULL,
+    surface           TEXT NOT NULL,
+    type              TEXT NOT NULL CHECK (type IN ({_NODE_TYPE_LIST})),
+    subtype           TEXT,
+    char_start        INTEGER NOT NULL,
+    char_end          INTEGER NOT NULL,
+    score             REAL NOT NULL,
+    extraction_method TEXT NOT NULL CHECK (extraction_method IN ('gliner', 'rule', 'llm')),
+    node_id           INTEGER REFERENCES nodes(id) ON DELETE SET NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_nodes_work        ON nodes(work_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_revealed    ON nodes(revealed_chapter);
 CREATE INDEX IF NOT EXISTS idx_edges_work        ON edges(work_id);
@@ -120,6 +139,9 @@ CREATE INDEX IF NOT EXISTS idx_props_revealed    ON node_properties(revealed_cha
 CREATE INDEX IF NOT EXISTS idx_chapters_work     ON chapters(work_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_chapter    ON chunks(chapter_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_work       ON chunks(work_id);
+CREATE INDEX IF NOT EXISTS idx_mentions_work     ON mentions(work_id);
+CREATE INDEX IF NOT EXISTS idx_mentions_chapter  ON mentions(chapter_id);
+CREATE INDEX IF NOT EXISTS idx_mentions_node     ON mentions(node_id);
 """
 
 
@@ -279,6 +301,71 @@ class Repository:
         )
         self.conn.commit()
         return int(cur.lastrowid or 0)
+
+    def list_nodes(self, work_id: int) -> list[Node]:
+        rows = self.conn.execute(
+            "SELECT * FROM nodes WHERE work_id = ? ORDER BY id", (work_id,)
+        ).fetchall()
+        return [Node(**dict(r)) for r in rows]
+
+    def count_nodes(self, work_id: int) -> int:
+        row = self.conn.execute(
+            "SELECT COUNT(*) AS n FROM nodes WHERE work_id = ?", (work_id,)
+        ).fetchone()
+        return int(row["n"])
+
+    def clear_nodes(self, work_id: int) -> None:
+        """Drop all nodes for a work (extraction is derived + idempotently rebuilt)."""
+        self.conn.execute("DELETE FROM nodes WHERE work_id = ?", (work_id,))
+        self.conn.commit()
+
+    # --- mentions (Phase 2) ---------------------------------------------- #
+
+    def add_mention(self, mention: Mention) -> int:
+        cur = self.conn.execute(
+            """INSERT INTO mentions
+                 (work_id, chapter_id, chapter_ordinal, ordinal, surface, type, subtype,
+                  char_start, char_end, score, extraction_method, node_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                mention.work_id,
+                mention.chapter_id,
+                mention.chapter_ordinal,
+                mention.ordinal,
+                mention.surface,
+                mention.type.value,
+                mention.subtype,
+                mention.char_start,
+                mention.char_end,
+                mention.score,
+                mention.extraction_method.value,
+                mention.node_id,
+            ),
+        )
+        self.conn.commit()
+        return int(cur.lastrowid or 0)
+
+    def list_mentions(self, work_id: int) -> list[Mention]:
+        rows = self.conn.execute(
+            "SELECT * FROM mentions WHERE work_id = ? ORDER BY id", (work_id,)
+        ).fetchall()
+        return [Mention(**dict(r)) for r in rows]
+
+    def count_mentions(self, work_id: int) -> int:
+        row = self.conn.execute(
+            "SELECT COUNT(*) AS n FROM mentions WHERE work_id = ?", (work_id,)
+        ).fetchone()
+        return int(row["n"])
+
+    def clear_mentions(self, work_id: int) -> None:
+        self.conn.execute("DELETE FROM mentions WHERE work_id = ?", (work_id,))
+        self.conn.commit()
+
+    def set_mention_node(self, mention_id: int, node_id: int) -> None:
+        self.conn.execute(
+            "UPDATE mentions SET node_id = ? WHERE id = ?", (node_id, mention_id)
+        )
+        self.conn.commit()
 
     # --- edges ----------------------------------------------------------- #
 
