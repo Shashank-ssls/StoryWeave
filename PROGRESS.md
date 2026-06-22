@@ -3,7 +3,22 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 7a — Tier-2 social relations (GLiNER-RelEx, CPU)** + **measure-driven tuning pass**. Status: **DONE, green & pushed** (commits `edcf3ff`, `274b792`). Tuning lifted the operating point to **P=1.00, F1 0.40→0.44**. Next: Phase 7b (LLM go/no-go, VRAM-gated) or Phase 8 (frontend).
+**Phase 7b — LLM go/no-go gate.** Status: **GO, green** (push pending). Local LLM path proven on both devices via Ollama; chosen path wired behind `llm_enabled` (OFF by default). NO 7c inference code yet. Next: Phase 7c (Tier-3 identity inference) or Phase 8 (frontend).
+
+## Done (Phase 7b — LLM go/no-go gate, NOT a feature)
+- **Runner = Ollama** (no-installer zip under gitignored `tools/`, server bound to 127.0.0.1; models cached to F: via `OLLAMA_MODELS=.llm-cache/ollama-models`). Chosen over a custom CUDA llama-cpp-python build because the zip needs no admin/service, bundles CUDA runners that auto partial-offload on the 4 GB card, and exposes an OpenAI-compatible `/v1` endpoint + eval timing (measured tok/s, not guessed). **C: stayed clean** (only a 6 KB Ollama keypair; zero model weights on C:); 6.3 GB of GGUF weights live on F:.
+- **GO/NO-GO MATRIX** (`eval/llm_gate.py`, stdlib-only; probe = the Wren==Caelum identity clue across sample ch1+ch2, strict JSON `{"same_entity":[["Wren","Caelum"]]}`, graded on co-reference):
+
+  | model | dev | loads | JSON | correct | tok/s | notes |
+  |---|---|---|---|---|---|---|
+  | llama3.2:3b | GPU | yes | yes | **YES** | **57.4** | fully offloaded to the 4 GB card |
+  | qwen2.5:7b | CPU | yes | yes | **YES** | 8.5 | 0% VRAM (system RAM) |
+  | llama3.2:3b | CPU | yes | yes | **YES** | 16.7 | — |
+  | qwen2.5:7b | GPU | yes | yes | **YES** | **1.3** | does NOT fit 4 GB → partial-offload thrash |
+
+  **Result = GO.** Honest caveat: the miniature probe is too easy to separate on *accuracy* — even the 3B nails it. The real discriminators are **speed and fit**: GPU-3B fast (57 tok/s); 7B does not fit the 4 GB GPU (1.3 tok/s); CPU-7B slow-but-roomy (8.5 tok/s) and leaves VRAM free for GLiNER. (The 7B-on-GPU vram% reading is unreliable when over-budget; the 1.3 tok/s is the real "doesn't fit" signal.)
+- **Wired path behind the flag (OFF by default):** `storyweave/nlp/llm.py` — `llm_available(settings)` is the single gate (False unless `llm_enabled` AND base_url AND model); `LlmClient` **refuses to construct while disabled** (raises) and speaks the OpenAI-compatible Chat Completions API (runner-agnostic), stdlib `urllib` only (no new dep, light-venv clean). NO Tier-2/Tier-3 logic — that's 7c. `config.py` documents the run-order fallback and defaults to local Ollama / `qwen2.5:7b` with `llm_enabled=False`.
+- **Tests (`test_llm.py`, +4):** disabled by default; client refuses to construct when disabled; **hard proof that the disabled path opens no socket** (monkeypatch `urllib.request.urlopen` to explode → never called); available only when enabled AND configured.
 
 > **Phase 7 is split into THREE independently-gated sub-phases** (not one monolithic LLM stage): **7a** GLiNER-RelEx Tier-2 social relations (CPU, no VRAM risk — DONE); **7b** the LLM GPU→CPU→Colab go/no-go + Tier-2 disambiguation/junk rejection; **7c** Tier-3 identity inference (the Wren==Caelum / Zhou Mingrui⇄Klein showcase, reveal-shifting). Each ends green + pushed before the next.
 
@@ -137,6 +152,13 @@ Goal: lift Tier-2 recall (Ally/Betrayed/Family were 0) without collapsing precis
 - `pytest` → 9 passed.
 - `storyweave version` → `0.1.0`; `storyweave info` → `llm_enabled: False`.
 
+## Gate result (Phase 7b)
+- `ruff check .` → All checks passed.
+- `mypy` (strict) → Success, 33 storyweave source files (eval `llm_gate.py` clean too).
+- `pytest` (light `.venv`) → 75 passed, 5 skipped (+4 LLM gate tests). `.venv-ml` sanity (test_llm/smoke/schema) → 12 passed; no ML code changed this phase, P0 fence suite untouched.
+- LLM gate (`eval/llm_gate.py`) → **GO**: 4/4 configs produced correct identity JSON; GPU-3B 57 tok/s, CPU-7B 8.5 tok/s, GPU-7B 1.3 tok/s (over budget). C: clean, weights on F:.
+- Rule #4/#5 proof: `llm_enabled=False` (default) → no client constructible, no outbound socket (tested).
+
 ## Gate result (Phase 7a, incl. tuning pass)
 - `ruff check .` → All checks passed (storyweave + tests + eval).
 - `mypy` (strict) → Success, 32 storyweave source files (eval clean too).
@@ -178,10 +200,10 @@ Goal: lift Tier-2 recall (Ally/Betrayed/Family were 0) without collapsing precis
 - CLI: `storyweave extract the-hollow-crown` → 89 mentions → 38 entities (7/8 types); re-run identical (idempotent).
 
 ## In-progress / next
-- **Phase 7a DONE (CPU, no VRAM risk).** Decide the next step:
-  - **Phase 7b — LLM go/no-go (VRAM-gated):** first action = small quantized model GPU→CPU→Colab go/no-go on the GTX 1650; then LLM-based Tier-2 disambiguation (Hermes-language vs deity) + junk rejection. OFF by default; graceful degradation IS the test.
-  - **Phase 7c — Tier-3 identity inference:** the showcase (Wren==Caelum SECRET_IDENTITY, reveal-shifting on `revealed_chapter`). Schema already exists; relex/LLM infers it; fence already handles identity edges (Phase 5 proven).
+- **Phase 7b DONE — GO.** The local LLM path works (Ollama, OpenAI-compatible, F: weights, OFF by default). Recommendation for 7c (below) is CPU `qwen2.5:7b` primary + GPU `llama3.2:3b` fast fallback. Decide the next step:
+  - **Phase 7c — Tier-3 identity inference (the showcase):** Wren==Caelum SECRET_IDENTITY + Gray Sparrow==Lady Veris ALIAS, reveal-shifting on `revealed_chapter`. Schema exists; fence already handles identity edges (Phase 5 proven); the LLM client is wired (`nlp/llm.py`). 7c builds the prompt/extraction + persistence + graceful degradation, then **re-validates accuracy on the harder cases** (the probe was single-clue; real inference is multi-step) before finalizing the model choice. Also the Phase-7b idea: LLM Tier-2 disambiguation + junk rejection.
   - **Phase 8 — Frontend**; **Phase 9 — packaging/CI/README**.
+- **To run the LLM locally (7c):** `tools/ollama/ollama serve` with `OLLAMA_MODELS=.llm-cache/ollama-models`, then set `STORYWEAVE_LLM_ENABLED=true` (models `qwen2.5:7b` CPU or `llama3.2:3b` GPU already pulled). Re-run `eval/llm_gate.py` to re-confirm.
 - Routes not yet built: `POST /ingest`, delete-work, and a Tier filter on `/graph` so the frontend can toggle structural vs social. Add when wiring the frontend (Phase 8).
 - **Benchmark improvement ideas (7b/later):** the 7a tuning pass settled the GLiNER-RelEx ceiling — threshold tuned (0.60, P=1.00), richer prompts tested (no gain, reverted), `relex-large-v1.0` tested (recovers Family/recall but precision→0.36, not shipped). The residual misses (Ally/Betrayed via pronoun coref + implication) need the **LLM layer (7b/7c)**: coreference resolution + relation inference, not more relex tuning. `relex-large-v1.0` weights are already on F: if a recall-favoring mode is wanted later.
 
@@ -228,3 +250,6 @@ Goal: lift Tier-2 recall (Ally/Betrayed/Family were 0) without collapsing precis
 - **Phase 7a (benchmark = the deliverable):** learned RE recovers social relations (Parent 1.00, Serves) that hand-written co-occurrence rules cannot label at all (rules F1=0 on social gold, yet 4/6 pair coverage). Complementary, not competing — quantified on the CC0 sample.
 - **Phase 7a tuning (precision over recall for a spoiler graph):** chose `relex_rel_threshold=0.60` (the P=1.00 knee) over recall-maximizing settings — a false social edge is worse than a missing one when the graph is reader-facing. F1 0.40→0.44, precision 0.67→1.00, zero FP social edges. Knob lives in `storyweave.toml`; global default also 0.6.
 - **Phase 7a tuning (negative results are results):** richer prompts and `relex-large-v1.0` were both measured and rejected — prompts moved nothing (Ally/Betrayed/Family are coref/implication, not phrasing); large recovered Family + recall but collapsed precision to 0.36. Recorded so the ceiling is understood, not re-litigated. The remaining recall is an LLM-layer (7b/7c) job.
+- **Phase 7b (runner = Ollama, not llama-cpp-python):** the no-installer zip avoids a Windows CUDA build, bundles CUDA runners for the GTX 1650's auto partial-offload, caches weights to F:, and gives an OpenAI-compatible `/v1` + measured eval timing. The wired client targets `/v1` so it's runner-agnostic (swap to any compatible endpoint later).
+- **Phase 7b (chosen path = CPU qwen2.5:7b primary, GPU llama3.2:3b fallback):** the 4 GB card fits only ≤3-4B (7B = 1.3 tok/s thrash). The probe didn't separate accuracy (all 4 configs correct), so the choice is on fit + headroom: real 7c identity inference is multi-step where 7-8B is the safer bet, it runs at ingest (8.5 tok/s acceptable), and CPU leaves VRAM free for GLiNER. GPU-3B (57 tok/s) is the fast fallback for RAM-constrained/speed-critical runs; Colab is last resort. 7c must re-validate on harder cases.
+- **Phase 7b (flag off = structurally inert):** `llm_available()` is the single gate and `LlmClient` refuses to construct when disabled, so rules #4/#5 hold by construction, not convention — proven by a test that fails if the disabled path opens any socket. No Tier-2/Tier-3 logic built yet (gate only).

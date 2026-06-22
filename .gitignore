@@ -38,3 +38,7 @@ frontend/.vite/
 
 # --- Model weights cache (HuggingFace; large, on F:, re-downloadable) ---
 .hf-cache/
+
+# --- LLM runner + GGUF weights (Phase 7b; large, on F:, re-downloadable) ---
+.llm-cache/
+tools/

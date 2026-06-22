@@ -62,11 +62,22 @@ class Settings(BaseSettings):
     vector_dir: Path = _REPO_ROOT / ".chroma"  # on-disk Chroma store (gitignored)
 
     # --- LLM enhancement layer (rule #4 + #5): OFF by default. ---
-    # When False, the pipeline runs the GLiNER floor only and makes no outbound calls.
+    # When False, the pipeline runs the GLiNER floor only and makes ZERO outbound calls
+    # (no client is even constructed — see storyweave/nlp/llm.py).
+    #
+    # Phase 7b go/no-go (GTX 1650 4 GB + 16 GB RAM, runner = local Ollama, OpenAI-compat
+    # endpoint /v1, models cached to F:). Documented run-order fallback (SPEC §4):
+    #   1. local GPU   — llama3.2:3b Q4 fits the 4 GB card, ~57 tok/s (fast fallback).
+    #   2. local CPU+RAM — qwen2.5:7b Q4 in system RAM, ~8.5 tok/s; PRIMARY for the
+    #      multi-step Tier-3 reasoning (7c) — bigger model, and it leaves VRAM free for
+    #      GLiNER. A 7B does NOT fit the 4 GB GPU (~1.3 tok/s thrash), so it lands here.
+    #   3. Colab       — last resort for anything larger than 8B.
+    # The LLM runs at INGEST time (not interactive), so CPU slowness is acceptable.
     llm_enabled: bool = False
-    llm_base_url: str | None = None
-    llm_model: str | None = None
-    llm_api_key: str | None = None
+    llm_base_url: str | None = "http://127.0.0.1:11434/v1"  # local Ollama (OpenAI-compatible)
+    llm_model: str | None = "qwen2.5:7b"  # CPU primary; set "llama3.2:3b" for the GPU path
+    llm_api_key: str | None = None  # local Ollama needs none
+    llm_temperature: float = 0.0  # deterministic extraction
 
 
 @lru_cache(maxsize=1)
