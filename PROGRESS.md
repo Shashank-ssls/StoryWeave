@@ -3,7 +3,7 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 7a — Tier-2 social relations (GLiNER-RelEx, CPU)** + **measure-driven tuning pass**. Status: **DONE, green** (push pending). Tuning lifted the operating point to **P=1.00, F1 0.40→0.44**. Next: Phase 7b (LLM go/no-go, VRAM-gated) or Phase 8 (frontend).
+**Phase 7a — Tier-2 social relations (GLiNER-RelEx, CPU)** + **measure-driven tuning pass**. Status: **DONE, green & pushed** (commits `edcf3ff`, `274b792`). Tuning lifted the operating point to **P=1.00, F1 0.40→0.44**. Next: Phase 7b (LLM go/no-go, VRAM-gated) or Phase 8 (frontend).
 
 > **Phase 7 is split into THREE independently-gated sub-phases** (not one monolithic LLM stage): **7a** GLiNER-RelEx Tier-2 social relations (CPU, no VRAM risk — DONE); **7b** the LLM GPU→CPU→Colab go/no-go + Tier-2 disambiguation/junk rejection; **7c** Tier-3 identity inference (the Wren==Caelum / Zhou Mingrui⇄Klein showcase, reveal-shifting). Each ends green + pushed before the next.
 
