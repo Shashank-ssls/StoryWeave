@@ -460,3 +460,29 @@ class Repository:
         )
         self.conn.commit()
         return int(cur.lastrowid or 0)
+
+    def list_node_properties(self, node_id: int) -> list[NodeProperty]:
+        rows = self.conn.execute(
+            "SELECT * FROM node_properties WHERE node_id = ? ORDER BY id", (node_id,)
+        ).fetchall()
+        return [NodeProperty(**dict(r)) for r in rows]
+
+    def list_node_properties_revealed(
+        self, work_id: int, chapter: int
+    ) -> list[NodeProperty]:
+        """Properties visible at chapter N: the property AND its node must be revealed.
+
+        The property-level both-rule — a property of a not-yet-revealed node stays
+        hidden even if the property's own reveal is early.
+        """
+        rows = self.conn.execute(
+            """SELECT pr.*
+                 FROM node_properties pr
+                 JOIN nodes n ON pr.node_id = n.id
+                WHERE n.work_id = ?
+                  AND pr.revealed_chapter <= ?
+                  AND n.revealed_chapter <= ?
+                ORDER BY pr.id""",
+            (work_id, chapter, chapter),
+        ).fetchall()
+        return [NodeProperty(**dict(r)) for r in rows]

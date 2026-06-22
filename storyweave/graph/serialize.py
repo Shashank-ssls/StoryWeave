@@ -17,7 +17,15 @@ from storyweave.query import fence
 
 
 def build_graph(repo: Repository, work_id: int, chapter: int) -> nx.DiGraph:
-    """Build a fenced NetworkX directed graph of the work at chapter N."""
+    """Build a fenced NetworkX directed graph of the work at chapter N.
+
+    Nodes, edges, AND node properties are all fenced through ``query/fence.py``.
+    """
+    # Revealed properties only (property-level both-rule applied in the fence).
+    props_by_node: dict[int | None, dict[str, str]] = {}
+    for prop in fence.visible_node_properties(repo, work_id, chapter):
+        props_by_node.setdefault(prop.node_id, {})[prop.key] = prop.value
+
     graph: nx.DiGraph = nx.DiGraph()
     for node in fence.visible_nodes(repo, work_id, chapter):
         graph.add_node(
@@ -30,6 +38,7 @@ def build_graph(repo: Repository, work_id: int, chapter: int) -> nx.DiGraph:
             revealed_chapter=node.revealed_chapter,
             extraction_method=node.extraction_method.value,
             evidence_span=node.evidence_span,
+            properties=props_by_node.get(node.id, {}),
         )
     for edge in fence.visible_edges(repo, work_id, chapter):
         graph.add_edge(

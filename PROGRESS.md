@@ -3,7 +3,14 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 4 — Vector store + RAG search.** Status: **DONE & green; ready to push.** Next: Phase 5 (consolidate the spoiler-fence query layer — the keystone). 
+**Phase 5 — The spoiler-fence query layer (KEYSTONE).** Status: **DONE & green; ready to push.** **This is the SPEC §8 natural early-exit checkpoint** — Phases 0–5 are a complete, fully-local, no-VRAM-risk product. Reassess appetite before Phase 7 (LLM) + Phase 8 (frontend).
+
+## Done (Phase 5)
+- `query/fence.py` is now the consolidated single chokepoint for ALL four fenced surfaces: `visible_nodes`, `visible_edges` (both-endpoints; covers Tier-3 identity edges with no special-casing), `visible_node_properties` (NEW — property + node both-rule), `visible_chunk_hits` (search). Module docstring documents the keystone contract.
+- `db/repository.py`: `list_node_properties_revealed(work_id, N)` — SQL JOIN enforcing the property-level both-rule (property AND node revealed); plus `list_node_properties(node_id)`.
+- `graph/serialize.py`: the projection now attaches **fenced** revealed properties to each node's Cytoscape `data.properties` (a secret stat on a hidden/early-property node never leaks).
+- **Permanent P0 regression `tests/test_fence.py` (7 tests)**: late node hidden at low N / visible at high N; both-endpoints edge rule; edge-level reveal independent of endpoints; serialized graph fenced; **property revealed later than its node**; **property of a hidden node stays hidden**; **Tier-3 identity reveal** (Wren==Prince Caelum SECRET_IDENTITY edge, hidden at N=1, visible at N=2); and a projection invariant proving no element with `revealed_chapter > N` ever appears.
+- Architecture audit: graph projection + search both route through `query/fence.py`; SQL filtering lives in `repository.list_*_revealed`, vector filtering in the store's `query`; no unfenced read path is exposed to callers.
 
 ## Done (Phase 4)
 - `search/embedder.py`: sentence-transformers wrapper (`Embedder`, lazy import, `.venv-ml`), L2-normalized embeddings (cosine == dot), HF cache forced to F:. `EmbedderProtocol` lets retrieval be tested with a fake embedder. Pinned `sentence-transformers==5.6.0`; model `all-MiniLM-L6-v2` (384-dim).
@@ -86,6 +93,12 @@
 - `pytest` → 9 passed.
 - `storyweave version` → `0.1.0`; `storyweave info` → `llm_enabled: False`.
 
+## Gate result (Phase 5)
+- `ruff check .` → All checks passed.
+- `mypy` (strict) → Success, 43 source files.
+- `pytest` (light `.venv`) → 50 passed, 4 skipped.
+- P0 fence suite (`test_fence.py`) → 7 passed (nodes, edges, identity, properties, projection invariant).
+
 ## Gate result (Phase 4)
 - `ruff check .` → All checks passed.
 - `mypy` (strict) → Success, 43 source files.
@@ -108,7 +121,10 @@
 - CLI: `storyweave extract the-hollow-crown` → 89 mentions → 38 entities (7/8 types); re-run identical (idempotent).
 
 ## In-progress / next
-- **Phase 5 — The spoiler-fence query layer (keystone).** Consolidate ALL fencing into `query/fence.py` (graph + search already route through it); add identity/reveal handling; permanent P0 regression in one place proving late node/edge/property hidden at low N + an identity reveal. SQL stays in repository, vector filter in store; fence is the sole sanctioned caller. This is the natural early-exit checkpoint (reassess appetite before Phase 7 LLM + frontend).
+- **EARLY-EXIT CHECKPOINT (SPEC §8).** Phases 0–5 = complete shippable product. Decide before continuing:
+  - **Phase 6 — API.** FastAPI routes (`/ingest`, `/works`, `/graph` n-mandatory, `/entity/{id}`, `/search` n-mandatory, delete-work); no unfenced path reachable from the client (all via `query/fence.py`). 422 on missing/negative n. Light venv.
+  - **Phase 7 — LLM enhancement (optional, VRAM-gated):** Tier-2 social + Tier-3 identity inference (reveal-shifting), junk rejection; OFF by default; graceful degradation IS the test. First action = GPU→CPU→Colab go/no-go.
+  - **Phase 8 — Frontend** (React/Vite/Cytoscape, chapter slider/bloom, multi-novel, in-app ingest); **Phase 9 — packaging/CI/README**.
 
 ## Known issues / TODOs
 - Starlette TestClient emits a deprecation warning (httpx vs httpx2). Cosmetic; revisit if it becomes an error.
@@ -138,3 +154,6 @@
 - **Phase 4 (two backends, one interface):** InMemory (light, exact, testable without ML) + Chroma (on-disk dev). FAISS deferred — Chroma covers dev/demo; the adapter interface keeps FAISS a drop-in later.
 - **Phase 4 (offline RAG floor):** extractive cited answer needs no LLM (rule #4). Vector index is fully rebuildable from SQLite chunks; nothing non-derived is stored in `.chroma/`.
 - **Phase 4 (Windows/Chroma):** Chroma holds `chroma.sqlite3` open; tests use `TemporaryDirectory(ignore_cleanup_errors=True)`. Chroma collection names need ≥3 chars.
+- **Phase 5 (identity = ordinary edge):** Tier-3 identity reveals (SAME_AS/ALIAS/SECRET_IDENTITY/REINCARNATION/TRANSMIGRATED_INTO) need NO special fence path — they are edges fenced by `revealed_chapter` + both-endpoints. The reader-knowledge timing (e.g. learns Wren==Caelum at ch2) is just the edge's `revealed_chapter`.
+- **Phase 5 (property both-rule):** a property is visible only if the property AND its node are revealed — enforced as a SQL JOIN, surfaced in the graph projection as `data.properties`.
+- **Phase 5 (no unfenced path):** the only client-facing reads are the `fence.visible_*` functions; raw `repository.list_nodes/list_edges` are for derived rebuilds, never client output. Phase 6 API must call only the fence.
