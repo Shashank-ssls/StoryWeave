@@ -172,6 +172,69 @@ def graph(
         typer.echo(text)
 
 
+@app.command()
+def index(
+    slug: Annotated[str, typer.Argument(help="Work slug to embed + index.")],
+    db: Annotated[Path | None, typer.Option(help="SQLite path override.")] = None,
+) -> None:
+    """Embed a work's chunks into the on-disk vector store. Requires .venv-ml."""
+    from storyweave.config import get_settings
+    from storyweave.db.repository import Repository
+    from storyweave.search.embedder import Embedder
+    from storyweave.search.retriever import index_work
+    from storyweave.search.store import ChromaVectorStore
+
+    settings = get_settings()
+    db_path = db or settings.db_path
+    with Repository(db_path) as repo:
+        repo.initialize_schema()
+        work = repo.get_work_by_slug(slug)
+        if work is None or work.id is None:
+            typer.echo(f"error: no work with slug '{slug}' (ingest it first)", err=True)
+            raise typer.Exit(code=1)
+        store = ChromaVectorStore(settings.vector_dir)
+        n = index_work(work.id, repo, store, Embedder(settings=settings))
+    typer.echo(f"indexed {n} chunks for '{slug}' -> {settings.vector_dir}")
+
+
+@app.command()
+def search(
+    slug: Annotated[str, typer.Argument(help="Work slug to search.")],
+    query: Annotated[str, typer.Argument(help="Natural-language query.")],
+    chapter: Annotated[int, typer.Option("--chapter", "-n", help="Reading position N (fence).")],
+    top_k: Annotated[int, typer.Option("--top-k", help="Number of passages.")] = 5,
+    db: Annotated[Path | None, typer.Option(help="SQLite path override.")] = None,
+) -> None:
+    """Spoiler-aware RAG search: fenced top-k passages + a cited answer. Requires .venv-ml."""
+    from storyweave.config import get_settings
+    from storyweave.db.repository import Repository
+    from storyweave.search.embedder import Embedder
+    from storyweave.search.retriever import compose_answer
+    from storyweave.search.retriever import search as run_search
+    from storyweave.search.store import ChromaVectorStore
+
+    if chapter < 0:
+        typer.echo("error: --chapter must be >= 0", err=True)
+        raise typer.Exit(code=1)
+
+    settings = get_settings()
+    db_path = db or settings.db_path
+    with Repository(db_path) as repo:
+        repo.initialize_schema()
+        work = repo.get_work_by_slug(slug)
+        if work is None or work.id is None:
+            typer.echo(f"error: no work with slug '{slug}'", err=True)
+            raise typer.Exit(code=1)
+        store = ChromaVectorStore(settings.vector_dir)
+        hits = run_search(query, work.id, chapter, store, Embedder(settings=settings), top_k)
+
+    answer = compose_answer(query, hits)
+    typer.echo(answer.text)
+    typer.echo("--- sources ---")
+    for c in answer.citations:
+        typer.echo(f"  ch{c.chapter_ordinal} chunk#{c.chunk_id} [{c.char_start}:{c.char_end}]")
+
+
 def main() -> None:
     """Console-script entry point."""
     app()

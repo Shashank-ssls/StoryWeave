@@ -15,8 +15,13 @@ the graph.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from storyweave.db.models import Edge, Node
 from storyweave.db.repository import Repository
+
+if TYPE_CHECKING:  # pragma: no cover - typing only (avoids a runtime import cycle)
+    from storyweave.search.store import BaseVectorStore, SearchHit
 
 
 def visible_nodes(repo: Repository, work_id: int, chapter: int) -> list[Node]:
@@ -27,3 +32,19 @@ def visible_nodes(repo: Repository, work_id: int, chapter: int) -> list[Node]:
 def visible_edges(repo: Repository, work_id: int, chapter: int) -> list[Edge]:
     """Edges the reader may see at chapter N (both endpoints revealed)."""
     return repo.list_edges_revealed(work_id, chapter)
+
+
+def visible_chunk_hits(
+    store: BaseVectorStore,
+    query_embedding: list[float],
+    work_id: int,
+    chapter: int,
+    top_k: int,
+) -> list[SearchHit]:
+    """Fenced vector retrieval: the sanctioned entry to the index.
+
+    Guarantees the chapter constraint is passed so the store filters
+    ``chapter_ordinal <= chapter`` at the index level — results are already fenced
+    when they reach the caller; nothing is post-filtered afterwards.
+    """
+    return store.query(query_embedding, work_id=work_id, top_k=top_k, max_chapter=chapter)

@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     gliner_threshold: float = 0.4
     gliner_device: str = "cpu"  # "cuda" to use the GPU (4 GB VRAM fits the small model)
 
+    # --- Vector search (Phase 4) ---
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"  # 384-dim, CPU-fine
+    embedding_device: str = "cpu"
+    vector_dir: Path = _REPO_ROOT / ".chroma"  # on-disk Chroma store (gitignored)
+
     # --- LLM enhancement layer (rule #4 + #5): OFF by default. ---
     # When False, the pipeline runs the GLiNER floor only and makes no outbound calls.
     llm_enabled: bool = False

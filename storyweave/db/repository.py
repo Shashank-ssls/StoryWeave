@@ -273,6 +273,13 @@ class Repository:
         ).fetchall()
         return [Chunk(**dict(r)) for r in rows]
 
+    def list_chunks_for_work(self, work_id: int) -> list[Chunk]:
+        """All chunks of a work (for rebuilding the vector index from SQLite)."""
+        rows = self.conn.execute(
+            "SELECT * FROM chunks WHERE work_id = ? ORDER BY id", (work_id,)
+        ).fetchall()
+        return [Chunk(**dict(r)) for r in rows]
+
     def count_chunks(self, work_id: int) -> int:
         row = self.conn.execute(
             "SELECT COUNT(*) AS n FROM chunks WHERE work_id = ?", (work_id,)

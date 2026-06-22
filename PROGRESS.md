@@ -3,7 +3,17 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 3 — Tier-1 relationships + graph projection.** Status: **DONE & green; ready to push.** Next: Phase 4 (vector store + RAG search). Phase 3 is fully light-venv (no GLiNER): it operates on entities/mentions from Phase 2.
+**Phase 4 — Vector store + RAG search.** Status: **DONE & green; ready to push.** Next: Phase 5 (consolidate the spoiler-fence query layer — the keystone). 
+
+## Done (Phase 4)
+- `search/embedder.py`: sentence-transformers wrapper (`Embedder`, lazy import, `.venv-ml`), L2-normalized embeddings (cosine == dot), HF cache forced to F:. `EmbedderProtocol` lets retrieval be tested with a fake embedder. Pinned `sentence-transformers==5.6.0`; model `all-MiniLM-L6-v2` (384-dim).
+- `search/store.py`: `BaseVectorStore` interface + two backends — `InMemoryVectorStore` (pure-Python cosine, light venv, exact) and `ChromaVectorStore` (on-disk, lazy `chromadb==1.5.9`, cosine). Every vector carries `work_id` + `chapter_ordinal` (reveal key). **Fence applied inside `query`** (eligible = work_id match AND `chapter_ordinal <= max_chapter`) before ranking — no unfenced path out of the store. Rebuildable from SQLite.
+- `query/fence.py`: added `visible_chunk_hits` — the sanctioned search entry; guarantees the chapter constraint reaches the index. (TYPE_CHECKING import of the store avoids a runtime cycle.)
+- `search/retriever.py`: `index_work` (embed all chunks → store, idempotent per work), `search` (embed query → fenced top-k), and **offline extractive RAG** `compose_answer` (best query-relevant sentence per top hit + `[chN]` citations, provenance = chunk_id/chapter/char offsets). No LLM needed (rule #4); LLM compose is a Phase-7 opt-in.
+- `cli`: `storyweave index <slug>` and `storyweave search <slug> "<query>" -n N [--top-k --db]` (negative N → error).
+- `config`: `embedding_model`, `embedding_device`, `vector_dir` (`<repo>/.chroma`, gitignored).
+- Tests (+13): store fence/work-isolation, `index_work` idempotency, **MANDATORY fence regression** (`test_search.py`: a ch5 chunk is absent at N=3 even when the query is its own text; reachable at N=5), extractive-answer citations; ML-gated real-embedder dimension/similarity + Chroma round-trip-fenced.
+- Demo on sample: `index` → 12 chunks; search "who is the Gray Sparrow really" at **N=2 returns only ch1/ch2** (reveal is ch3, fenced out), at **N=4 returns the ch3/ch4 reveal passages**. Cited, spoiler-aware, end to end.
 
 ## Done (Phase 3)
 - `query/fence.py`: the spoiler-fence chokepoint (`visible_nodes`/`visible_edges`). Sole sanctioned caller of the revealed-chapter SQL; never post-filters in Python.
@@ -76,6 +86,13 @@
 - `pytest` → 9 passed.
 - `storyweave version` → `0.1.0`; `storyweave info` → `llm_enabled: False`.
 
+## Gate result (Phase 4)
+- `ruff check .` → All checks passed.
+- `mypy` (strict) → Success, 43 source files.
+- `pytest` (light `.venv`) → 46 passed, 4 skipped.
+- `pytest` (`.venv-ml`, `test_search.py`) → 7 passed (real embeddings + Chroma).
+- Fenced search regression green; cache stays on F: (673M), C: clean.
+
 ## Gate result (Phase 3)
 - `ruff check .` → All checks passed.
 - `mypy` (strict) → Success, 39 source files.
@@ -91,7 +108,7 @@
 - CLI: `storyweave extract the-hollow-crown` → 89 mentions → 38 entities (7/8 types); re-run identical (idempotent).
 
 ## In-progress / next
-- **Phase 4 — Vector store + RAG search.** Embed chunks (sentence-transformers, batchable, `--device`), each vector stamped with reveal + work_id; one adapter interface, Chroma (dev) + FAISS (scale); RAG retrieves fenced top-k → cited answer (extractive default + opt-in LLM compose). Fencing must route through `query/fence.py` at the index level (extend it for vectors).
+- **Phase 5 — The spoiler-fence query layer (keystone).** Consolidate ALL fencing into `query/fence.py` (graph + search already route through it); add identity/reveal handling; permanent P0 regression in one place proving late node/edge/property hidden at low N + an identity reveal. SQL stays in repository, vector filter in store; fence is the sole sanctioned caller. This is the natural early-exit checkpoint (reassess appetite before Phase 7 LLM + frontend).
 
 ## Known issues / TODOs
 - Starlette TestClient emits a deprecation warning (httpx vs httpx2). Cosmetic; revisit if it becomes an error.
@@ -117,3 +134,7 @@
 - **Phase 3 (fence at SQL level):** the both-endpoints rule is a JOIN in `repository.list_edges_revealed`, never a Python post-filter; `query/fence.py` is the only sanctioned caller. Phase 5 will consolidate search fencing here too.
 - **Phase 3 (rule edges reveal == first_seen):** a structural co-occurrence edge is known to the reader exactly when both entities have co-occurred, so no reveal shift; secret/identity reveal-shifting is Tier-3/LLM (Phase 7).
 - **Phase 3 (edges are derived):** like mentions/nodes, edges are rebuilt idempotently (clear+rebuild) — SQLite chapters are the only non-derived source.
+- **Phase 4 (chunk reveal key):** a chunk's reveal key is its `chapter_ordinal` (reader at N sees chunks from chapters ≤ N); stored as vector metadata so the fence is an index-level filter, not a post-filter.
+- **Phase 4 (two backends, one interface):** InMemory (light, exact, testable without ML) + Chroma (on-disk dev). FAISS deferred — Chroma covers dev/demo; the adapter interface keeps FAISS a drop-in later.
+- **Phase 4 (offline RAG floor):** extractive cited answer needs no LLM (rule #4). Vector index is fully rebuildable from SQLite chunks; nothing non-derived is stored in `.chroma/`.
+- **Phase 4 (Windows/Chroma):** Chroma holds `chroma.sqlite3` open; tests use `TemporaryDirectory(ignore_cleanup_errors=True)`. Chroma collection names need ≥3 chars.

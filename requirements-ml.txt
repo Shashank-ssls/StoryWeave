@@ -32,10 +32,10 @@ gliner==0.2.27                # zero-shot NER — the extraction FLOOR
 transformers==5.6.2           # GLiNER backbone (deberta-v3-small)
 huggingface_hub==1.20.1       # weight downloads -> F: cache
 
-# --- Vector search (Phase 4; pins finalized then) ---
-# sentence-transformers
-# chromadb
-# faiss-cpu
+# --- Vector search (Phase 4; pinned at this gate, verified on CPU) ---
+sentence-transformers==5.6.0   # chunk embeddings (all-MiniLM-L6-v2, 384-dim)
+chromadb==1.5.9                # on-disk vector backend (dev)
+# faiss-cpu                     # scale backend (deferred; Chroma covers dev/demo)
 
 # --- Optional LLM enhancement layer (Phase 7; OFF by default; pins at that gate) ---
 # llama-cpp-python
