@@ -1,24 +1,162 @@
-"""FastAPI app factory.
+"""FastAPI app — fenced HTTP surface (Phase 6).
 
-Phase 0 ships only ``GET /api/v1/health``. Fenced graph/search routes arrive in
-Phase 6 — and every data route will route through ``query/fence.py``.
+Every data route requires the reading position ``n`` as a mandatory query param and
+returns 422 when it is missing or out of range (FastAPI validation on a required
+``Query(..., ge=0)``). No route returns data except through ``query/fence.py`` — the
+routes are thin: validate -> fence -> serialize -> typed response. The layer imports
+no ML; the search route's embedder + vector store arrive via overridable dependencies.
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, FastAPI
+from pathlib import Path
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 
 from storyweave import __version__
+from storyweave.api.deps import get_embedder, get_repository, get_vector_store
+from storyweave.api.schemas import (
+    CitationModel,
+    EdgeModel,
+    EntitiesResponse,
+    EntityDetailResponse,
+    EntityModel,
+    GraphElements,
+    GraphResponse,
+    HealthResponse,
+    HitModel,
+    PropertyModel,
+    SearchResponse,
+    WorkModel,
+    WorksResponse,
+)
+from storyweave.config import get_settings
+from storyweave.db.models import Work
+from storyweave.db.repository import Repository
+from storyweave.graph.serialize import graph_json
+from storyweave.query import fence
+from storyweave.search.embedder import EmbedderProtocol
+from storyweave.search.retriever import compose_answer
+from storyweave.search.retriever import search as run_search
+from storyweave.search.store import BaseVectorStore
 
 API_PREFIX = "/api/v1"
-
 router = APIRouter(prefix=API_PREFIX)
 
+# Mandatory reading-position param: required (no default) + non-negative => missing or
+# out-of-range yields 422 automatically.
+ChapterParam = Annotated[int, Query(description="Reading position N (mandatory).", ge=0)]
+RepoDep = Annotated[Repository, Depends(get_repository)]
 
-@router.get("/health")
-def health() -> dict[str, str]:
-    """Liveness probe."""
-    return {"status": "ok", "version": __version__}
+
+def _require_work(repo: Repository, slug: str) -> Work:
+    work = repo.get_work_by_slug(slug)
+    if work is None or work.id is None:
+        raise HTTPException(status_code=404, detail=f"no work with slug '{slug}'")
+    return work
+
+
+@router.get("/health", response_model=HealthResponse)
+def health(repo: RepoDep) -> HealthResponse:
+    """Liveness + DB and vector-store status."""
+    try:
+        works = len(repo.list_works())
+        database = "ok"
+    except Exception:  # pragma: no cover - defensive
+        works, database = 0, "error"
+    vector_dir = get_settings().vector_dir
+    vector_store = "ready" if Path(vector_dir).exists() else "empty"
+    return HealthResponse(
+        status="ok",
+        version=__version__,
+        database=database,
+        works=works,
+        vector_store=vector_store,
+    )
+
+
+@router.get("/works", response_model=WorksResponse)
+def list_works(repo: RepoDep) -> WorksResponse:
+    works = [
+        WorkModel(
+            id=w.id or 0,
+            slug=w.slug,
+            title=w.title,
+            chapter_count=repo.count_chapters(w.id or 0),
+        )
+        for w in repo.list_works()
+    ]
+    return WorksResponse(works=works)
+
+
+@router.get("/works/{slug}/entities", response_model=EntitiesResponse)
+def list_entities(slug: str, n: ChapterParam, repo: RepoDep) -> EntitiesResponse:
+    work = _require_work(repo, slug)
+    nodes = fence.visible_nodes(repo, work.id or 0, n)  # fenced
+    entities = [EntityModel.from_node(node) for node in nodes]
+    return EntitiesResponse(slug=slug, n=n, count=len(entities), entities=entities)
+
+
+@router.get("/works/{slug}/graph", response_model=GraphResponse)
+def get_graph(slug: str, n: ChapterParam, repo: RepoDep) -> GraphResponse:
+    work = _require_work(repo, slug)
+    payload = graph_json(repo, work.id or 0, n)  # fenced projection
+    return GraphResponse(slug=slug, n=n, elements=GraphElements.model_validate(payload["elements"]))
+
+
+@router.get("/works/{slug}/entity/{entity_id}", response_model=EntityDetailResponse)
+def get_entity(slug: str, entity_id: int, n: ChapterParam, repo: RepoDep) -> EntityDetailResponse:
+    work = _require_work(repo, slug)
+    work_id = work.id or 0
+    # Fetch the entity through the fence so a not-yet-revealed node 404s.
+    node = next((x for x in fence.visible_nodes(repo, work_id, n) if x.id == entity_id), None)
+    if node is None:
+        raise HTTPException(status_code=404, detail="entity not found or not yet revealed")
+    edges = [
+        EdgeModel.from_edge(e)
+        for e in fence.visible_edges(repo, work_id, n)
+        if entity_id in (e.source_id, e.target_id)
+    ]
+    properties = [
+        PropertyModel.from_property(p)
+        for p in fence.visible_node_properties(repo, work_id, n)
+        if p.node_id == entity_id
+    ]
+    return EntityDetailResponse(
+        slug=slug, n=n, entity=EntityModel.from_node(node), edges=edges, properties=properties
+    )
+
+
+@router.get("/works/{slug}/search", response_model=SearchResponse)
+def search_work(
+    slug: str,
+    n: ChapterParam,
+    repo: RepoDep,
+    embedder: Annotated[EmbedderProtocol, Depends(get_embedder)],
+    store: Annotated[BaseVectorStore, Depends(get_vector_store)],
+    q: Annotated[str, Query(min_length=1, description="Query (mandatory).")],
+    top_k: Annotated[int, Query(ge=1, le=50)] = 5,
+) -> SearchResponse:
+    work = _require_work(repo, slug)
+    hits = run_search(q, work.id or 0, n, store, embedder, top_k)  # fenced at the index
+    answer = compose_answer(q, hits)
+    return SearchResponse(
+        slug=slug,
+        n=n,
+        query=q,
+        answer=answer.text,
+        citations=[
+            CitationModel(
+                chunk_id=c.chunk_id,
+                chapter_ordinal=c.chapter_ordinal,
+                char_start=c.char_start,
+                char_end=c.char_end,
+            )
+            for c in answer.citations
+        ],
+        hits=[HitModel.from_hit(h) for h in hits],
+    )
 
 
 def create_app() -> FastAPI:

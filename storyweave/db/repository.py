@@ -153,7 +153,10 @@ class Repository:
         path_arg = str(db_path)
         if path_arg != ":memory:":
             Path(path_arg).parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(path_arg)
+        # check_same_thread=False: FastAPI runs sync routes in a threadpool, so a repo
+        # may be used from a different thread than it was created in. Each request gets
+        # its own Repository (see api/deps), so connections are not shared concurrently.
+        self.conn = sqlite3.connect(path_arg, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON;")
 
@@ -195,6 +198,10 @@ class Repository:
     def get_work_by_slug(self, slug: str) -> Work | None:
         row = self.conn.execute("SELECT * FROM works WHERE slug = ?", (slug,)).fetchone()
         return Work(**dict(row)) if row else None
+
+    def list_works(self) -> list[Work]:
+        rows = self.conn.execute("SELECT * FROM works ORDER BY id").fetchall()
+        return [Work(**dict(r)) for r in rows]
 
     def get_or_create_work(self, slug: str, title: str) -> int:
         existing = self.get_work_by_slug(slug)
@@ -314,6 +321,10 @@ class Repository:
             "SELECT * FROM nodes WHERE work_id = ? ORDER BY id", (work_id,)
         ).fetchall()
         return [Node(**dict(r)) for r in rows]
+
+    def get_node(self, node_id: int) -> Node | None:
+        row = self.conn.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
+        return Node(**dict(row)) if row else None
 
     def count_nodes(self, work_id: int) -> int:
         row = self.conn.execute(

@@ -3,7 +3,20 @@
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
-**Phase 5 — The spoiler-fence query layer (KEYSTONE).** Status: **DONE & green; ready to push.** **This is the SPEC §8 natural early-exit checkpoint** — Phases 0–5 are a complete, fully-local, no-VRAM-risk product. Reassess appetite before Phase 7 (LLM) + Phase 8 (frontend).
+**Phase 6 — API (FastAPI).** Status: **DONE & green; ready to push.** Next: Phase 7 (optional LLM, VRAM-gated) or Phase 8 (frontend). All routes fenced + light-venv only.
+
+## Done (Phase 6)
+- `api/app.py`: fenced routes, thin (validate → fence → serialize → typed response). `n` is a mandatory `Query(..., ge=0)` so missing/negative → **422** automatically.
+  - `GET /api/v1/health` — liveness + DB status + works count + vector-store status.
+  - `GET /api/v1/works` — list works (+ chapter counts).
+  - `GET /api/v1/works/{slug}/entities?n=N` — fenced entity list.
+  - `GET /api/v1/works/{slug}/graph?n=N` — fenced Cytoscape JSON.
+  - `GET /api/v1/works/{slug}/entity/{id}?n=N` — single entity (404 if unrevealed) + its revealed edges + revealed properties.
+  - `GET /api/v1/works/{slug}/search?n=N&q=...` — fenced semantic search + cited answer.
+- `api/schemas.py`: a pydantic response model for every route (no raw dicts); Cytoscape graph fully typed (`GraphNodeData`/`GraphEdgeData`).
+- `api/deps.py`: overridable providers (`get_repository`/`get_embedder`/`get_vector_store`). The API imports NO ML — Embedder/Chroma load lazily; tests inject a fake embedder + in-memory store, so the whole API runs under light `.venv`.
+- All reads go through `query/fence.py`; all SQL in `repository`. `Repository` now opens SQLite with `check_same_thread=False` (FastAPI threadpool; per-request repos aren't shared concurrently).
+- Tests (`test_api.py`, +16): **P0 422-on-missing-n for every data route** (parametrized) + 422 on negative n + 422 on missing q; fenced entities/graph/entity-detail/search (incl. ch5 hidden at N=2, identity edge appears at N=2, secret property only at N=5); 404 for unknown work + unrevealed entity. `test_health.py` updated for DB status.
 
 ## Done (Phase 5)
 - `query/fence.py` is now the consolidated single chokepoint for ALL four fenced surfaces: `visible_nodes`, `visible_edges` (both-endpoints; covers Tier-3 identity edges with no special-casing), `visible_node_properties` (NEW — property + node both-rule), `visible_chunk_hits` (search). Module docstring documents the keystone contract.
@@ -93,6 +106,12 @@
 - `pytest` → 9 passed.
 - `storyweave version` → `0.1.0`; `storyweave info` → `llm_enabled: False`.
 
+## Gate result (Phase 6)
+- `ruff check .` → All checks passed.
+- `mypy` (strict) → Success, 46 source files.
+- `pytest` (light `.venv`) → 64 passed, 4 skipped. Entire API suite runs without ML installed (proves no ML import in the API layer).
+- P0: every data route returns 422 when `n` is absent.
+
 ## Gate result (Phase 5)
 - `ruff check .` → All checks passed.
 - `mypy` (strict) → Success, 43 source files.
@@ -121,10 +140,10 @@
 - CLI: `storyweave extract the-hollow-crown` → 89 mentions → 38 entities (7/8 types); re-run identical (idempotent).
 
 ## In-progress / next
-- **EARLY-EXIT CHECKPOINT (SPEC §8).** Phases 0–5 = complete shippable product. Decide before continuing:
-  - **Phase 6 — API.** FastAPI routes (`/ingest`, `/works`, `/graph` n-mandatory, `/entity/{id}`, `/search` n-mandatory, delete-work); no unfenced path reachable from the client (all via `query/fence.py`). 422 on missing/negative n. Light venv.
+- **EARLY-EXIT CHECKPOINT still open (SPEC §8).** Phases 0–6 = complete, fully-local product with an HTTP API. Decide before continuing:
   - **Phase 7 — LLM enhancement (optional, VRAM-gated):** Tier-2 social + Tier-3 identity inference (reveal-shifting), junk rejection; OFF by default; graceful degradation IS the test. First action = GPU→CPU→Colab go/no-go.
   - **Phase 8 — Frontend** (React/Vite/Cytoscape, chapter slider/bloom, multi-novel, in-app ingest); **Phase 9 — packaging/CI/README**.
+- Routes not yet built (not requested this phase): `POST /ingest`, delete-work. Add when wiring the frontend (Phase 8) or if needed earlier.
 
 ## Known issues / TODOs
 - Starlette TestClient emits a deprecation warning (httpx vs httpx2). Cosmetic; revisit if it becomes an error.
@@ -157,3 +176,6 @@
 - **Phase 5 (identity = ordinary edge):** Tier-3 identity reveals (SAME_AS/ALIAS/SECRET_IDENTITY/REINCARNATION/TRANSMIGRATED_INTO) need NO special fence path — they are edges fenced by `revealed_chapter` + both-endpoints. The reader-knowledge timing (e.g. learns Wren==Caelum at ch2) is just the edge's `revealed_chapter`.
 - **Phase 5 (property both-rule):** a property is visible only if the property AND its node are revealed — enforced as a SQL JOIN, surfaced in the graph projection as `data.properties`.
 - **Phase 5 (no unfenced path):** the only client-facing reads are the `fence.visible_*` functions; raw `repository.list_nodes/list_edges` are for derived rebuilds, never client output. Phase 6 API must call only the fence.
+- **Phase 6 (no ML in API):** Embedder/Chroma are injected via FastAPI dependencies and load ML lazily; tests override them with a fake embedder + in-memory store, so the API is fully testable (and runnable) under the light `.venv`.
+- **Phase 6 (mandatory n):** every data route uses a required `Query(..., ge=0)`; FastAPI returns 422 for missing/negative n with no custom code. `q` is `Query(min_length=1)`.
+- **Phase 6 (sqlite threads):** `Repository` uses `check_same_thread=False` for FastAPI's threadpool; safe because each request gets its own repo (no concurrent sharing).
