@@ -169,6 +169,42 @@ def social(
 
 
 @app.command()
+def identity(
+    slug: Annotated[str, typer.Argument(help="Work slug to infer Tier-3 identity edges for.")],
+    config: Annotated[Path | None, typer.Option(help="storyweave.toml overrides.")] = None,
+    model: Annotated[
+        str | None, typer.Option(help="LLM model id override (e.g. llama3.2:3b).")
+    ] = None,
+    db: Annotated[Path | None, typer.Option(help="SQLite path override.")] = None,
+) -> None:
+    """Infer Tier-3 IDENTITY edges via the LLM (SAME_AS/ALIAS/SECRET_IDENTITY/...).
+
+    OFF by default (rule #5): enable with STORYWEAVE_LLM_ENABLED=true and a running
+    local runner. Citation-gated + reveal-respecting. Idempotent: rebuilds only Tier-3
+    edges; if the LLM is disabled/unavailable the work degrades cleanly to the floor.
+    """
+    from storyweave.config import Settings, get_settings
+    from storyweave.db.repository import Repository
+    from storyweave.ingest.work_config import load_work_config
+    from storyweave.nlp.identity import infer_identities
+
+    settings = get_settings()
+    if model is not None:  # per-run model override (knobs are data)
+        settings = Settings(**{**settings.model_dump(), "llm_model": model})
+    db_path = db or settings.db_path
+    work_config = load_work_config(config)
+
+    with Repository(db_path) as repo:
+        repo.initialize_schema()
+        work = repo.get_work_by_slug(slug)
+        if work is None or work.id is None:
+            typer.echo(f"error: no work with slug '{slug}' (ingest + extract first)", err=True)
+            raise typer.Exit(code=1)
+        report = infer_identities(work.id, repo, work_config.identity, settings)
+    typer.echo(report.summary())
+
+
+@app.command()
 def graph(
     slug: Annotated[str, typer.Argument(help="Work slug.")],
     chapter: Annotated[int, typer.Option("--chapter", "-n", help="Reading position N (fence).")],

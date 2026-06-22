@@ -70,6 +70,15 @@ class RelationConfig(BaseModel):
     relex_rel_threshold: float | None = None
 
 
+class IdentityConfig(BaseModel):
+    # --- Tier-3 identity inference (Phase 7c): LLM-inferred, citation-gated. ---
+    # Identity is about persons, so candidate pairs are drawn from these node types.
+    candidate_types: list[str] = Field(default_factory=lambda: ["Character", "Title"])
+    # Cap on how many co-occurring pairs we ask the LLM about (real novels have many);
+    # most-important pairs first. Knob is DATA (per-work), never hardcoded.
+    max_candidate_pairs: int = 60
+
+
 class WorkConfig(BaseModel):
     title: str | None = None
     slug: str | None = None
@@ -78,6 +87,7 @@ class WorkConfig(BaseModel):
     chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
     extraction: ExtractionConfig = Field(default_factory=ExtractionConfig)
     relations: RelationConfig = Field(default_factory=RelationConfig)
+    identity: IdentityConfig = Field(default_factory=IdentityConfig)
 
 
 def load_work_config(path: Path | str | None) -> WorkConfig:

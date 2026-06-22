@@ -1,0 +1,324 @@
+"""Tier-3 IDENTITY inference (Phase 7c) — the showcase, and pure enhancement.
+
+This is the second LLM layer above the GLiNER/relex floor and, like every layer
+above it, it is OPTIONAL (rules #4/#5): with ``llm_enabled=False`` (the default) it
+produces nothing, writes nothing, and the Tier-1/Tier-2 floor + the reveal fence
+stand fully intact. Nothing here is reachable without the flag — no client is
+constructed and no socket is opened.
+
+THE LOAD-BEARING RULE (this whole phase):
+    An identity edge's ``revealed_chapter`` = the SMALLEST chapter k at which the
+    model can conclude the identity from chapters 1..k ONLY, **backed by a quoted
+    confirming clause that actually occurs in chapters 1..k.** Confirmed-only
+    semantics — the chapter a careful reader could first FULLY conclude it, never a
+    partial-clue guess. The Phase-7b addendum proved a plain prompt blooms an
+    identity 1–2 chapters EARLY on a partial clue; the citation margin is therefore
+    the PRODUCTION mechanism, not an experiment. The model MUST emit a supporting
+    quote per asserted identity; this code verifies that quote occurs (normalized)
+    in the fed text of chapters 1..k; an identity with NO valid in-range citation is
+    NOT written, and is counted separately so a fail-closed is diagnosable.
+
+How the reveal is computed (the addendum sweep, now production code):
+    For a candidate pair of canonical nodes, sweep k = 1..(last chapter), feeding
+    ONLY chapters 1..k (never past k). For EACH Tier-3 relation the model confirms
+    with a verified in-range citation, record the smallest k it was confirmed at and
+    write one edge with ``revealed_chapter = k``. A single pair may carry more than
+    one relation at different chapters (e.g. Wren==Caelum is a SECRET_IDENTITY the
+    reader concludes at ch2 and a TRANSMIGRATED_INTO the reader concludes at ch4 —
+    two layered reveals, the LotM-style showcase).
+
+Anchor, don't invent (same rule as 7a): head/tail re-ground to existing canonical
+floor nodes; identity is an EDGE, never a node collapse — the slider must still show
+two nodes with a blooming edge between them. Provenance ``method='llm'``, ``tier=3``
+(both already in the Phase-0 CHECK constraints — no schema change). Edges flow
+through the existing ``edges`` table → ``query/fence.py`` unchanged (Phase 5 already
+fences identity edges by the both-endpoints rule).
+
+The five Tier-3 relations are all in the inference VOCABULARY; the sample proves
+three (SECRET_IDENTITY, ALIAS, TRANSMIGRATED_INTO). SAME_AS and REINCARNATION are
+schema-and-prompt-ready but UNPROVEN until a sample exercises them.
+
+Tests inject a fake model via :class:`IdentityProtocol`; the real model wraps the
+wired :class:`~storyweave.nlp.llm.LlmClient`. No heavy import here — stdlib only.
+"""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from dataclasses import dataclass, field
+from typing import Protocol
+
+from storyweave.config import Settings, get_settings
+from storyweave.db.models import (
+    TIER3_RELATIONS,
+    Edge,
+    ExtractionMethod,
+    Node,
+    RelationTier,
+)
+from storyweave.db.repository import Repository
+from storyweave.ingest.work_config import IdentityConfig
+from storyweave.nlp.llm import LlmClient, llm_available
+
+# Symmetric Tier-3 relation(s): endpoints stored order-independent.
+_SYMMETRIC_IDENTITY: frozenset[str] = frozenset({"SAME_AS"})
+
+# Minimum normalized length for a citation to count — guards against a model
+# "quoting" a stop-word fragment that trivially occurs in any text.
+_MIN_CITATION_CHARS = 8
+
+SYSTEM_PROMPT = (
+    "You are a strict identity-resolution tool for fiction. You are given a passage (the "
+    "chapters a reader has read so far) and TWO named entities. MOST pairs of names are "
+    "DIFFERENT people — default to NOT the same. Answer YES only if the passage EXPLICITLY "
+    "equates the two (states that one IS the other, or is the other's alias / secret "
+    "identity / reincarnation / transmigrated soul). Resemblance, suspicion, being in the "
+    "same scene, serving the same person, or being allies/family is NOT identity. If you "
+    "are not sure, answer NO.\n"
+    "If (and only if) YES, choose exactly one relation:\n"
+    "- SAME_AS: two plain names for one person, no secrecy or special mechanism.\n"
+    "- ALIAS: one name is a known alias, codename, or persona of the other.\n"
+    "- SECRET_IDENTITY: one is secretly the other; the true identity is hidden in-world.\n"
+    "- REINCARNATION: one is the reborn/reincarnated continuation of the other (a past life).\n"
+    "- TRANSMIGRATED_INTO: one's soul or consciousness, from another world or life, now "
+    "inhabits the other's body.\n"
+    "You MUST quote the EXACT clause from THIS passage that itself states the equivalence "
+    "(it should name or unmistakably refer to BOTH entities). If no such clause exists in "
+    "this passage, answer NO. Output ONLY strict JSON, no prose: {\"same\": true|false, "
+    '"relation": "SAME_AS"|"ALIAS"|"SECRET_IDENTITY"|"REINCARNATION"|"TRANSMIGRATED_INTO"'
+    '|null, "clue": "<exact quote that states the equivalence, or empty>"}.'
+)
+
+
+@dataclass
+class IdentityVerdict:
+    """One model judgement for a pair at a given reading position."""
+
+    same: bool
+    relation: str | None  # one of TIER3_RELATIONS (normalized), or None
+    clue: str  # the model's quoted supporting clause (verified by the orchestrator)
+
+
+class IdentityProtocol(Protocol):
+    """The surface the orchestrator depends on (lets tests inject a fake model)."""
+
+    def infer(self, a: str, b: str, text: str, k: int) -> IdentityVerdict: ...
+
+
+def normalize_relation(raw: str | None) -> str | None:
+    """Map a model relation string onto the Tier-3 vocabulary (or None)."""
+    if not raw:
+        return None
+    key = re.sub(r"[\s\-]+", "_", raw.strip()).upper()
+    return key if key in set(TIER3_RELATIONS) else None
+
+
+class LlmIdentityModel:
+    """Real model: wraps the wired OpenAI-compatible client with the cite-anchored prompt.
+
+    Constructible only when the flag is ON (``LlmClient`` refuses otherwise), so the
+    disabled-path no-socket guarantee (rule #5) holds by construction.
+    """
+
+    def __init__(self, settings: Settings | None = None) -> None:
+        self._client = LlmClient(settings)
+
+    def infer(self, a: str, b: str, text: str, k: int) -> IdentityVerdict:
+        user = (
+            f"PASSAGE (chapters 1..{k}):\n{text}\n\n"
+            f"Do '{a}' and '{b}' denote the same identity? If yes, give the relation and "
+            f"quote the proving clause from the passage. JSON only."
+        )
+        obj = self._client.complete_json(SYSTEM_PROMPT, user)
+        return IdentityVerdict(
+            same=bool(obj.get("same") is True),
+            relation=normalize_relation(obj.get("relation") if isinstance(obj, dict) else None),
+            clue=str(obj.get("clue", "") if isinstance(obj, dict) else "").strip(),
+        )
+
+
+# --------------------------------------------------------------------------- #
+# Citation verification — the production confidence margin.
+# --------------------------------------------------------------------------- #
+_CITE_PUNCT = re.compile(r"[^\w\s]+", re.UNICODE)
+_WS = re.compile(r"\s+")
+
+
+def _normalize_citation(s: str) -> str:
+    """NFKC + casefold + strip punctuation + collapse whitespace.
+
+    Mirrors the ingest cleaner's NFKC coordinate space. Deliberately tolerant of
+    formatting (smart quotes, em-dashes, casing, line wraps) so a faithfully-quoted
+    clause matches the fed text — but it does NOT tolerate different *words*, so a
+    fabricated or paraphrased "quote" is correctly rejected (that is the whole point
+    of the citation gate).
+    """
+    s = unicodedata.normalize("NFKC", s)
+    s = _CITE_PUNCT.sub(" ", s.casefold())
+    return _WS.sub(" ", s).strip()
+
+
+def citation_in_range(clue: str, fed_text: str) -> bool:
+    """True iff the model's quoted clause actually occurs in the fed ch1..k text."""
+    norm_clue = _normalize_citation(clue)
+    if len(norm_clue) < _MIN_CITATION_CHARS:
+        return False
+    return norm_clue in _normalize_citation(fed_text)
+
+
+# --------------------------------------------------------------------------- #
+# Orchestration.
+# --------------------------------------------------------------------------- #
+@dataclass
+class IdentityReport:
+    work_id: int
+    edges_added: int = 0
+    per_relation: dict[str, int] = field(default_factory=dict)
+    pairs_tested: int = 0
+    citations_rejected: int = 0  # same=YES dropped for a missing/invalid in-range citation
+    disabled: bool = False  # llm_enabled=False — produced nothing by design
+    degraded: bool = False  # model unavailable/failed mid-run — floor kept intact
+
+    def summary(self) -> str:
+        if self.disabled:
+            return (
+                f"work id={self.work_id}: LLM disabled — no Tier-3 identity edges "
+                f"(Tier-1/Tier-2 floor intact)"
+            )
+        if self.degraded:
+            return (
+                f"work id={self.work_id}: identity model unavailable — kept the floor "
+                f"(0 Tier-3 edges)"
+            )
+        by_rel = ", ".join(f"{r}:{n}" for r, n in sorted(self.per_relation.items())) or "none"
+        return (
+            f"work id={self.work_id}: {self.edges_added} Tier-3 identity edges ({by_rel}); "
+            f"{self.pairs_tested} pairs tested, {self.citations_rejected} uncited YES rejected"
+        )
+
+
+def _fed_texts(repo: Repository, work_id: int) -> list[tuple[int, str]]:
+    """[(k, chapters-1..k concatenated)] ascending — the reveal-respecting windows."""
+    chapters = sorted(repo.list_chapters(work_id), key=lambda c: c.ordinal)
+    out: list[tuple[int, str]] = []
+    acc: list[str] = []
+    for ch in chapters:
+        acc.append(ch.clean_text.strip())
+        out.append((ch.ordinal, "\n\n".join(acc)))
+    return out
+
+
+def _candidate_pairs(
+    repo: Repository, work_id: int, config: IdentityConfig
+) -> list[tuple[Node, Node]]:
+    """Unordered pairs of co-occurring candidate nodes (identity is about persons).
+
+    Co-occurrence = the two nodes are mentioned in at least one common chapter; we only
+    ask the LLM about entities that actually appear together. Ordered (source, target)
+    by first-seen so direction reads met-first -> revealed. Capped (knobs are data).
+    """
+    nodes = [
+        n
+        for n in repo.list_nodes(work_id)
+        if n.id is not None and n.type.value in set(config.candidate_types)
+    ]
+    chapters_of: dict[int, set[int]] = {}
+    for m in repo.list_mentions(work_id):
+        if m.node_id is not None:
+            chapters_of.setdefault(m.node_id, set()).add(m.chapter_ordinal)
+
+    pairs: list[tuple[Node, Node]] = []
+    for i in range(len(nodes)):
+        for j in range(i + 1, len(nodes)):
+            a, b = nodes[i], nodes[j]
+            assert a.id is not None and b.id is not None
+            if chapters_of.get(a.id, set()) & chapters_of.get(b.id, set()):
+                src, tgt = sorted((a, b), key=lambda n: (n.first_seen_chapter, n.name))
+                pairs.append((src, tgt))
+    # Most-important pairs first, then cap (real novels have many co-occurring people).
+    pairs.sort(key=lambda p: p[0].importance + p[1].importance, reverse=True)
+    return pairs[: config.max_candidate_pairs]
+
+
+def infer_identities(
+    work_id: int,
+    repo: Repository,
+    config: IdentityConfig | None = None,
+    settings: Settings | None = None,
+    model: IdentityProtocol | None = None,
+) -> IdentityReport:
+    """Infer Tier-3 identity edges with reveal-respecting, citation-gated semantics.
+
+    Idempotent + tier-scoped: clears only this work's Tier-3 edges and rebuilds,
+    leaving Tier-1/Tier-2 untouched. Pure enhancement (rule #4): with the flag off it
+    is disabled (nothing written, no socket); if the model fails it degrades and keeps
+    the floor.
+    """
+    cfg = config or IdentityConfig()
+    cfg_settings = settings or get_settings()
+    report = IdentityReport(work_id=work_id)
+
+    if model is None:
+        if not llm_available(cfg_settings):
+            report.disabled = True  # flag off -> produce nothing (no client, no socket)
+            return report
+        try:
+            model = LlmIdentityModel(cfg_settings)
+        except Exception:  # pragma: no cover - defensive: never hard-depend on the LLM
+            report.degraded = True
+            return report
+
+    windows = _fed_texts(repo, work_id)
+    pairs = _candidate_pairs(repo, work_id, cfg)
+    report.pairs_tested = len(pairs)
+
+    # relation -> (smallest confirming k, verified clue), per pair.
+    resolved: list[tuple[Node, Node, dict[str, tuple[int, str]]]] = []
+    try:
+        for src, tgt in pairs:
+            confirmed: dict[str, tuple[int, str]] = {}
+            for k, fed in windows:
+                verdict = model.infer(src.name, tgt.name, fed, k)
+                if not verdict.same:
+                    continue
+                relation = verdict.relation
+                if relation is None:
+                    continue
+                if not citation_in_range(verdict.clue, fed):
+                    report.citations_rejected += 1  # YES without a valid in-range citation
+                    continue
+                if relation not in confirmed:
+                    confirmed[relation] = (k, verdict.clue.strip())
+            if confirmed:
+                resolved.append((src, tgt, confirmed))
+    except Exception:  # pragma: no cover - model failed mid-run -> degrade, keep floor
+        report.degraded = True
+        return report
+
+    repo.clear_edges_by_tier(work_id, RelationTier.IDENTITY)
+    for src, tgt, confirmed in resolved:
+        assert src.id is not None and tgt.id is not None
+        for relation, (k, clue) in confirmed.items():
+            s_id, t_id = src.id, tgt.id
+            if relation in _SYMMETRIC_IDENTITY and s_id > t_id:
+                s_id, t_id = t_id, s_id
+            repo.add_edge(
+                Edge(
+                    work_id=work_id,
+                    source_id=s_id,
+                    target_id=t_id,
+                    relation=relation,
+                    tier=RelationTier.IDENTITY,
+                    # The identity exists once both referents are present; the reader
+                    # only CONNECTS them at k -> revealed_chapter = k (the reveal shift).
+                    first_seen_chapter=min(src.first_seen_chapter, tgt.first_seen_chapter),
+                    revealed_chapter=k,
+                    extraction_method=ExtractionMethod.LLM,
+                    evidence_span=clue,
+                )
+            )
+            report.edges_added += 1
+            report.per_relation[relation] = report.per_relation.get(relation, 0) + 1
+
+    return report
