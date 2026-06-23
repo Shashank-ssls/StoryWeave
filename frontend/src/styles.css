@@ -1,0 +1,223 @@
+:root {
+  /* One ink-dark ground, parchment ink, a single warm accent for reveals. */
+  --ground: oklch(0.16 0.02 260);
+  --ground-2: oklch(0.2 0.02 260);
+  --line: oklch(0.32 0.02 260);
+  --ink: oklch(0.9 0.02 80);
+  --ink-dim: oklch(0.66 0.02 80);
+  --accent: oklch(0.82 0.12 85);
+  --serif: "Iowan Old Style", Palatino, Georgia, "Times New Roman", serif;
+  --sans: system-ui, "Segoe UI", sans-serif;
+  --mono: "Cascadia Code", "DejaVu Sans Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+/* Top bar — quiet, lets the title carry it. */
+.topbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.mark {
+  font-family: var(--serif);
+  font-size: 21px;
+  letter-spacing: 0.02em;
+}
+
+.work {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-dim);
+  font-size: 15px;
+}
+
+.readout {
+  font-size: 12.5px;
+  color: var(--ink-dim);
+  letter-spacing: 0.01em;
+}
+
+.readout b {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Stage — the graph fills it; legend + detail float as quiet overlays. */
+.stage {
+  position: relative;
+  overflow: hidden;
+}
+
+.graph-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.legend {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  max-width: 280px;
+  padding: 10px 12px;
+  background: color-mix(in oklch, var(--ground-2) 86%, transparent);
+  border: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--ink-dim);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Detail panel — appears on selection; reveals provenance + evidence, kept calm. */
+.detail {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 268px;
+  padding: 16px 18px;
+  background: color-mix(in oklch, var(--ground-2) 92%, transparent);
+  border: 1px solid var(--line);
+}
+
+.detail-kind {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--ink-dim);
+}
+
+.detail h2 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 22px;
+  margin: 4px 0 12px;
+}
+
+.detail dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+
+.detail dt {
+  color: var(--ink-dim);
+}
+
+.detail dd {
+  margin: 0;
+}
+
+.detail .quote {
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink);
+}
+
+.pk {
+  color: var(--ink-dim);
+}
+
+.prov {
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
+/* Slider — the instrument that drives the fence. Thin, deliberate. */
+.slider-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 22px;
+  border-top: 1px solid var(--line);
+}
+
+.slider-bar label {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--ink-dim);
+}
+
+.slider-bar input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 4px;
+}
+
+.chapter-num {
+  font-family: var(--serif);
+  font-size: 18px;
+  min-width: 56px;
+  text-align: right;
+}
+
+.chapter-num .of {
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+.error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 13px;
+  gap: 8px;
+}
+
+.error .hint {
+  color: var(--ink-dim);
+  opacity: 0.7;
+}

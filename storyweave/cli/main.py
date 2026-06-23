@@ -35,6 +35,31 @@ def info() -> None:
     typer.echo(f"llm_enabled: {settings.llm_enabled}")
 
 
+@app.command(name="seed-demo")
+def seed_demo(
+    db: Annotated[Path | None, typer.Option(help="SQLite path override (fresh file).")] = None,
+) -> None:
+    """Build the deterministic CC0 demo graph (the-hollow-crown) — no ML, no LLM.
+
+    Reproducible fixture data for the Phase-8 frontend slice: the 8 node types + the
+    gold identity reveals (Wren==Caelum SECRET_IDENTITY@2, etc.) so the slider blooms.
+    Serve it with `uvicorn storyweave.api.app:app` and point the frontend at it.
+    """
+    from storyweave.config import get_settings
+    from storyweave.db.repository import Repository
+    from storyweave.demo.seed import DEMO_SLUG, seed_hollow_crown
+
+    db_path = db or get_settings().db_path
+    with Repository(db_path) as repo:
+        repo.initialize_schema()
+        try:
+            work_id = seed_hollow_crown(repo)
+        except ValueError as exc:
+            typer.echo(f"error: {exc}", err=True)
+            raise typer.Exit(code=1) from exc
+    typer.echo(f"seeded '{DEMO_SLUG}' (work id={work_id}) into {db_path}")
+
+
 @app.command()
 def ingest(
     path: Annotated[Path, typer.Argument(help="A .txt file or a directory of .txt chapters.")],

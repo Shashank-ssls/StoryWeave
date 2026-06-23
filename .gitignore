@@ -34,6 +34,7 @@ dist/
 node_modules/
 frontend/dist/
 frontend/.vite/
+*.tsbuildinfo
 
 # --- Vector store artifacts (rebuildable) ---
 .chroma/
