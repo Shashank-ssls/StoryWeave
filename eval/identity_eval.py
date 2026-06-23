@@ -24,7 +24,7 @@ import urllib.request
 from pathlib import Path
 
 from storyweave.config import Settings
-from storyweave.nlp.identity import LlmIdentityModel, citation_in_range
+from storyweave.nlp.identity import LlmIdentityModel, citation_in_range, citation_valid
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SAMPLE_DIR = REPO_ROOT / "data" / "samples" / "the-hollow-crown"
@@ -86,7 +86,7 @@ def main() -> int:
                 v.same
                 and v.relation is not None
                 and (relation is None or v.relation == relation)
-                and citation_in_range(v.clue, fed)
+                and citation_valid(v.clue, fed, v.relation, a, b)
             )
             if confirmed:
                 first_yes_k = k

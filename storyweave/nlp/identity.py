@@ -83,11 +83,19 @@ SYSTEM_PROMPT = (
     "- REINCARNATION: one is the reborn/reincarnated continuation of the other (a past life).\n"
     "- TRANSMIGRATED_INTO: one's soul or consciousness, from another world or life, now "
     "inhabits the other's body.\n"
-    "You MUST quote the EXACT clause from THIS passage that itself states the equivalence "
-    "(it should name or unmistakably refer to BOTH entities). If no such clause exists in "
-    "this passage, answer NO. Output ONLY strict JSON, no prose: {\"same\": true|false, "
-    '"relation": "SAME_AS"|"ALIAS"|"SECRET_IDENTITY"|"REINCARNATION"|"TRANSMIGRATED_INTO"'
-    '|null, "clue": "<exact quote that states the equivalence, or empty>"}.'
+    "You MUST quote, as 'clue', an EXACT span that appears VERBATIM in THIS passage. "
+    "Which span depends on the relation:\n"
+    "- For SAME_AS / ALIAS / SECRET_IDENTITY: quote the clause that states the equivalence, "
+    "naming or unmistakably referring to BOTH entities (these are co-named in the text).\n"
+    "- For TRANSMIGRATED_INTO / REINCARNATION: the reveal is usually SINGLE-ANCHORED — the "
+    "passage establishes that a soul or consciousness from another world or past life now "
+    "inhabits ONE named body (often via inherited memories, or waking inside that body), and "
+    "it need NOT name both entities in one clause. Quote that transmigration/inheritance "
+    "clause exactly as it appears.\n"
+    "The clue MUST occur verbatim in the passage; do NOT quote this instruction or invent a "
+    "clause. If no such span exists, answer NO. Output ONLY strict JSON, no prose: "
+    '{"same": true|false, "relation": "SAME_AS"|"ALIAS"|"SECRET_IDENTITY"|"REINCARNATION"'
+    '|"TRANSMIGRATED_INTO"|null, "clue": "<exact span copied from the passage, or empty>"}.'
 )
 
 
@@ -160,11 +168,72 @@ def _normalize_citation(s: str) -> str:
 
 
 def citation_in_range(clue: str, fed_text: str) -> bool:
-    """True iff the model's quoted clause actually occurs in the fed ch1..k text."""
+    """True iff the model's quoted clause actually occurs in the fed ch1..k text.
+
+    The FABRICATION guard, identical for every relation: a paraphrased, invented, or
+    instruction-echoed "quote" does not occur verbatim (normalized) in the passage and
+    is rejected. ``citation_valid`` layers the relation-family rule on top of this; this
+    floor is never relaxed (so the no-citation-no-edge guarantee, test B, is untouched).
+    """
     norm_clue = _normalize_citation(clue)
     if len(norm_clue) < _MIN_CITATION_CHARS:
         return False
     return norm_clue in _normalize_citation(fed_text)
+
+
+# Identity relations whose reveal is structurally SINGLE-ANCHORED: the prose
+# establishes a soul/consciousness from another world or past life now inhabiting ONE
+# named body (LotM: Zhou Mingrui's memories flood into Klein's body — the text never
+# co-states both names in one clause). Demanding a both-naming citation here fails
+# CLOSED on the true reveal (measured live on real prose, both models), so for these
+# the citation rule is the existence floor PLUS an in-range anchor for at least one of
+# the two entities — never a both-names clause.
+SINGLE_ANCHOR_IDENTITY: frozenset[str] = frozenset({"TRANSMIGRATED_INTO", "REINCARNATION"})
+# Identity relations that co-name both entities in-text by nature; the model is asked to
+# quote the co-naming clause. (We do NOT add a hard both-names CODE gate for them: 7c
+# measured that the live model often cites a real-but-descriptive clause near the reveal
+# that names neither party, so a hard both-names gate would fail-close SECRET_IDENTITY
+# too. Strict-family over-merge is the PARKED NLI-relevance concern, re-measured first.)
+BOTH_NAMES_IDENTITY: frozenset[str] = frozenset({"SAME_AS", "ALIAS", "SECRET_IDENTITY"})
+
+
+def _entity_anchored_in_range(name: str, fed_text: str) -> bool:
+    """True iff the entity's name occurs (normalized) in the fed ch1..k text."""
+    norm_name = _normalize_citation(name)
+    return bool(norm_name) and norm_name in _normalize_citation(fed_text)
+
+
+def citation_valid(
+    clue: str, fed_text: str, relation: str | None, name_a: str = "", name_b: str = ""
+) -> bool:
+    """Relation-family-aware citation validity — the production confidence margin.
+
+    Two modes, chosen by the relation FAMILY (the relation TYPE still comes from the
+    model; only the citation-VALIDITY rule varies — enum-driven, never per-novel):
+
+    * **Both-names family** (SAME_AS / ALIAS / SECRET_IDENTITY): existence floor only —
+      the clue must occur verbatim in-range (``citation_in_range``). The prompt asks for a
+      co-naming clause; we deliberately do not additionally HARD-require both names in code
+      (7c: that fail-closes the strict family on the live model's descriptive citations).
+
+    * **Single-anchor family** (TRANSMIGRATED_INTO / REINCARNATION): existence floor AND at
+      least one of the two entities is anchored (named) in the fed ch1..k text. The reveal
+      is structurally single-anchored — the clue evidences the transmigration/inheritance
+      and need NOT name both — so requiring a both-naming clause here is wrong (it fails
+      CLOSED on the true reveal). Requiring one in-range anchor keeps a degenerate "soul
+      edge between two entities neither of whom is present yet" from being written.
+
+    The ``citation_in_range`` fabrication floor is enforced for EVERY relation, so this is
+    auditably NOT a weakening of the no-citation-no-edge guard — it only changes WHICH real,
+    in-range quote counts, scoped to the family that structurally cannot co-name both.
+    """
+    if not citation_in_range(clue, fed_text):
+        return False  # fabrication guard — unchanged for ALL relations (test B)
+    if relation in SINGLE_ANCHOR_IDENTITY:
+        return _entity_anchored_in_range(name_a, fed_text) or _entity_anchored_in_range(
+            name_b, fed_text
+        )
+    return True
 
 
 # --------------------------------------------------------------------------- #
@@ -285,7 +354,7 @@ def infer_identities(
                 relation = verdict.relation
                 if relation is None:
                     continue
-                if not citation_in_range(verdict.clue, fed):
+                if not citation_valid(verdict.clue, fed, relation, src.name, tgt.name):
                     report.citations_rejected += 1  # YES without a valid in-range citation
                     continue
                 if relation not in confirmed:

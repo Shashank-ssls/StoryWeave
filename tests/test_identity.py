@@ -35,6 +35,7 @@ from storyweave.nlp.identity import (
     IdentityReport,
     IdentityVerdict,
     citation_in_range,
+    citation_valid,
     infer_identities,
     normalize_relation,
 )
@@ -299,6 +300,54 @@ def test_citation_gate_tolerates_formatting_but_rejects_fabrication() -> None:
     assert citation_in_range("“The Gray Sparrow — and Lady Veris were the SAME person”", fed)
     assert not citation_in_range("they are secretly the same", fed)  # different words
     assert not citation_in_range("person", fed)  # occurs, but below the min-length floor
+
+
+# --------------------------------------------------------------------------- #
+# C-new. SINGLE-ANCHOR citation mode (the 7c-fix): the both-names demand is relaxed
+# ONLY for the structurally-single-anchored relations (TRANSMIGRATED_INTO/REINCARNATION),
+# while the fabrication floor (test B) is untouched. Deterministic — tests OUR validity
+# logic, not the model.
+# --------------------------------------------------------------------------- #
+def test_citation_valid_single_anchor_relaxes_both_names_but_keeps_fabrication_guard() -> None:
+    fed = "\n\n".join((CH1, CH2, CH3, CH4))  # Caelum is named in ch2..4
+    # Single-anchored TRANSMIGRATED_INTO clue names NEITHER "Wren" nor "Caelum" -> VALID
+    # (this is the real-prose fail-closed, fixed).
+    assert citation_valid(TRANSMIG_CLUE, fed, "TRANSMIGRATED_INTO", "Wren", "Caelum")
+    # Fabrication floor still holds for the single-anchor family (paraphrase not in text).
+    assert not citation_valid(
+        "a soul was poured into a stranger", fed, "TRANSMIGRATED_INTO", "Wren", "Caelum"
+    )
+    # The relax did NOT blow a hole: a REAL in-range quote whose pair is anchored by
+    # NEITHER entity in the fed text writes nothing.
+    fed_no_names = "an older soul had been poured into the drowned prince."
+    assert not citation_valid(
+        TRANSMIG_CLUE, fed_no_names, "TRANSMIGRATED_INTO", "Wren", "Caelum"
+    )
+    # Both-names family is unchanged: existence floor (real co-naming clue valid; fake not).
+    assert citation_valid(SECRET_CLUE, fed, "SECRET_IDENTITY", "Wren", "Caelum")
+    assert not citation_valid(
+        "they share a secret bloodline", fed, "SECRET_IDENTITY", "Wren", "Caelum"
+    )
+
+
+def test_single_anchored_transmigration_writes_edge_at_gold() -> None:
+    """C-new (orchestrator): a TRANSMIGRATED_INTO confirmed only by a REAL single-anchored
+    citation (naming neither entity) writes the edge at its gold chapter — the real-prose
+    fail-closed, fixed, and locked against a future both-names tightening."""
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid, ids = _setup_sample(repo)
+        wc = frozenset({"Wren", "Caelum"})
+        script = {(wc, 4): IdentityVerdict(True, "TRANSMIGRATED_INTO", TRANSMIG_CLUE)}
+        report = infer_identities(wid, repo, model=FakeIdentity(script))
+
+        assert report.edges_added == 1
+        assert report.citations_rejected == 0  # the single-anchored citation was ACCEPTED
+        edges = repo.list_edges_by_tier(wid, RelationTier.IDENTITY)
+        assert len(edges) == 1
+        assert edges[0].relation == "TRANSMIGRATED_INTO"
+        assert edges[0].revealed_chapter == 4
+        assert {edges[0].source_id, edges[0].target_id} == {ids["Wren"], ids["Caelum"]}
 
 
 def test_relation_normalization_stays_within_tier3() -> None:
