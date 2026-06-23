@@ -36,6 +36,10 @@ frontend/dist/
 frontend/.vite/
 *.tsbuildinfo
 
+# --- Visual-gate tooling (Playwright browsers + local screenshots; never committed) ---
+.pw-cache/
+.shots/
+
 # --- Vector store artifacts (rebuildable) ---
 .chroma/
 *.faiss

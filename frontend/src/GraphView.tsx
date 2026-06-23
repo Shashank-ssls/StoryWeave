@@ -1,8 +1,20 @@
 import { useEffect, useRef } from "react";
 import cytoscape from "cytoscape";
-import type { Core, ElementDefinition } from "cytoscape";
+import type { Core, ElementDefinition, NodeSingular } from "cytoscape";
+import cola from "cytoscape-cola";
 import type { GraphElements, GraphNodeData, GraphEdgeData } from "./types";
-import { IDENTITY_RELATIONS, typeColor } from "./ontology";
+import {
+  EDGE_QUIET,
+  GROUND,
+  INK,
+  INK_DIM,
+  IDENTITY_RELATIONS,
+  REVEAL,
+  relationLabel,
+  typeColor,
+} from "./ontology";
+
+cytoscape.use(cola);
 
 export type Selection =
   | { kind: "node"; data: GraphNodeData }
@@ -14,111 +26,117 @@ interface Props {
   onSelect: (sel: Selection) => void;
 }
 
-// The graph holds ONLY what the server revealed at N. Advancing N adds elements; we
-// diff against what is already on screen and BLOOM the newcomers in — identity edges
-// (the reveals) get the loud treatment, everything else stays quiet.
+const reducedMotion =
+  typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// One constellation. Colours are hex (Cytoscape's canvas cannot parse oklch). Tiers
+// read off edge `tier`; identity edges are the gold signature. Focus/dim classes drive
+// the Obsidian hover behaviour; smooth via opacity transitions.
 const STYLE: cytoscape.StylesheetStyle[] = [
   {
     selector: "node",
     style: {
       "background-color": "data(color)",
-      "border-width": 1,
-      "border-color": "oklch(0.30 0.02 260)",
-      width: "mapData(importance, 0, 1, 16, 52)",
-      height: "mapData(importance, 0, 1, 16, 52)",
+      "border-width": 1.5,
+      "border-color": GROUND,
+      width: "data(size)",
+      height: "data(size)",
       label: "data(label)",
-      color: "oklch(0.88 0.02 80)",
-      "font-family": "Iowan Old Style, Palatino, Georgia, serif",
+      color: INK,
+      "font-family": "IBM Plex Sans, system-ui, sans-serif",
       "font-size": 11,
+      "font-weight": 500,
       "text-valign": "bottom",
       "text-halign": "center",
-      "text-margin-y": 5,
-      "text-wrap": "wrap",
-      "text-max-width": "120",
+      "text-margin-y": 6,
+      "text-outline-color": GROUND,
+      "text-outline-width": 2.4,
+      "min-zoomed-font-size": 7,
+      "transition-property": "opacity, border-color, border-width",
+      "transition-duration": 160,
       "overlay-opacity": 0,
     },
   },
   {
-    selector: "node:selected",
-    style: { "border-width": 2, "border-color": "oklch(0.92 0.04 80)" },
+    selector: "node.focus",
+    style: { "border-color": INK, "border-width": 2.5 },
   },
   {
     selector: "edge",
     style: {
-      width: 1.1,
-      "line-color": "oklch(0.42 0.02 260)",
       "curve-style": "bezier",
       "target-arrow-shape": "none",
+      width: 1,
+      "line-color": EDGE_QUIET,
+      color: INK_DIM,
+      "font-family": "IBM Plex Sans, system-ui, sans-serif",
+      "font-size": 8.5,
+      "text-rotation": "autorotate",
+      "text-background-color": GROUND,
+      "text-background-opacity": 0.9,
+      "text-background-padding": "2",
+      "transition-property": "opacity, width, line-color",
+      "transition-duration": 160,
       "overlay-opacity": 0,
     },
   },
+  // Tier-2 social — medium presence.
+  { selector: "edge[tier = 2]", style: { width: 1.7, "line-color": "#5b6488" } },
+  // Tier-3 identity — the bold gold filament, always labelled (the signature).
   {
-    // Tier-3 identity edges — the showcase. Distinct, labelled, brighter.
-    selector: "edge.identity",
+    selector: "edge[tier = 3]",
     style: {
-      width: 2.4,
-      "line-color": "oklch(0.82 0.12 85)",
-      "line-style": "solid",
-      label: "data(relation)",
-      color: "oklch(0.86 0.06 85)",
-      "font-family": "Iowan Old Style, Palatino, Georgia, serif",
-      "font-size": 9,
-      "text-rotation": "autorotate",
-      "text-background-color": "oklch(0.16 0.02 260)",
-      "text-background-opacity": 0.85,
-      "text-background-padding": "2",
+      width: 2.6,
+      "line-color": REVEAL,
+      label: "data(rlabel)",
+      color: REVEAL,
+      "z-index": 10,
     },
   },
+  // A neighbourhood edge in focus shows its relation; everything else stays quiet.
+  { selector: "edge.focus", style: { label: "data(rlabel)", "line-color": INK_DIM, color: INK } },
+  { selector: "node.dim", style: { opacity: 0.12 } },
+  { selector: "edge.dim", style: { opacity: 0.06 } },
 ];
 
-const LAYOUT: cytoscape.LayoutOptions = {
-  name: "cose",
-  animate: true,
-  animationDuration: 520,
-  randomize: false,
-  fit: true,
-  padding: 48,
-  nodeRepulsion: () => 9000,
-  idealEdgeLength: () => 110,
-} as cytoscape.LayoutOptions;
+function colaLayout(): cytoscape.LayoutOptions {
+  return {
+    name: "cola",
+    animate: !reducedMotion, // animate the settle, then STOP (no infinite drift)
+    infinite: false,
+    fit: false,
+    randomize: false,
+    nodeSpacing: () => 26,
+    edgeLength: (e: { data: (k: string) => unknown }) => (e.data("tier") === 3 ? 150 : 110),
+    maxSimulationTime: reducedMotion ? 800 : 2200,
+    convergenceThreshold: 0.01,
+  } as unknown as cytoscape.LayoutOptions;
+}
+
+function nodeSize(deg: number): number {
+  return Math.round(20 + 8 * Math.sqrt(deg));
+}
 
 function toCyElements(elements: GraphElements): ElementDefinition[] {
   const nodes: ElementDefinition[] = elements.nodes.map((n) => ({
     group: "nodes",
-    data: { ...n.data, color: typeColor(n.data.type) },
+    data: { ...n.data, color: typeColor(n.data.type), size: 22 },
   }));
   const edges: ElementDefinition[] = elements.edges.map((e) => ({
     group: "edges",
-    data: { ...e.data },
+    data: { ...e.data, rlabel: relationLabel(e.data.relation) },
     classes: IDENTITY_RELATIONS.has(e.data.relation) ? "identity" : undefined,
   }));
   return [...nodes, ...edges];
 }
 
-function bloom(cy: Core, newIds: Set<string>): void {
-  cy.batch(() => {
-    cy.elements().forEach((ele) => {
-      if (newIds.has(ele.id())) ele.style("opacity", 0);
-    });
-  });
-  cy.elements().forEach((ele) => {
-    if (!newIds.has(ele.id())) return;
-    const isIdentity = ele.isEdge() && ele.hasClass("identity");
-    ele.animate({ style: { opacity: 1 } }, { duration: isIdentity ? 700 : 420 });
-    if (isIdentity) {
-      // The signature pulse: a brief widen-and-settle as the reveal lands.
-      ele
-        .animate({ style: { width: 6 } }, { duration: 240 })
-        .animate({ style: { width: 2.4 } }, { duration: 460 });
-    }
-  });
-}
-
 export default function GraphView({ elements, onSelect }: Props): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<Core | null>(null);
+  const layoutRef = useRef<cytoscape.Layouts | null>(null);
+  const firstFit = useRef(true);
 
-  // Init once.
   useEffect(() => {
     if (!containerRef.current) return;
     const cy = cytoscape({
@@ -126,21 +144,35 @@ export default function GraphView({ elements, onSelect }: Props): JSX.Element {
       style: STYLE,
       wheelSensitivity: 0.2,
       minZoom: 0.3,
-      maxZoom: 2.5,
+      maxZoom: 2.6,
     });
-    cy.on("tap", "node", (evt) => onSelect({ kind: "node", data: evt.target.data() }));
-    cy.on("tap", "edge", (evt) => onSelect({ kind: "edge", data: evt.target.data() }));
-    cy.on("tap", (evt) => {
-      if (evt.target === cy) onSelect(null);
+
+    const focusOn = (node: NodeSingular): void => {
+      const hood = node.closedNeighborhood();
+      cy.batch(() => {
+        cy.elements().addClass("dim");
+        hood.removeClass("dim").addClass("focus");
+      });
+    };
+    const clearFocus = (): void => {
+      cy.batch(() => cy.elements().removeClass("dim focus"));
+    };
+    cy.on("mouseover", "node", (e) => focusOn(e.target));
+    cy.on("mouseout", "node", clearFocus);
+    cy.on("tap", "node", (e) => onSelect({ kind: "node", data: e.target.data() }));
+    cy.on("tap", "edge", (e) => onSelect({ kind: "edge", data: e.target.data() }));
+    cy.on("tap", (e) => {
+      if (e.target === cy) onSelect(null);
     });
+
     cyRef.current = cy;
+    if (import.meta.env.DEV) (window as unknown as { __cy?: Core }).__cy = cy;
     return () => {
       cy.destroy();
       cyRef.current = null;
     };
   }, [onSelect]);
 
-  // Sync to the fenced payload for the current N: remove what's gone, bloom what's new.
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
@@ -150,15 +182,52 @@ export default function GraphView({ elements, onSelect }: Props): JSX.Element {
 
     const gone = cy.elements().filter((e) => !desiredIds.has(e.id()));
     if (gone.length > 0) gone.remove();
-
     const additions = desired.filter((e) => !presentIds.has(String(e.data.id)));
     const newIds = new Set(additions.map((e) => String(e.data.id)));
     if (additions.length > 0) cy.add(additions);
+    if (additions.length === 0 && gone.length === 0) return;
 
-    if (additions.length > 0 || gone.length > 0) {
-      cy.layout(LAYOUT).run();
-      if (additions.length > 0) bloom(cy, newIds);
-    }
+    // Size every node by degree (Obsidian-style weighting), recomputed as links arrive.
+    cy.batch(() => {
+      cy.nodes().forEach((n) => {
+        n.data("size", nodeSize(n.degree(false)));
+      });
+      additions.forEach((a) => {
+        cy.getElementById(String(a.data.id)).style("opacity", 0);
+      });
+    });
+
+    layoutRef.current?.stop();
+    const layout = cy.layout(colaLayout());
+    layoutRef.current = layout;
+    // Fit exactly when the layout settles — no drift, no timing guess.
+    const pad = firstFit.current ? 80 : 90;
+    firstFit.current = false;
+    layout.one("layoutstop", () => {
+      const c = cyRef.current;
+      if (c && c.elements().length > 0) {
+        c.animate({ fit: { eles: c.elements(), padding: pad } }, { duration: 420 });
+      }
+    });
+    layout.run();
+
+    // Bloom the newcomers in; identity edges ignite (gold width pulse).
+    cy.elements().forEach((ele) => {
+      if (!newIds.has(ele.id())) return;
+      if (reducedMotion) {
+        ele.style("opacity", 1);
+        return;
+      }
+      const identity = ele.isEdge() && ele.data("tier") === 3;
+      ele.animate({ style: { opacity: 1 } }, { duration: identity ? 760 : 460 });
+      if (identity) {
+        ele.animate({ style: { width: 7 } }, { duration: 260 }).animate(
+          { style: { width: 2.6 } },
+          { duration: 520 },
+        );
+      }
+    });
+
   }, [elements]);
 
   return <div ref={containerRef} className="graph-canvas" />;

@@ -1,14 +1,14 @@
 :root {
-  /* One ink-dark ground, parchment ink, a single warm accent for reveals. */
-  --ground: oklch(0.16 0.02 260);
-  --ground-2: oklch(0.2 0.02 260);
-  --line: oklch(0.32 0.02 260);
-  --ink: oklch(0.9 0.02 80);
-  --ink-dim: oklch(0.66 0.02 80);
-  --accent: oklch(0.82 0.12 85);
-  --serif: "Iowan Old Style", Palatino, Georgia, "Times New Roman", serif;
-  --sans: system-ui, "Segoe UI", sans-serif;
-  --mono: "Cascadia Code", "DejaVu Sans Mono", ui-monospace, monospace;
+  --ground: #0b0d14;
+  --surface: #141828;
+  --surface-2: #1b2032;
+  --line: #272c40;
+  --ink: #e9e4d6;
+  --ink-dim: #8b91a8;
+  --reveal: #ffd073;
+  --display: "Spectral", Georgia, serif;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
 * {
@@ -25,57 +25,152 @@ body,
 body {
   background: var(--ground);
   color: var(--ink);
-  font-family: var(--sans);
+  font-family: var(--body);
   -webkit-font-smoothing: antialiased;
 }
 
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--reveal);
+  outline-offset: 2px;
+}
+
+/* ── Cover / entry ─────────────────────────────────────────────────────────── */
+.cover {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  /* a faint scatter of stars — quiet, sets the constellation register */
+  background:
+    radial-gradient(1.2px 1.2px at 18% 30%, #ffffff22, transparent),
+    radial-gradient(1.2px 1.2px at 72% 22%, #ffffff1c, transparent),
+    radial-gradient(1px 1px at 40% 70%, #ffffff18, transparent),
+    radial-gradient(1.4px 1.4px at 85% 64%, #ffffff14, transparent),
+    var(--ground);
+}
+
+.cover-inner {
+  max-width: 540px;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.wordmark {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 64px;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  margin: 10px 0 0;
+}
+
+.wordmark .weave {
+  font-style: italic;
+  color: var(--reveal);
+}
+
+.cover-lede {
+  font-family: var(--display);
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--ink);
+  opacity: 0.86;
+  max-width: 460px;
+  margin: 18px 0 28px;
+  text-wrap: pretty;
+}
+
+.enter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  background: transparent;
+  color: var(--ground);
+  background-color: var(--reveal);
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.enter:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.enter-work {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.enter-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* ── App shell ─────────────────────────────────────────────────────────────── */
 .app {
   height: 100%;
   display: grid;
   grid-template-rows: auto 1fr auto;
 }
 
-/* Top bar — quiet, lets the title carry it. */
 .topbar {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 24px;
-  padding: 14px 22px;
+  padding: 13px 22px;
   border-bottom: 1px solid var(--line);
 }
 
 .brand {
   display: flex;
   align-items: baseline;
-  gap: 14px;
+  gap: 11px;
+}
+
+.brand .star {
+  color: var(--reveal);
+  font-size: 13px;
 }
 
 .mark {
-  font-family: var(--serif);
-  font-size: 21px;
-  letter-spacing: 0.02em;
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .work {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-style: italic;
   color: var(--ink-dim);
   font-size: 15px;
 }
 
 .readout {
-  font-size: 12.5px;
+  display: flex;
+  gap: 16px;
+  font-family: var(--mono);
+  font-size: 12px;
   color: var(--ink-dim);
-  letter-spacing: 0.01em;
 }
 
-.readout b {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-/* Stage — the graph fills it; legend + detail float as quiet overlays. */
+/* ── Stage / overlays ──────────────────────────────────────────────────────── */
 .stage {
   position: relative;
   overflow: hidden;
@@ -90,60 +185,77 @@ body {
   position: absolute;
   left: 16px;
   bottom: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  max-width: 280px;
-  padding: 10px 12px;
-  background: color-mix(in oklch, var(--ground-2) 86%, transparent);
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   border: 1px solid var(--line);
-  font-size: 11.5px;
+  backdrop-filter: blur(3px);
+}
+
+.legend-title {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--ink-dim);
+  margin-bottom: 9px;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 18px;
+  font-size: 12.5px;
 }
 
 .legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .swatch {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  display: inline-block;
 }
 
-/* Detail panel — appears on selection; reveals provenance + evidence, kept calm. */
 .detail {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 268px;
-  padding: 16px 18px;
-  background: color-mix(in oklch, var(--ground-2) 92%, transparent);
+  width: 274px;
+  padding: 17px 19px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--line);
+  backdrop-filter: blur(3px);
 }
 
 .detail-kind {
+  font-family: var(--mono);
   font-size: 11px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
   color: var(--ink-dim);
 }
 
 .detail h2 {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-weight: 500;
-  font-size: 22px;
-  margin: 4px 0 12px;
+  font-size: 24px;
+  line-height: 1.15;
+  margin: 5px 0 14px;
+}
+
+.detail h2.rel {
+  font-style: italic;
+  color: var(--reveal);
 }
 
 .detail dl {
   margin: 0;
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 12px;
+  gap: 7px 14px;
   font-size: 13px;
 }
 
@@ -156,51 +268,60 @@ body {
 }
 
 .detail .quote {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-style: italic;
-  color: var(--ink);
+  line-height: 1.4;
 }
 
 .pk {
   color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 11px;
 }
 
 .prov {
-  margin-top: 12px;
+  margin-top: 14px;
   font-family: var(--mono);
   font-size: 11px;
   color: var(--ink-dim);
 }
 
-/* Slider — the instrument that drives the fence. Thin, deliberate. */
-.slider-bar {
+/* ── Reading position (the slider, reframed as a timeline) ─────────────────── */
+.reading {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 12px 22px;
+  gap: 18px;
+  padding: 13px 22px;
   border-top: 1px solid var(--line);
 }
 
-.slider-bar label {
-  font-family: var(--serif);
-  font-size: 14px;
+.reading-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--ink-dim);
 }
 
-.slider-bar input[type="range"] {
+.scrubber {
   flex: 1;
-  accent-color: var(--accent);
+  accent-color: var(--reveal);
   height: 4px;
 }
 
-.chapter-num {
-  font-family: var(--serif);
-  font-size: 18px;
-  min-width: 56px;
+.reading-num {
+  font-family: var(--display);
+  font-size: 16px;
+  min-width: 116px;
   text-align: right;
 }
 
-.chapter-num .of {
+.reading-num b {
+  color: var(--reveal);
+  font-weight: 500;
+}
+
+.reading-num .of {
   color: var(--ink-dim);
   font-size: 13px;
 }
@@ -211,13 +332,28 @@ body {
   display: grid;
   place-content: center;
   text-align: center;
+  gap: 8px;
   color: var(--ink-dim);
   font-family: var(--mono);
   font-size: 13px;
-  gap: 8px;
 }
 
 .error .hint {
-  color: var(--ink-dim);
   opacity: 0.7;
+}
+
+@media (max-width: 560px) {
+  .wordmark {
+    font-size: 46px;
+  }
+  .detail {
+    width: calc(100vw - 32px);
+  }
+  .legend {
+    display: none;
+  }
+  .readout span:nth-child(2),
+  .readout span:nth-child(3) {
+    display: none;
+  }
 }
