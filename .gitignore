@@ -11,6 +11,9 @@
 data/raw/*
 !data/raw/.gitkeep
 
+# --- Session-seed prompt files (local working notes; never committed) ---
+*-prompt.md
+
 # --- Secrets ---
 .env
 
