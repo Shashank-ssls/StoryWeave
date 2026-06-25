@@ -43,8 +43,12 @@ export default function SearchPanel({
         </button>
       </div>
       <div className="search-as-of">answered as of chapter {n} — nothing later</div>
+      <label className="search-q-label" htmlFor="search-q">
+        Ask a question
+      </label>
       <div className="search-bar">
         <input
+          id="search-q"
           className="search-input"
           value={q}
           onChange={(e) => setQ(e.target.value)}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchGraph, fetchWorks } from "./api";
+import { deleteWork, fetchGraph, fetchWorks } from "./api";
 import type { GraphElements, WorkModel } from "./types";
 import { NODE_TYPES, TYPE_COLOR, relationLabel } from "./ontology";
 import GraphView, { type Selection } from "./GraphView";
@@ -85,6 +85,41 @@ function DetailPanel({ sel }: { sel: Selection }): JSX.Element | null {
   );
 }
 
+// Destructive action → a confirmation that NAMES the work (CLAUDE.md: ask before
+// destructive actions). The delete is a true delete of local data; the demo can't
+// reach here (it has no delete control).
+function ConfirmDelete({
+  work,
+  busy,
+  onConfirm,
+  onCancel,
+}: {
+  work: WorkModel;
+  busy: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}): JSX.Element {
+  return (
+    <div className="composer-scrim" role="dialog" aria-modal="true" aria-label="Confirm delete">
+      <div className="confirm">
+        <h2 className="confirm-title">Delete this novel?</h2>
+        <p className="confirm-body">
+          Delete <span className="confirm-work">{work.title}</span> and its map? This
+          removes its local data and can’t be undone.
+        </p>
+        <div className="composer-actions">
+          <button className="composer-cancel" onClick={onCancel} disabled={busy}>
+            Cancel
+          </button>
+          <button className="confirm-go" onClick={onConfirm} disabled={busy}>
+            {busy ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App(): JSX.Element {
   const [works, setWorks] = useState<WorkModel[]>([]);
   const [work, setWork] = useState<WorkModel | null>(null);
@@ -94,6 +129,8 @@ export default function App(): JSX.Element {
   const [elements, setElements] = useState<GraphElements>(EMPTY);
   const [sel, setSel] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<WorkModel | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadWorks = useCallback(
     () =>
@@ -150,6 +187,20 @@ export default function App(): JSX.Element {
     [loadWorks, enter],
   );
 
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await deleteWork(pendingDelete.slug);
+      setPendingDelete(null);
+      await loadWorks();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDeleting(false);
+    }
+  }, [pendingDelete, loadWorks]);
+
   const onSelect = useCallback((s: Selection) => setSel(s), []);
   const max = work?.chapter_count ?? 1;
   const counts = useMemo(
@@ -160,9 +211,22 @@ export default function App(): JSX.Element {
   if (!work) {
     return (
       <>
-        <Library works={works} onEnter={enter} onAdd={() => setComposing(true)} />
+        <Library
+          works={works}
+          onEnter={enter}
+          onAdd={() => setComposing(true)}
+          onDelete={setPendingDelete}
+        />
         {composing ? (
           <Composer onReady={(slug) => void onComposed(slug)} onClose={() => setComposing(false)} />
+        ) : null}
+        {pendingDelete ? (
+          <ConfirmDelete
+            work={pendingDelete}
+            busy={deleting}
+            onConfirm={() => void confirmDelete()}
+            onCancel={() => setPendingDelete(null)}
+          />
         ) : null}
       </>
     );
@@ -172,10 +236,13 @@ export default function App(): JSX.Element {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <button className="star-home" onClick={toLibrary} aria-label="Back to the shelf">
-            ✦
+          <button className="home-link" onClick={toLibrary} aria-label="Back to the library">
+            <span className="back-chevron" aria-hidden>
+              ‹
+            </span>
+            <span className="star">✦</span>
+            <span className="mark">StoryWeave</span>
           </button>
-          <span className="mark">StoryWeave</span>
           <span className="work">{work.title}</span>
         </div>
         <div className="topbar-right">

@@ -142,7 +142,9 @@ export default function GraphView({ elements, onSelect }: Props): JSX.Element {
     const cy = cytoscape({
       container: containerRef.current,
       style: STYLE,
-      wheelSensitivity: 0.2,
+      // 2.5x the old 0.2 — wheel zoom felt sluggish; 0.5 is responsive but still
+      // smooth (cytoscape default is 1.0, which overshoots). Keeps zoom-to-cursor.
+      wheelSensitivity: 0.5,
       minZoom: 0.3,
       maxZoom: 2.6,
     });

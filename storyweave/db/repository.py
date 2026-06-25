@@ -209,6 +209,14 @@ class Repository:
             return existing.id
         return self.create_work(Work(slug=slug, title=title))
 
+    def delete_work(self, work_id: int) -> None:
+        """TRUE delete: drop the work and every row keyed to it — chapters, chunks,
+        nodes, edges, node_properties, mentions — via the schema's ON DELETE CASCADE
+        (foreign_keys is ON per connection). The vector index is derived and cleared
+        separately by the caller (store.reset)."""
+        self.conn.execute("DELETE FROM works WHERE id = ?", (work_id,))
+        self.conn.commit()
+
     # --- chapters (Phase 1) ---------------------------------------------- #
 
     def get_chapter_by_ordinal(self, work_id: int, ordinal: int) -> Chapter | None:

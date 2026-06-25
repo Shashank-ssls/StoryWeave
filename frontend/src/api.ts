@@ -66,3 +66,11 @@ export async function searchWork(slug: string, n: number, q: string): Promise<Se
     `/api/v1/works/${encodeURIComponent(slug)}/search?n=${n}&q=${encodeURIComponent(q)}`,
   );
 }
+
+// True delete of a user novel (local data only; the demo is protected server-side).
+export async function deleteWork(slug: string): Promise<void> {
+  const resp = await fetch(`/api/v1/works/${encodeURIComponent(slug)}`, { method: "DELETE" });
+  if (!resp.ok) {
+    throw new Error(await errorMessage(resp, `DELETE /works/${slug}`));
+  }
+}

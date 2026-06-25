@@ -344,14 +344,40 @@ button {
 
 /* ── Library / shelf ───────────────────────────────────────────────────────── */
 .library {
-  place-items: start center;
+  place-items: center;
   overflow-y: auto;
 }
 
+/* Two-column spread: the thesis on the left, the shelf on the right — a composed
+   page, not a lonely centered column. Collapses to one column on narrow screens. */
 .library-inner {
   width: 100%;
-  max-width: 760px;
-  padding: clamp(40px, 9vh, 96px) 0;
+  max-width: 1080px;
+  padding: clamp(32px, 7vh, 80px) clamp(24px, 6vw, 72px);
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: clamp(32px, 6vw, 80px);
+  align-items: center;
+}
+
+.lib-hero {
+  max-width: 460px;
+}
+
+.lib-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.hero-dot {
+  opacity: 0.5;
 }
 
 .shelf-label {
@@ -364,18 +390,15 @@ button {
 }
 
 .shelf {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 14px;
-}
-
-.work-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  text-align: left;
-  padding: 18px 18px 16px;
+  gap: 12px;
+}
+
+/* The card is the box; .work-card-open is the clickable padded area inside it, so the
+   delete control can sit in the corner without stealing the card's click target. */
+.work-card {
+  position: relative;
   background: color-mix(in srgb, var(--surface) 80%, transparent);
   border: 1px solid var(--line);
   color: var(--ink);
@@ -385,6 +408,19 @@ button {
 .work-card:hover {
   border-color: color-mix(in srgb, var(--reveal) 55%, var(--line));
   transform: translateY(-2px);
+}
+
+.work-card-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  padding: 18px 44px 16px 18px;
+  background: transparent;
+  border: none;
+  color: inherit;
 }
 
 .work-card-title {
@@ -412,8 +448,43 @@ button {
   opacity: 1;
 }
 
+.work-card-del {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--ink-dim);
+  font-size: 17px;
+  line-height: 1;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.work-card-del:hover:not(.disabled) {
+  color: #e88b91;
+  border-color: color-mix(in srgb, #e88b91 45%, var(--line));
+  background: color-mix(in srgb, #e88b91 12%, transparent);
+}
+
+.work-card-del.disabled {
+  font-size: 12px;
+  opacity: 0.5;
+  cursor: default;
+}
+
 .work-card-add {
-  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  padding: 18px;
+  color: var(--ink);
   border-style: dashed;
   background: transparent;
 }
@@ -589,13 +660,94 @@ button {
   }
 }
 
+/* ── Confirm delete (destructive) ──────────────────────────────────────────── */
+.confirm {
+  width: 100%;
+  max-width: 440px;
+  padding: 26px 28px 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.confirm-title {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 23px;
+  margin: 0 0 10px;
+}
+
+.confirm-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+  margin: 0 0 22px;
+}
+
+.confirm-work {
+  font-family: var(--display);
+  font-style: italic;
+  color: var(--ink);
+}
+
+.confirm-go {
+  background: #c4565d;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.confirm-go:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 /* ── Top bar additions (stage) ─────────────────────────────────────────────── */
-.star-home {
+/* The wordmark is the always-visible way home (the header is a fixed grid row, so it
+   stays put through any pan/zoom of the canvas below). */
+.home-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
   background: none;
   border: none;
+  padding: 4px 6px;
+  margin-left: -6px;
+  border-radius: 4px;
+  color: inherit;
+  transition: background 120ms ease;
+}
+
+.home-link:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.home-link .star {
   color: var(--reveal);
-  font-size: 14px;
-  padding: 0;
+  font-size: 13px;
+}
+
+.home-link .mark {
+  text-decoration-color: transparent;
+}
+
+.home-link:hover .mark {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--ink-dim);
+}
+
+.back-chevron {
+  font-family: var(--display);
+  font-size: 20px;
+  color: var(--ink-dim);
+  line-height: 0.8;
+  align-self: center;
+}
+
+.home-link:hover .back-chevron {
+  color: var(--reveal);
 }
 
 .topbar-right {
@@ -656,6 +808,16 @@ button {
   letter-spacing: 0.04em;
   color: var(--ink-dim);
   margin: 2px 0 12px;
+}
+
+.search-q-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 7px;
 }
 
 .search-bar {
@@ -734,6 +896,19 @@ button {
   white-space: nowrap;
 }
 
+/* Below ~860px the two-column spread has no room — stack hero over shelf. */
+@media (max-width: 860px) {
+  .library-inner {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    align-items: start;
+    max-width: 560px;
+  }
+  .lib-hero {
+    max-width: none;
+  }
+}
+
 @media (max-width: 560px) {
   .wordmark {
     font-size: 46px;
@@ -750,8 +925,5 @@ button {
   }
   .search-panel {
     width: calc(100vw - 32px);
-  }
-  .shelf {
-    grid-template-columns: 1fr;
   }
 }

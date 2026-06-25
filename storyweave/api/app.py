@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Response
 
 from storyweave import __version__
 from storyweave.api import jobs
@@ -39,6 +39,7 @@ from storyweave.api.schemas import (
 from storyweave.config import get_settings
 from storyweave.db.models import Work
 from storyweave.db.repository import Repository
+from storyweave.demo.seed import DEMO_SLUG
 from storyweave.graph.serialize import graph_json
 from storyweave.ingest.pipeline import ingest as run_ingest
 from storyweave.ingest.pipeline import slugify
@@ -144,6 +145,27 @@ def work_status(slug: str, repo: RepoDep) -> AnalysisStatusResponse:
         detail=status.detail if status else "",
         node_count=node_count,
     )
+
+
+@router.delete("/works/{slug}", status_code=204)
+def delete_work(
+    slug: str,
+    repo: RepoDep,
+    store: Annotated[BaseVectorStore, Depends(get_vector_store)],
+) -> Response:
+    """TRUE delete of a user novel: drop its SQLite rows (cascade) + its vector index.
+    The CC0 demo is protected — it's the committed, reproducible fixture the build
+    depends on. Only LOCAL data is removed; nothing committed changes."""
+    work = _require_work(repo, slug)
+    if slug == DEMO_SLUG:
+        raise HTTPException(status_code=403, detail="The demo novel can't be deleted.")
+    repo.delete_work(work.id or 0)
+    try:
+        store.reset(work.id or 0)  # vectors are derived; SQLite delete is authoritative
+    except Exception:  # pragma: no cover - store may be absent/unbuilt for this work
+        pass
+    jobs.forget(slug)
+    return Response(status_code=204)
 
 
 @router.get("/works/{slug}/entities", response_model=EntitiesResponse)

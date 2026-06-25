@@ -50,6 +50,12 @@ def _set(slug: str, state: str, detail: str = "") -> None:
         _jobs[slug] = Analysis(state, detail)
 
 
+def forget(slug: str) -> None:
+    """Drop a slug's analysis state (e.g. after the work is deleted)."""
+    with _lock:
+        _jobs.pop(slug, None)
+
+
 def _run(slug: str, db_path: str) -> None:
     py = ml_python()
     if not py.exists():

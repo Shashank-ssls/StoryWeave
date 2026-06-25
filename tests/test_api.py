@@ -208,6 +208,57 @@ def test_status_reflects_job_state(
     assert seeded["node_count"] >= 1
 
 
+# --- delete a work (true delete; demo protected) -------------------------- #
+
+
+def test_delete_user_work_removes_all_its_data(
+    client: tuple[TestClient, dict[str, int]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(jobs, "start_analysis", lambda slug, db: None)
+    c, ids = client
+    # Ingest a user novel, then delete it.
+    c.post("/api/v1/works", json={"title": "The Lantern Keep", "text": _CH_TEXT})
+    assert c.get("/api/v1/works/the-lantern-keep/status").status_code == 200
+    resp = c.delete("/api/v1/works/the-lantern-keep")
+    assert resp.status_code == 204
+    # Gone from the listing and 404 on read; the demo work is untouched.
+    slugs = {w["slug"] for w in c.get("/api/v1/works").json()["works"]}
+    assert "the-lantern-keep" not in slugs
+    assert "demo" in slugs
+    assert c.get("/api/v1/works/the-lantern-keep/entities?n=1").status_code == 404
+
+
+def test_delete_cascades_rows(client: tuple[TestClient, dict[str, int]]) -> None:
+    # The seeded 'demo' work has nodes/chapters; deleting it must cascade. We use the
+    # repo directly to prove the cascade, independent of the route's demo guard.
+    c, ids = client
+    repo = c.app.dependency_overrides[get_repository]()  # type: ignore[attr-defined]
+    wid = ids["wid"]
+    assert repo.count_nodes(wid) > 0
+    repo.delete_work(wid)
+    assert repo.get_work(wid) is None
+    assert repo.count_nodes(wid) == 0
+    assert repo.count_chapters(wid) == 0
+
+
+def test_delete_demo_is_forbidden(client: tuple[TestClient, dict[str, int]]) -> None:
+    c, _ = client
+    # Seed a work under the protected demo slug; the route must refuse to delete it.
+    from storyweave.demo.seed import DEMO_SLUG  # noqa: PLC0415
+
+    repo = c.app.dependency_overrides[get_repository]()  # type: ignore[attr-defined]
+    repo.create_work(Work(slug=DEMO_SLUG, title="The Hollow Crown"))
+    resp = c.delete(f"/api/v1/works/{DEMO_SLUG}")
+    assert resp.status_code == 403
+    assert repo.get_work_by_slug(DEMO_SLUG) is not None
+
+
+def test_delete_unknown_work_404(client: tuple[TestClient, dict[str, int]]) -> None:
+    c, _ = client
+    assert c.delete("/api/v1/works/ghost").status_code == 404
+
+
 # --- fenced reads ---------------------------------------------------------- #
 
 

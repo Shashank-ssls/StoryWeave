@@ -3,6 +3,9 @@
 // every node grey. The legend and the graph both read from TYPE_COLOR, so they cannot
 // disagree. See frontend/DESIGN.md for the rationale.
 
+// The committed CC0 demo — protected from deletion (the build depends on it).
+export const DEMO_SLUG = "the-hollow-crown";
+
 export const NODE_TYPES = [
   "Character",
   "Place",
