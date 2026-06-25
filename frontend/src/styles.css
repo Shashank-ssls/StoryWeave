@@ -15,6 +15,16 @@
   box-sizing: border-box;
 }
 
+/* Hide scrollbars app-wide but keep scrolling — the midnight canvas reads cleaner
+   without chrome rails (Firefox + WebKit/Chromium). Content stays fully scrollable. */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 html,
 body,
 #root {
@@ -592,11 +602,36 @@ button {
 }
 
 .composer-error,
-.search-error,
 .composer-error code {
   font-family: var(--mono);
   font-size: 12px;
   color: #e88b91;
+}
+
+/* Live chapter-detection readout under the textarea. */
+.detect-readout {
+  margin: 4px 0 14px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.detect-count {
+  font-family: var(--mono);
+  font-size: 15px;
+  color: var(--reveal);
+  font-weight: 600;
+}
+
+.detect-dim {
+  opacity: 0.7;
+}
+
+.detect-list {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-dim);
 }
 
 .composer-actions {
@@ -606,8 +641,7 @@ button {
   margin-top: 6px;
 }
 
-.composer-cancel,
-.search-toggle {
+.composer-cancel {
   background: transparent;
   border: 1px solid var(--line);
   color: var(--ink-dim);
@@ -756,144 +790,18 @@ button {
   gap: 18px;
 }
 
-.search-toggle {
+/* Add-chapters affordance in the graph header (append flow). */
+.add-chapters {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
   padding: 6px 13px;
   font-size: 12.5px;
 }
 
-.search-toggle:hover,
-.search-toggle.on {
-  color: var(--ground);
-  background: var(--ink);
-  border-color: var(--ink);
-}
-
-/* ── Search panel (stage overlay) ──────────────────────────────────────────── */
-.search-panel {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  width: 340px;
-  max-height: calc(100% - 32px);
-  overflow-y: auto;
-  padding: 16px 18px;
-  background: color-mix(in srgb, var(--surface) 96%, transparent);
-  border: 1px solid var(--line);
-  backdrop-filter: blur(4px);
-  z-index: 5;
-}
-
-.search-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.search-title {
-  font-family: var(--display);
-  font-size: 18px;
-}
-
-.search-x {
-  background: none;
-  border: none;
-  color: var(--ink-dim);
-  font-size: 20px;
-  line-height: 1;
-}
-
-.search-as-of {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  color: var(--ink-dim);
-  margin: 2px 0 12px;
-}
-
-.search-q-label {
-  display: block;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-  margin-bottom: 7px;
-}
-
-.search-bar {
-  display: flex;
-  gap: 8px;
-}
-
-.search-input {
-  flex: 1;
-  min-width: 0;
-  background: var(--ground);
-  border: 1px solid var(--line);
+.add-chapters:hover {
   color: var(--ink);
-  font-family: var(--body);
-  font-size: 13px;
-  padding: 8px 10px;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: color-mix(in srgb, var(--reveal) 55%, var(--line));
-}
-
-.search-go {
-  background: var(--ink);
-  color: var(--ground);
-  border: none;
-  padding: 0 14px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.search-go:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.search-empty {
-  margin-top: 14px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--ink-dim);
-}
-
-.search-answer {
-  font-family: var(--display);
-  font-size: 15px;
-  line-height: 1.5;
-  margin: 16px 0 12px;
-}
-
-.search-hits {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.search-hit {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  font-size: 12.5px;
-  line-height: 1.45;
-  color: var(--ink-dim);
-  border-top: 1px solid var(--line);
-  padding-top: 10px;
-}
-
-.hit-ch {
-  font-family: var(--mono);
-  font-size: 10.5px;
-  color: var(--reveal);
-  white-space: nowrap;
+  border-color: color-mix(in srgb, var(--reveal) 45%, var(--line));
 }
 
 /* Below ~860px the two-column spread has no room — stack hero over shelf. */
@@ -922,8 +830,5 @@ button {
   .readout span:nth-child(2),
   .readout span:nth-child(3) {
     display: none;
-  }
-  .search-panel {
-    width: calc(100vw - 32px);
   }
 }

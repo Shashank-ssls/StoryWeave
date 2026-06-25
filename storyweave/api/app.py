@@ -20,6 +20,9 @@ from storyweave.api import jobs
 from storyweave.api.deps import get_embedder, get_repository, get_vector_store
 from storyweave.api.schemas import (
     AnalysisStatusResponse,
+    AppendRequest,
+    AppendResponse,
+    ChapterPreview,
     CitationModel,
     EdgeModel,
     EntitiesResponse,
@@ -31,6 +34,8 @@ from storyweave.api.schemas import (
     HitModel,
     IngestRequest,
     IngestResponse,
+    PreviewRequest,
+    PreviewResponse,
     PropertyModel,
     SearchResponse,
     WorkModel,
@@ -41,8 +46,8 @@ from storyweave.db.models import Work
 from storyweave.db.repository import Repository
 from storyweave.demo.seed import DEMO_SLUG
 from storyweave.graph.serialize import graph_json
+from storyweave.ingest.pipeline import detect_outline, slugify
 from storyweave.ingest.pipeline import ingest as run_ingest
-from storyweave.ingest.pipeline import slugify
 from storyweave.query import fence
 from storyweave.search.embedder import EmbedderProtocol
 from storyweave.search.retriever import compose_answer
@@ -166,6 +171,65 @@ def delete_work(
         pass
     jobs.forget(slug)
     return Response(status_code=204)
+
+
+@router.post("/works/preview", response_model=PreviewResponse)
+def preview_chapters(body: PreviewRequest, repo: RepoDep) -> PreviewResponse:
+    """Detect the chapter outline of pasted text (same splitter as ingest), WITHOUT
+    writing anything — so the user sees how many chapters will land before committing.
+    With a slug, mark which detected chapters are already in that work (the append
+    preview: 'N new chapters')."""
+    text = body.text.strip()
+    outline = detect_outline(text) if text else []
+    existing: set[int] = set()
+    if body.slug:
+        work = repo.get_work_by_slug(body.slug)
+        if work and work.id:
+            existing = {c.ordinal for c in repo.list_chapters(work.id)}
+    chapters = [
+        ChapterPreview(ordinal=c.ordinal, title=c.title, is_new=c.ordinal not in existing)
+        for c in outline
+    ]
+    return PreviewResponse(
+        chapters=chapters,
+        total=len(chapters),
+        new_count=sum(1 for c in chapters if c.is_new),
+    )
+
+
+@router.post("/works/{slug}/chapters", response_model=AppendResponse, status_code=201)
+def append_chapters(slug: str, body: AppendRequest, repo: RepoDep) -> AppendResponse:
+    """Append chapters to an EXISTING work. Idempotent re-ingest (hash-matched, so
+    already-present chapters are not duplicated), then rebuild the derived graph over
+    the extended range. The CC0 demo is protected (it's a seeded fixture, not ingested
+    text — rebuilding would wipe its hand-built graph)."""
+    work = _require_work(repo, slug)
+    if slug == DEMO_SLUG:
+        raise HTTPException(
+            status_code=403, detail="The demo novel is a fixed sample; it can't take new chapters."
+        )
+    text = body.text.strip()
+    if not text:
+        raise HTTPException(status_code=422, detail="no text to append")
+    tmp = Path(tempfile.gettempdir()) / f"storyweave-append-{slug}.txt"
+    tmp.write_text(text, encoding="utf-8")
+    try:
+        report = run_ingest(tmp, repo, slug=work.slug, title=work.title)
+    finally:
+        tmp.unlink(missing_ok=True)
+    if report.chapters_added == 0 and report.chapters_updated == 0:
+        raise HTTPException(status_code=422, detail="no new chapters detected in the text")
+
+    # SQLite is the source of truth; the graph is derived — rebuild it for the new range.
+    jobs.start_analysis(slug, str(get_settings().db_path))
+    status = jobs.get_status(slug)
+    return AppendResponse(
+        slug=slug,
+        chapter_count=repo.count_chapters(work.id or 0),
+        chapters_added=report.chapters_added,
+        chunks_added=report.chunks_added,
+        state=status.state if status else "queued",
+    )
 
 
 @router.get("/works/{slug}/entities", response_model=EntitiesResponse)

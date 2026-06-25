@@ -259,6 +259,71 @@ def test_delete_unknown_work_404(client: tuple[TestClient, dict[str, int]]) -> N
     assert c.delete("/api/v1/works/ghost").status_code == 404
 
 
+# --- chapter preview + append --------------------------------------------- #
+
+
+_THREE_CH = (
+    "Chapter 1\nThe bridge was empty.\n\n"
+    "Chapter 2\nA heron in the wax.\n\n"
+    "Chapter 3\nThe keep opened its doors at last.\n"
+)
+
+
+def test_preview_counts_detected_chapters(client: tuple[TestClient, dict[str, int]]) -> None:
+    c, _ = client
+    body = c.post("/api/v1/works/preview", json={"text": _THREE_CH}).json()
+    assert body["total"] == 3
+    assert body["new_count"] == 3  # no slug -> all new
+    assert [ch["ordinal"] for ch in body["chapters"]] == [1, 2, 3]
+
+
+def test_preview_marks_existing_chapters_for_append(
+    client: tuple[TestClient, dict[str, int]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(jobs, "start_analysis", lambda slug, db: None)
+    c, _ = client
+    c.post("/api/v1/works", json={"title": "The Lantern Keep", "text": _CH_TEXT})  # ch 1,2
+    body = c.post(
+        "/api/v1/works/preview", json={"text": _THREE_CH, "slug": "the-lantern-keep"}
+    ).json()
+    assert body["total"] == 3
+    assert body["new_count"] == 1  # ch 1,2 already present; only ch 3 is new
+    by_ord = {ch["ordinal"]: ch["is_new"] for ch in body["chapters"]}
+    assert by_ord == {1: False, 2: False, 3: True}
+
+
+def test_append_adds_chapters_and_bumps_count(
+    client: tuple[TestClient, dict[str, int]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    launched: list[str] = []
+    monkeypatch.setattr(jobs, "start_analysis", lambda slug, db: launched.append(slug))
+    c, _ = client
+    c.post("/api/v1/works", json={"title": "The Lantern Keep", "text": _CH_TEXT})  # 2 ch
+    resp = c.post("/api/v1/works/the-lantern-keep/chapters", json={"text": _THREE_CH})
+    assert resp.status_code == 201
+    body = resp.json()
+    assert body["chapter_count"] == 3  # slider max grows 2 -> 3
+    assert body["chapters_added"] == 1
+    assert launched[-1] == "the-lantern-keep"  # graph rebuild kicked
+
+
+def test_append_to_demo_is_forbidden(client: tuple[TestClient, dict[str, int]]) -> None:
+    c, _ = client
+    from storyweave.demo.seed import DEMO_SLUG  # noqa: PLC0415
+
+    repo = c.app.dependency_overrides[get_repository]()  # type: ignore[attr-defined]
+    repo.create_work(Work(slug=DEMO_SLUG, title="The Hollow Crown"))
+    resp = c.post(f"/api/v1/works/{DEMO_SLUG}/chapters", json={"text": _THREE_CH})
+    assert resp.status_code == 403
+
+
+def test_append_unknown_work_404(client: tuple[TestClient, dict[str, int]]) -> None:
+    c, _ = client
+    assert c.post("/api/v1/works/ghost/chapters", json={"text": _THREE_CH}).status_code == 404
+
+
 # --- fenced reads ---------------------------------------------------------- #
 
 

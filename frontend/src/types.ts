@@ -61,20 +61,22 @@ export interface AnalysisStatus {
   node_count: number;
 }
 
-export interface SearchHit {
-  chunk_id: number;
-  chapter_ordinal: number;
-  char_start: number;
-  char_end: number;
-  text: string;
-  score: number;
+export interface ChapterPreview {
+  ordinal: number;
+  title: string | null;
+  is_new: boolean;
 }
 
-export interface SearchResponse {
+export interface PreviewResponse {
+  chapters: ChapterPreview[];
+  total: number;
+  new_count: number;
+}
+
+export interface AppendResponse {
   slug: string;
-  n: number;
-  query: string;
-  answer: string;
-  citations: { chunk_id: number; chapter_ordinal: number; char_start: number; char_end: number }[];
-  hits: SearchHit[];
+  chapter_count: number;
+  chapters_added: number;
+  chunks_added: number;
+  state: string;
 }

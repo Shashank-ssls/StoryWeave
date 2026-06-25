@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { deleteWork, fetchGraph, fetchWorks } from "./api";
 import type { GraphElements, WorkModel } from "./types";
-import { NODE_TYPES, TYPE_COLOR, relationLabel } from "./ontology";
+import { DEMO_SLUG, NODE_TYPES, TYPE_COLOR, relationLabel } from "./ontology";
 import GraphView, { type Selection } from "./GraphView";
 import Library from "./Library";
 import Composer from "./Composer";
-import SearchPanel from "./SearchPanel";
 
 const EMPTY: GraphElements = { nodes: [], edges: [] };
 
@@ -124,7 +123,7 @@ export default function App(): JSX.Element {
   const [works, setWorks] = useState<WorkModel[]>([]);
   const [work, setWork] = useState<WorkModel | null>(null);
   const [composing, setComposing] = useState(false);
-  const [searching, setSearching] = useState(false);
+  const [appending, setAppending] = useState(false);
   const [n, setN] = useState(1);
   const [elements, setElements] = useState<GraphElements>(EMPTY);
   const [sel, setSel] = useState<Selection>(null);
@@ -168,9 +167,26 @@ export default function App(): JSX.Element {
     setN(1);
     setElements(EMPTY);
     setSel(null);
-    setSearching(false);
+    setAppending(false);
     setError(null);
   }, []);
+
+  // After an append, the work has more chapters: extend the slider to the new max and
+  // jump to the end so the just-added chapters' reveals are visible. The graph re-queries
+  // off the new `work`/`n` (the rebuild already ran before the modal said ready).
+  const onAppended = useCallback(
+    async (slug: string) => {
+      setAppending(false);
+      const fresh = await loadWorks();
+      const updated = fresh.find((w) => w.slug === slug);
+      if (updated) {
+        setWork(updated);
+        setN(updated.chapter_count);
+        setSel(null);
+      }
+    },
+    [loadWorks],
+  );
 
   const toLibrary = useCallback(() => {
     setWork(null);
@@ -218,7 +234,11 @@ export default function App(): JSX.Element {
           onDelete={setPendingDelete}
         />
         {composing ? (
-          <Composer onReady={(slug) => void onComposed(slug)} onClose={() => setComposing(false)} />
+          <Composer
+            mode="create"
+            onReady={(slug) => void onComposed(slug)}
+            onClose={() => setComposing(false)}
+          />
         ) : null}
         {pendingDelete ? (
           <ConfirmDelete
@@ -246,12 +266,11 @@ export default function App(): JSX.Element {
           <span className="work">{work.title}</span>
         </div>
         <div className="topbar-right">
-          <button
-            className={`search-toggle${searching ? " on" : ""}`}
-            onClick={() => setSearching((s) => !s)}
-          >
-            Ask the story
-          </button>
+          {work.slug !== DEMO_SLUG ? (
+            <button className="add-chapters" onClick={() => setAppending(true)}>
+              + Add chapters
+            </button>
+          ) : null}
           <div className="readout">
             <span>ch {n}</span>
             <span>{counts.nodes} entities</span>
@@ -271,8 +290,13 @@ export default function App(): JSX.Element {
         )}
         <Legend />
         <DetailPanel sel={sel} />
-        {searching ? (
-          <SearchPanel slug={work.slug} n={n} onClose={() => setSearching(false)} />
+        {appending ? (
+          <Composer
+            mode="append"
+            work={work}
+            onReady={(slug) => void onAppended(slug)}
+            onClose={() => setAppending(false)}
+          />
         ) : null}
       </main>
 

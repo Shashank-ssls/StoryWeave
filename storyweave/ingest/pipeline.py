@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import hashlib
 import re
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from storyweave.db.models import Chapter, Chunk
 from storyweave.db.repository import Repository
 from storyweave.ingest.cleaner import clean_text
-from storyweave.ingest.splitter import chunk_chapter, detect_chapters
+from storyweave.ingest.splitter import RawChapter, chunk_chapter, detect_chapters
 from storyweave.ingest.work_config import WorkConfig
 
 _SLUG_STRIP = re.compile(r"[^a-z0-9]+")
@@ -27,6 +28,22 @@ def _sha256(text: str) -> str:
 
 def slugify(value: str) -> str:
     return _SLUG_STRIP.sub("-", value.lower()).strip("-") or "untitled"
+
+
+def detect_outline(text: str, config: WorkConfig | None = None) -> list[RawChapter]:
+    """Detect the chapter outline of raw pasted text WITHOUT writing to the DB.
+
+    Runs the exact same ``detect_chapters`` splitter the ingest pipeline uses (on the
+    raw text, before cleaning — which is the order ingest detects in), so a preview
+    count is guaranteed to match what ``ingest`` would actually persist. No mutation.
+    """
+    cfg = config or WorkConfig()
+    tmp = Path(tempfile.gettempdir()) / f"storyweave-preview-{_sha256(text)[:16]}.txt"
+    tmp.write_text(text, encoding="utf-8")
+    try:
+        return detect_chapters(tmp, cfg.splitting)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 @dataclass

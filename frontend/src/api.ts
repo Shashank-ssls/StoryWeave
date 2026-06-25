@@ -1,8 +1,9 @@
 import type {
   AnalysisStatus,
+  AppendResponse,
   GraphResponse,
   IngestResponse,
-  SearchResponse,
+  PreviewResponse,
   WorkModel,
 } from "./types";
 
@@ -60,10 +61,17 @@ export async function fetchStatus(slug: string): Promise<AnalysisStatus> {
   return getJSON<AnalysisStatus>(`/api/v1/works/${encodeURIComponent(slug)}/status`);
 }
 
-// Fenced semantic search: only passages revealed by chapter n, with a cited answer.
-export async function searchWork(slug: string, n: number, q: string): Promise<SearchResponse> {
-  return getJSON<SearchResponse>(
-    `/api/v1/works/${encodeURIComponent(slug)}/search?n=${n}&q=${encodeURIComponent(q)}`,
+// Chapter-detection preview (no DB write): how many chapters the splitter finds, and —
+// with a slug — which are new vs already in the work. Same splitter the ingest uses.
+export async function previewChapters(text: string, slug?: string): Promise<PreviewResponse> {
+  return postJSON<PreviewResponse>("/api/v1/works/preview", { text, slug: slug ?? null });
+}
+
+// Append chapters to an existing work (idempotent; rebuilds the derived graph).
+export async function appendChapters(slug: string, text: string): Promise<AppendResponse> {
+  return postJSON<AppendResponse>(
+    `/api/v1/works/${encodeURIComponent(slug)}/chapters`,
+    { text },
   );
 }
 

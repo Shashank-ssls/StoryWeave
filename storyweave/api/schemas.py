@@ -51,6 +51,35 @@ class AnalysisStatusResponse(BaseModel):
     node_count: int  # > 0 once entities exist (the graph is ready to view)
 
 
+class PreviewRequest(BaseModel):
+    text: str
+    slug: str | None = None  # when set, mark which detected chapters already exist
+
+
+class ChapterPreview(BaseModel):
+    ordinal: int
+    title: str | None
+    is_new: bool  # not yet present in the work (always True for a brand-new novel)
+
+
+class PreviewResponse(BaseModel):
+    chapters: list[ChapterPreview]
+    total: int  # chapters the splitter detected (matches what ingest will persist)
+    new_count: int  # of those, how many are not already in the work
+
+
+class AppendRequest(BaseModel):
+    text: str
+
+
+class AppendResponse(BaseModel):
+    slug: str
+    chapter_count: int  # the work's NEW total (the slider max)
+    chapters_added: int
+    chunks_added: int
+    state: str  # analysis state for the graph rebuild
+
+
 class EntityModel(BaseModel):
     id: int
     name: str
