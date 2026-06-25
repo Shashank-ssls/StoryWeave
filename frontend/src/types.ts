@@ -60,3 +60,21 @@ export interface AnalysisStatus {
   detail: string;
   node_count: number;
 }
+
+export interface SearchHit {
+  chunk_id: number;
+  chapter_ordinal: number;
+  char_start: number;
+  char_end: number;
+  text: string;
+  score: number;
+}
+
+export interface SearchResponse {
+  slug: string;
+  n: number;
+  query: string;
+  answer: string;
+  citations: { chunk_id: number; chapter_ordinal: number; char_start: number; char_end: number }[];
+  hits: SearchHit[];
+}

@@ -3,30 +3,11 @@ import { fetchGraph, fetchWorks } from "./api";
 import type { GraphElements, WorkModel } from "./types";
 import { NODE_TYPES, TYPE_COLOR, relationLabel } from "./ontology";
 import GraphView, { type Selection } from "./GraphView";
+import Library from "./Library";
+import Composer from "./Composer";
+import SearchPanel from "./SearchPanel";
 
 const EMPTY: GraphElements = { nodes: [], edges: [] };
-
-function Cover({ work, onEnter }: { work: WorkModel | null; onEnter: () => void }): JSX.Element {
-  return (
-    <div className="cover">
-      <div className="cover-inner">
-        <div className="eyebrow">a spoiler-aware map of a story</div>
-        <h1 className="wordmark">
-          Story<span className="weave">Weave</span>
-        </h1>
-        <p className="cover-lede">
-          The graph shows only what a reader knows by a given chapter. Slide forward and
-          the story’s connections appear — a hidden identity igniting the moment the text
-          earns it.
-        </p>
-        <button className="enter" onClick={onEnter} disabled={!work}>
-          Enter <span className="enter-work">{work?.title ?? "…"}</span>
-          <span className="enter-meta">from chapter 1</span>
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function Legend(): JSX.Element {
   return (
@@ -105,23 +86,37 @@ function DetailPanel({ sel }: { sel: Selection }): JSX.Element | null {
 }
 
 export default function App(): JSX.Element {
+  const [works, setWorks] = useState<WorkModel[]>([]);
   const [work, setWork] = useState<WorkModel | null>(null);
-  const [entered, setEntered] = useState(false);
+  const [composing, setComposing] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [n, setN] = useState(1);
   const [elements, setElements] = useState<GraphElements>(EMPTY);
   const [sel, setSel] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const loadWorks = useCallback(
+    () =>
+      fetchWorks()
+        .then((w) => {
+          setWorks(w);
+          return w;
+        })
+        .catch((e: unknown) => {
+          setError(String(e));
+          return [] as WorkModel[];
+        }),
+    [],
+  );
+
   useEffect(() => {
-    fetchWorks()
-      .then((works) => setWork(works.find((w) => w.slug === "the-hollow-crown") ?? works[0] ?? null))
-      .catch((e: unknown) => setError(String(e)));
-  }, []);
+    void loadWorks();
+  }, [loadWorks]);
 
   // Every slider move RE-QUERIES the server at N. The fence is server-side, so the
   // payload itself only holds revealed-at-N data — the client never post-filters.
   useEffect(() => {
-    if (!work || !entered) return;
+    if (!work) return;
     let live = true;
     fetchGraph(work.slug, n)
       .then((g) => live && setElements(g.elements))
@@ -129,7 +124,31 @@ export default function App(): JSX.Element {
     return () => {
       live = false;
     };
-  }, [work, n, entered]);
+  }, [work, n]);
+
+  const enter = useCallback((w: WorkModel) => {
+    setWork(w);
+    setN(1);
+    setElements(EMPTY);
+    setSel(null);
+    setSearching(false);
+    setError(null);
+  }, []);
+
+  const toLibrary = useCallback(() => {
+    setWork(null);
+    void loadWorks();
+  }, [loadWorks]);
+
+  const onComposed = useCallback(
+    async (slug: string) => {
+      setComposing(false);
+      const fresh = await loadWorks();
+      const target = fresh.find((w) => w.slug === slug);
+      if (target) enter(target);
+    },
+    [loadWorks, enter],
+  );
 
   const onSelect = useCallback((s: Selection) => setSel(s), []);
   const max = work?.chapter_count ?? 1;
@@ -138,20 +157,39 @@ export default function App(): JSX.Element {
     [elements],
   );
 
-  if (!entered) return <Cover work={work} onEnter={() => setEntered(true)} />;
+  if (!work) {
+    return (
+      <>
+        <Library works={works} onEnter={enter} onAdd={() => setComposing(true)} />
+        {composing ? (
+          <Composer onReady={(slug) => void onComposed(slug)} onClose={() => setComposing(false)} />
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="star">✦</span>
+          <button className="star-home" onClick={toLibrary} aria-label="Back to the shelf">
+            ✦
+          </button>
           <span className="mark">StoryWeave</span>
-          <span className="work">{work?.title}</span>
+          <span className="work">{work.title}</span>
         </div>
-        <div className="readout">
-          <span>ch {n}</span>
-          <span>{counts.nodes} entities</span>
-          <span>{counts.edges} links</span>
+        <div className="topbar-right">
+          <button
+            className={`search-toggle${searching ? " on" : ""}`}
+            onClick={() => setSearching((s) => !s)}
+          >
+            Ask the story
+          </button>
+          <div className="readout">
+            <span>ch {n}</span>
+            <span>{counts.nodes} entities</span>
+            <span>{counts.edges} links</span>
+          </div>
         </div>
       </header>
 
@@ -166,6 +204,9 @@ export default function App(): JSX.Element {
         )}
         <Legend />
         <DetailPanel sel={sel} />
+        {searching ? (
+          <SearchPanel slug={work.slug} n={n} onClose={() => setSearching(false)} />
+        ) : null}
       </main>
 
       <footer className="reading">
