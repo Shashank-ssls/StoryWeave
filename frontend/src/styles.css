@@ -320,15 +320,44 @@ button {
 }
 
 .reading-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  min-width: 150px;
   font-family: var(--display);
   font-size: 16px;
-  min-width: 116px;
-  text-align: right;
+  color: var(--ink);
 }
 
-.reading-num b {
-  color: var(--reveal);
-  font-weight: 500;
+.rn-label {
+  color: var(--ink);
+}
+
+/* The editable reading-position box: a short mono numeric field. Neutral, NOT gold —
+   gold stays reserved for identity reveals (DESIGN.md). */
+.chapter-box {
+  width: 3.4ch;
+  box-sizing: content-box;
+  font-family: var(--mono);
+  font-size: 14px;
+  text-align: center;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 3px 5px;
+  -moz-appearance: textfield;
+}
+
+.chapter-box:hover {
+  border-color: color-mix(in srgb, var(--ink-dim) 60%, var(--line));
+}
+
+.chapter-box:focus {
+  outline: none;
+  border-color: var(--ink-dim);
+  background: var(--ground);
 }
 
 .reading-num .of {
@@ -830,5 +859,17 @@ button {
   .readout span:nth-child(2),
   .readout span:nth-child(3) {
     display: none;
+  }
+  /* The editable box widens the readout; reclaim room so "of M" never clips. */
+  .reading {
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .reading-label {
+    display: none;
+  }
+  .reading-num {
+    min-width: 0;
+    font-size: 15px;
   }
 }

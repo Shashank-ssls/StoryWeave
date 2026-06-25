@@ -119,6 +119,64 @@ function ConfirmDelete({
   );
 }
 
+// The reading position as an EDITABLE box — a second VIEW of the one `n` (the slider is
+// the other). It never filters; committing just calls onCommit(n), which re-queries the
+// fence exactly like a slider drag. Commit is Enter/blur only (never per-keystroke), so a
+// half-typed value can't flash an out-of-range graph; on commit we clamp to [1, M].
+function ChapterBox({
+  n,
+  max,
+  onCommit,
+}: {
+  n: number;
+  max: number;
+  onCommit: (v: number) => void;
+}): JSX.Element {
+  const [draft, setDraft] = useState(String(n));
+  const [editing, setEditing] = useState(false);
+
+  const commit = (): void => {
+    const raw = draft.trim();
+    if (!/^-?\d+$/.test(raw)) {
+      setDraft(String(n)); // non-integer / empty / garbage -> reject, revert, no fence change
+      setEditing(false);
+      return;
+    }
+    const clamped = Math.min(max, Math.max(1, parseInt(raw, 10))); // 0/neg/>M -> nearest valid
+    setDraft(String(clamped));
+    setEditing(false);
+    if (clamped !== n) onCommit(clamped);
+  };
+
+  return (
+    <span className="reading-num">
+      <span className="rn-label">chapter</span>
+      <input
+        className="chapter-box"
+        type="text"
+        inputMode="numeric"
+        aria-label="Current chapter — type a number and press Enter"
+        value={editing ? draft : String(n)}
+        onFocus={() => {
+          setEditing(true);
+          setDraft(String(n));
+        }}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur(); // blur runs commit
+          else if (e.key === "Escape") {
+            setDraft(String(n));
+            setEditing(false);
+            e.currentTarget.blur();
+          }
+        }}
+      />
+      <span className="of">of {max}</span>
+    </span>
+  );
+}
+
 export default function App(): JSX.Element {
   const [works, setWorks] = useState<WorkModel[]>([]);
   const [work, setWork] = useState<WorkModel | null>(null);
@@ -312,9 +370,7 @@ export default function App(): JSX.Element {
           aria-label="Chapter"
           onChange={(e) => setN(Number(e.target.value))}
         />
-        <span className="reading-num">
-          chapter <b>{n}</b> <span className="of">of {max}</span>
-        </span>
+        <ChapterBox n={n} max={max} onCommit={setN} />
       </footer>
     </div>
   );
