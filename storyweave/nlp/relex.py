@@ -34,7 +34,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
 from storyweave.config import Settings, get_settings
-from storyweave.db.models import Edge, ExtractionMethod, RelationTier
+from storyweave.db.models import Edge, ExtractionMethod, NodeType, RelationTier
 from storyweave.db.repository import Repository
 from storyweave.ingest.work_config import WorkConfig
 from storyweave.nlp.cluster import normalize_surface
@@ -72,6 +72,30 @@ RELATION_PROMPTS: dict[str, str] = {
 SYMMETRIC_RELATIONS: frozenset[str] = frozenset(
     {"Ally", "Enemy", "Rival", "Sibling", "Spouse", "Family", "Romantic"}
 )
+
+# Phase 7d — TYPE-AWARE junk rejection. A social relation is between AGENTS (people or
+# organizations); kinship, romance, and mentorship are between PEOPLE specifically. relex
+# scores high on type-nonsensical relations (measured on the CC0 sample: "Wren Respects
+# <the heron ring>" 0.68, "<he> Student <the Coil>" 0.62) — these are dropped here.
+# Enum-driven (ontology data, never per-novel), and EVERY hand-labeled gold relation on
+# the sample is agent↔agent, so this provably cannot lower the 7a precision (P=1.00).
+_AGENT_TYPES: frozenset[NodeType] = frozenset({NodeType.CHARACTER, NodeType.ORGANIZATION})
+_PERSON_ONLY_RELATIONS: frozenset[str] = frozenset(
+    {"Parent", "Child", "Sibling", "Spouse", "Romantic", "Family", "Mentor", "Student"}
+)
+
+
+def relation_types_valid(relation: str, src_type: NodeType, tgt_type: NodeType) -> bool:
+    """True iff a Tier-2 ``relation`` is type-compatible with its endpoint node types.
+
+    Order-independent (so it may be checked before the symmetric-relation swap): the
+    constraint is on the SET of endpoint types, not their direction. Kinship/romance/
+    mentorship require both endpoints be Character; all other social relations require
+    both endpoints be agents (Character or Organization). A violation is junk.
+    """
+    if relation in _PERSON_ONLY_RELATIONS:
+        return src_type is NodeType.CHARACTER and tgt_type is NodeType.CHARACTER
+    return src_type in _AGENT_TYPES and tgt_type in _AGENT_TYPES
 
 # Entity labels for the relex NER pass. The anchoring step re-grounds every span to a
 # canonical node, so this only needs to be broad enough to surface the right spans.
@@ -187,6 +211,7 @@ class SocialReport:
     work_id: int
     edges_added: int = 0
     per_relation: dict[str, int] = field(default_factory=dict)
+    junk_rejected: int = 0  # distinct edges dropped by the type-aware filter (Phase 7d)
     degraded: bool = False  # True when the relex model was unavailable (graceful floor)
 
     def summary(self) -> str:
@@ -196,7 +221,10 @@ class SocialReport:
                 f"(0 Tier-2 edges added)"
             )
         by_rel = ", ".join(f"{r}:{n}" for r, n in sorted(self.per_relation.items()))
-        return f"work id={self.work_id}: {self.edges_added} Tier-2 edges ({by_rel})"
+        return (
+            f"work id={self.work_id}: {self.edges_added} Tier-2 edges ({by_rel}); "
+            f"{self.junk_rejected} type-invalid junk rejected"
+        )
 
 
 def _node_surface_index(repo: Repository, work_id: int) -> dict[str, int]:
@@ -254,8 +282,10 @@ def extract_social_relations(
 
     surface_to_node = _node_surface_index(repo, work_id)
     chapter_ordinal = {c.id: c.ordinal for c in repo.list_chapters(work_id) if c.id is not None}
+    node_type = {n.id: n.type for n in repo.list_nodes(work_id) if n.id is not None}
 
     accum: dict[tuple[int, int, str], _EdgeAccum] = {}
+    rejected: set[tuple[int, int, str]] = set()  # type-invalid junk (counted once each)
     try:
         for chapter in repo.list_chapters(work_id):
             assert chapter.id is not None
@@ -265,6 +295,12 @@ def extract_social_relations(
                     tgt = surface_to_node.get(normalize_surface(span.target_surface))
                     if src is None or tgt is None or src == tgt:
                         continue  # no phantom nodes; both endpoints must be grounded
+                    # Phase 7d: drop a relation whose endpoint TYPES are nonsensical for it
+                    # (e.g. a person "Respects" an Item). Order-independent, so checked
+                    # before the symmetric swap. Counted, not silently swallowed.
+                    if not relation_types_valid(span.relation, node_type[src], node_type[tgt]):
+                        rejected.add((min(src, tgt), max(src, tgt), span.relation))
+                        continue
                     if span.relation in SYMMETRIC_RELATIONS and src > tgt:
                         src, tgt = tgt, src  # order-independent key for symmetric relations
                     key = (src, tgt, span.relation)
@@ -278,6 +314,7 @@ def extract_social_relations(
         report.degraded = True
         return report
 
+    report.junk_rejected = len(rejected)
     repo.clear_edges_by_tier(work_id, RelationTier.SOCIAL)
     for (src, tgt, relation), acc in accum.items():
         repo.add_edge(

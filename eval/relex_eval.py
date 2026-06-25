@@ -141,6 +141,11 @@ def run() -> int:
         f"connected by SOME structural edge (rules find the link, not its social nature)."
     )
     print(f"\nTier-2 edges produced by relex: {social.edges_added}")
+    print(
+        f"Tier-2 type-invalid junk rejected (Phase 7d): {social.junk_rejected} "
+        f"(dropped from the graph; gold P/R above is unchanged — the junk is between "
+        f"non-gold / wrong-type endpoints)"
+    )
     return 0 if social.edges_added > 0 else 1
 
 

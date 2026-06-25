@@ -27,6 +27,7 @@ from storyweave.nlp.relex import (
     RelationSpan,
     SocialReport,
     extract_social_relations,
+    relation_types_valid,
 )
 from storyweave.query import fence
 
@@ -205,6 +206,122 @@ def test_graceful_degradation_keeps_the_floor() -> None:
         # The structural floor and the graph it powers are unaffected.
         assert repo.count_edges(wid) == tier1_count
         assert len(fence.visible_edges(repo, wid, 1)) == tier1_count
+
+
+# --------------------------------------------------------------------------- #
+# Phase 7d — TYPE-AWARE junk rejection (deterministic; the live measure is report-only
+# in eval/relex_eval.py). relex scores high on type-nonsensical relations; we drop them.
+# The HARD constraint: this must not drop any hand-labeled CC0 gold relation (P=1.00).
+# --------------------------------------------------------------------------- #
+def test_relation_types_valid_table() -> None:
+    # agent<->agent relations accept Character/Organization in either slot.
+    assert relation_types_valid("Serves", NodeType.CHARACTER, NodeType.ORGANIZATION)
+    assert relation_types_valid("Ally", NodeType.ORGANIZATION, NodeType.ORGANIZATION)
+    assert relation_types_valid("Betrayed", NodeType.CHARACTER, NodeType.CHARACTER)
+    # kinship/romance/mentorship require two Characters.
+    assert relation_types_valid("Parent", NodeType.CHARACTER, NodeType.CHARACTER)
+    assert not relation_types_valid("Parent", NodeType.CHARACTER, NodeType.ORGANIZATION)
+    assert not relation_types_valid("Student", NodeType.CHARACTER, NodeType.ORGANIZATION)
+    # a person does not "Respect"/"love" an Item or a Place — junk.
+    assert not relation_types_valid("Respects", NodeType.CHARACTER, NodeType.ITEM)
+    assert not relation_types_valid("Romantic", NodeType.CHARACTER, NodeType.PLACE)
+
+
+def test_type_invalid_social_relation_is_rejected_as_junk() -> None:
+    """A person 'Respects' an Item -> dropped + counted; the valid edge in the same run
+    still persists (the measured 'Wren Respects <the heron ring>' 0.68 junk class)."""
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid, ids = _setup_work(
+            repo,
+            [
+                ("Wren", NodeType.CHARACTER, 1),
+                ("the Coil", NodeType.ORGANIZATION, 1),
+                ("heron ring", NodeType.ITEM, 1),
+            ],
+        )
+        fake = FakeRelex(
+            [
+                RelationSpan("Wren", "Serves", "the Coil", 0.95, "ev"),  # Char->Org: valid
+                RelationSpan("Wren", "Respects", "heron ring", 0.68, "ev"),  # Char->Item: junk
+            ]
+        )
+        report = extract_social_relations(wid, repo, extractor=fake)
+
+        assert report.edges_added == 1
+        assert report.junk_rejected == 1
+        edges = repo.list_edges_by_tier(wid, RelationTier.SOCIAL)
+        assert {e.relation for e in edges} == {"Serves"}
+        assert all(ids["heron ring"] not in (e.source_id, e.target_id) for e in edges)
+
+
+def test_person_only_relation_to_an_organization_is_rejected() -> None:
+    """'Student of <the Coil>' (a person-only relation pointing at an Organization) is the
+    measured 0.60–0.62 junk class -> dropped; the Char->Char relation in the run survives."""
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid, _ = _setup_work(
+            repo,
+            [
+                ("Maela", NodeType.CHARACTER, 1),
+                ("Caelum", NodeType.CHARACTER, 1),
+                ("the Coil", NodeType.ORGANIZATION, 1),
+            ],
+        )
+        fake = FakeRelex(
+            [
+                RelationSpan("Maela", "Parent", "Caelum", 0.9, "ev"),  # Char->Char: valid
+                RelationSpan("Caelum", "Student", "the Coil", 0.8, "ev"),  # person-only->Org: junk
+            ]
+        )
+        report = extract_social_relations(wid, repo, extractor=fake)
+
+        assert report.edges_added == 1
+        assert report.junk_rejected == 1
+        assert {e.relation for e in repo.list_edges_by_tier(wid, RelationTier.SOCIAL)} == {"Parent"}
+
+
+def test_all_gold_relations_pass_the_type_filter_unchanged() -> None:
+    """THE HARD 7d CONSTRAINT (P=1.00 preserved): every hand-labeled CC0 gold relation is
+    agent<->agent, so the type filter drops NONE of them — and the legitimately
+    multi-relation pair (Halvard Family+Betrayed Caelum) is NOT collapsed, which is why a
+    generic one-relation-per-pair disambiguation was rejected."""
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid, ids = _setup_work(
+            repo,
+            [
+                ("Wren", NodeType.CHARACTER, 1),
+                ("the Coil", NodeType.ORGANIZATION, 1),
+                ("Maela", NodeType.CHARACTER, 1),
+                ("Caelum", NodeType.CHARACTER, 1),
+                ("Veris", NodeType.CHARACTER, 1),
+                ("Dunmore", NodeType.CHARACTER, 1),
+                ("Halvard", NodeType.CHARACTER, 1),
+            ],
+        )
+        gold = [
+            RelationSpan("Wren", "Serves", "the Coil", 0.9, "ev"),
+            RelationSpan("Maela", "Parent", "Caelum", 0.9, "ev"),
+            RelationSpan("Veris", "Ally", "Maela", 0.9, "ev"),
+            RelationSpan("Dunmore", "Serves", "Maela", 0.9, "ev"),
+            RelationSpan("Halvard", "Family", "Caelum", 0.9, "ev"),
+            RelationSpan("Halvard", "Betrayed", "Caelum", 0.9, "ev"),
+            RelationSpan("Veris", "Ally", "Wren", 0.9, "ev"),
+        ]
+        report = extract_social_relations(wid, repo, extractor=FakeRelex(gold))
+
+        assert report.junk_rejected == 0  # nothing in the gold is type-invalid
+        assert report.edges_added == 7  # every gold relation survives the filter
+        rels = sorted(e.relation for e in repo.list_edges_by_tier(wid, RelationTier.SOCIAL))
+        assert rels == ["Ally", "Ally", "Betrayed", "Family", "Parent", "Serves", "Serves"]
+        pair = {ids["Halvard"], ids["Caelum"]}
+        on_pair = {
+            e.relation
+            for e in repo.list_edges_by_tier(wid, RelationTier.SOCIAL)
+            if {e.source_id, e.target_id} == pair
+        }
+        assert on_pair == {"Family", "Betrayed"}  # both kept; not collapsed
 
 
 # --------------------------------------------------------------------------- #
