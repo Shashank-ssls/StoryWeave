@@ -43,3 +43,20 @@ export interface GraphResponse {
   n: number;
   elements: GraphElements;
 }
+
+export interface IngestResponse {
+  slug: string;
+  title: string;
+  chapter_count: number;
+  chunks_added: number;
+  state: string;
+}
+
+export type AnalysisState = "queued" | "extracting" | "relating" | "ready" | "error" | "unknown";
+
+export interface AnalysisStatus {
+  slug: string;
+  state: AnalysisState;
+  detail: string;
+  node_count: number;
+}

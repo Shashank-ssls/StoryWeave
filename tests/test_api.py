@@ -12,8 +12,10 @@ import hashlib
 import pytest
 from fastapi.testclient import TestClient
 
+from storyweave.api import jobs
 from storyweave.api.app import create_app
 from storyweave.api.deps import get_embedder, get_repository, get_vector_store
+from storyweave.config import get_settings
 from storyweave.db.models import (
     Chapter,
     Chunk,
@@ -55,6 +57,12 @@ def _add_chapter_chunk(repo: Repository, wid: int, ordinal: int, text: str) -> N
         Chunk(chapter_id=cid, work_id=wid, ordinal=0, char_start=0, char_end=len(text),
               text=text, content_hash=f"c{ordinal}")
     )
+
+
+@pytest.fixture(autouse=True)
+def _reset_jobs() -> None:
+    """The analysis registry is a module global; isolate it per test."""
+    jobs._jobs.clear()
 
 
 @pytest.fixture
@@ -138,6 +146,66 @@ def test_list_works(client: tuple[TestClient, dict[str, int]]) -> None:
 def test_unknown_work_404(client: tuple[TestClient, dict[str, int]]) -> None:
     c, _ = client
     assert c.get("/api/v1/works/nope/entities?n=1").status_code == 404
+
+
+# --- in-app ingest + analysis status (Part B) ----------------------------- #
+
+
+_CH_TEXT = (
+    "Chapter 1\nWren stole a ring in the moonlit market.\n\n"
+    "Chapter 2\nWren was Prince Caelum, the drowned heir, all along.\n"
+)
+
+
+def test_ingest_creates_work_and_chapters(
+    client: tuple[TestClient, dict[str, int]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Don't shell out to .venv-ml in the unit test — record the launch instead.
+    launched: list[tuple[str, str]] = []
+    monkeypatch.setattr(jobs, "start_analysis", lambda slug, db: launched.append((slug, db)))
+    c, _ = client
+    resp = c.post("/api/v1/works", json={"title": "The Lantern Keep", "text": _CH_TEXT})
+    assert resp.status_code == 201
+    body = resp.json()
+    assert body["slug"] == "the-lantern-keep"
+    assert body["chapter_count"] == 2
+    assert body["state"] == "queued"
+    assert launched == [("the-lantern-keep", str(get_settings().db_path))]
+    # The new work is listed and analysis status is reachable.
+    assert "the-lantern-keep" in {w["slug"] for w in c.get("/api/v1/works").json()["works"]}
+
+
+def test_ingest_duplicate_title_409(
+    client: tuple[TestClient, dict[str, int]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(jobs, "start_analysis", lambda slug, db: None)
+    c, _ = client
+    c.post("/api/v1/works", json={"title": "The Lantern Keep", "text": _CH_TEXT})
+    dup = c.post("/api/v1/works", json={"title": "The Lantern Keep", "text": _CH_TEXT})
+    assert dup.status_code == 409
+
+
+def test_ingest_empty_text_422(client: tuple[TestClient, dict[str, int]]) -> None:
+    c, _ = client
+    assert c.post("/api/v1/works", json={"title": "x", "text": "   "}).status_code == 422
+
+
+def test_status_reflects_job_state(
+    client: tuple[TestClient, dict[str, int]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(jobs, "start_analysis", lambda slug, db: jobs._set(slug, "extracting"))
+    c, _ = client
+    c.post("/api/v1/works", json={"title": "The Lantern Keep", "text": _CH_TEXT})
+    st = c.get("/api/v1/works/the-lantern-keep/status").json()
+    assert st["state"] == "extracting"
+    assert st["node_count"] == 0
+    # A pre-seeded work with nodes but no job reads as ready.
+    seeded = c.get("/api/v1/works/demo/status").json()
+    assert seeded["state"] == "ready"
+    assert seeded["node_count"] >= 1
 
 
 # --- fenced reads ---------------------------------------------------------- #

@@ -31,6 +31,26 @@ class WorksResponse(BaseModel):
     works: list[WorkModel]
 
 
+class IngestRequest(BaseModel):
+    title: str
+    text: str
+
+
+class IngestResponse(BaseModel):
+    slug: str
+    title: str
+    chapter_count: int
+    chunks_added: int
+    state: str  # analysis state (queued/extracting/…)
+
+
+class AnalysisStatusResponse(BaseModel):
+    slug: str
+    state: str  # queued | extracting | relating | ready | error
+    detail: str
+    node_count: int  # > 0 once entities exist (the graph is ready to view)
+
+
 class EntityModel(BaseModel):
     id: int
     name: str

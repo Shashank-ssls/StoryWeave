@@ -9,14 +9,17 @@ no ML; the search route's embedder + vector store arrive via overridable depende
 
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 
 from storyweave import __version__
+from storyweave.api import jobs
 from storyweave.api.deps import get_embedder, get_repository, get_vector_store
 from storyweave.api.schemas import (
+    AnalysisStatusResponse,
     CitationModel,
     EdgeModel,
     EntitiesResponse,
@@ -26,6 +29,8 @@ from storyweave.api.schemas import (
     GraphResponse,
     HealthResponse,
     HitModel,
+    IngestRequest,
+    IngestResponse,
     PropertyModel,
     SearchResponse,
     WorkModel,
@@ -35,6 +40,8 @@ from storyweave.config import get_settings
 from storyweave.db.models import Work
 from storyweave.db.repository import Repository
 from storyweave.graph.serialize import graph_json
+from storyweave.ingest.pipeline import ingest as run_ingest
+from storyweave.ingest.pipeline import slugify
 from storyweave.query import fence
 from storyweave.search.embedder import EmbedderProtocol
 from storyweave.search.retriever import compose_answer
@@ -88,6 +95,55 @@ def list_works(repo: RepoDep) -> WorksResponse:
         for w in repo.list_works()
     ]
     return WorksResponse(works=works)
+
+
+@router.post("/works", response_model=IngestResponse, status_code=201)
+def ingest_work(body: IngestRequest, repo: RepoDep) -> IngestResponse:
+    """In-app ingest: create the work + chapters in-process (ML-free), then kick off
+    extract→relate in the background (subprocess to .venv-ml). The graph populates as
+    analysis finishes; poll `/works/{slug}/status`."""
+    title = body.title.strip()
+    text = body.text.strip()
+    if not title or not text:
+        raise HTTPException(status_code=422, detail="title and text are required")
+    slug = slugify(title)
+    if repo.get_work_by_slug(slug) is not None:
+        raise HTTPException(status_code=409, detail=f"a work named '{title}' already exists")
+
+    tmp = Path(tempfile.gettempdir()) / f"storyweave-ingest-{slug}.txt"
+    tmp.write_text(text, encoding="utf-8")
+    try:
+        report = run_ingest(tmp, repo, slug=slug, title=title)
+    finally:
+        tmp.unlink(missing_ok=True)
+    if report.chapters_added == 0 and report.chapters_updated == 0:
+        raise HTTPException(status_code=422, detail="no chapters detected in the text")
+
+    jobs.start_analysis(slug, str(get_settings().db_path))
+    status = jobs.get_status(slug)
+    return IngestResponse(
+        slug=slug,
+        title=title,
+        chapter_count=repo.count_chapters(report.work_id),
+        chunks_added=report.chunks_added,
+        state=status.state if status else "queued",
+    )
+
+
+@router.get("/works/{slug}/status", response_model=AnalysisStatusResponse)
+def work_status(slug: str, repo: RepoDep) -> AnalysisStatusResponse:
+    """Analysis progress for in-app ingest; node_count > 0 means the graph is viewable."""
+    work = repo.get_work_by_slug(slug)
+    node_count = repo.count_nodes(work.id) if work and work.id else 0
+    status = jobs.get_status(slug)
+    # A pre-seeded work (e.g. the demo) has no job; it is ready iff it already has nodes.
+    state = status.state if status else ("ready" if node_count > 0 else "unknown")
+    return AnalysisStatusResponse(
+        slug=slug,
+        state=state,
+        detail=status.detail if status else "",
+        node_count=node_count,
+    )
 
 
 @router.get("/works/{slug}/entities", response_model=EntitiesResponse)
