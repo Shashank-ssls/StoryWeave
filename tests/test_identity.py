@@ -7,6 +7,10 @@ and they are DETERMINISTIC (a live LLM is non-deterministic and must never gate 
 
 A. FLIP-AT-GOLD     — edges land at revealed_chapter == gold k (C1=2, C2=3, C3=4).
 B. NO-CITATION-NO-EDGE — a confident YES with an unverifiable quote writes NOTHING.
+D. SAME_AS + REINCARNATION — the two relations the sample never exercises, made
+   deterministically test-ready as siblings of A/B. LIVE-UNCONFIRMED: no real sample
+   co-names a plain SAME_AS or a REINCARNATION reveal, so live proof stays PARKED;
+   deterministic readiness is NOT live proof.
 
 The live model is exercised separately, non-blocking, in eval/identity_eval.py (and
 the opt-in smoke at the bottom), per the repo's eval-script convention.
@@ -348,6 +352,107 @@ def test_single_anchored_transmigration_writes_edge_at_gold() -> None:
         assert edges[0].relation == "TRANSMIGRATED_INTO"
         assert edges[0].revealed_chapter == 4
         assert {edges[0].source_id, edges[0].target_id} == {ids["Wren"], ids["Caelum"]}
+
+
+# --------------------------------------------------------------------------- #
+# D. SAME_AS + REINCARNATION — the two Tier-3 relations the SAMPLE never exercises,
+# made DETERMINISTICALLY test-ready as siblings of the proven three (flip-at-gold +
+# no-citation-no-edge). These prove OUR mechanism (smallest-k reveal, the family-aware
+# citation gate, fence pass-through, exact relation label) the same way A/B prove the
+# other three. They are LIVE-UNCONFIRMED: no real sample co-names a plain SAME_AS or a
+# REINCARNATION reveal, so live confirmation stays PARKED. Deterministic readiness is
+# NOT live proof. We reuse the existing in-range clues (no new sample text invented):
+# the ALIAS_CLUE literally states "...were the same person" (a clean SAME_AS co-naming
+# clause), and the single-anchored TRANSMIG_CLUE is in REINCARNATION's own citation
+# family (SINGLE_ANCHOR_IDENTITY) per the 7c-fix.
+# --------------------------------------------------------------------------- #
+def test_same_as_flip_at_gold_and_fence() -> None:
+    """SAME_AS (co-naming family): the edge lands at its gold k, never earlier, and is
+    fenced by revealed_chapter — mirroring the proven ALIAS case."""
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid, ids = _setup_sample(repo)
+        sv = frozenset({"Gray Sparrow", "Lady Veris"})
+        # The co-naming clause ("...were the same person") occurs in ch3 -> SAME_AS gold k=3.
+        script = {
+            (sv, 3): IdentityVerdict(True, "SAME_AS", ALIAS_CLUE),
+            (sv, 4): IdentityVerdict(True, "SAME_AS", ALIAS_CLUE),
+        }
+        report = infer_identities(wid, repo, model=FakeIdentity(script))
+
+        assert report.edges_added == 1
+        assert report.citations_rejected == 0
+        edges = repo.list_edges_by_tier(wid, RelationTier.IDENTITY)
+        assert len(edges) == 1
+        edge = edges[0]
+        assert edge.relation == "SAME_AS"  # subtype discipline: exactly SAME_AS
+        assert edge.revealed_chapter == 3  # flip at gold, never a chapter early
+        assert {edge.source_id, edge.target_id} == {ids["Gray Sparrow"], ids["Lady Veris"]}
+        assert edge.source_id != edge.target_id  # an edge, never a node collapse
+        assert edge.extraction_method is ExtractionMethod.LLM and edge.evidence_span
+        # Fence pass-through (no new fence path): hidden at n<3, shown at n>=3.
+        assert "SAME_AS" not in {e.relation for e in fence.visible_edges(repo, wid, 2)}
+        assert "SAME_AS" in {e.relation for e in fence.visible_edges(repo, wid, 3)}
+
+
+def test_same_as_without_valid_citation_writes_no_edge() -> None:
+    """SAME_AS counterpart to test B: a confident YES with a fabricated quote writes
+    nothing and is counted (the fabrication floor is untouched for the co-naming family)."""
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid, _ = _setup_sample(repo)
+        sv = frozenset({"Gray Sparrow", "Lady Veris"})
+        script = {
+            (sv, k): IdentityVerdict(True, "SAME_AS", "they are plainly one and the same")
+            for k in (3, 4)
+        }
+        report = infer_identities(wid, repo, model=FakeIdentity(script))
+        assert report.edges_added == 0
+        assert repo.list_edges_by_tier(wid, RelationTier.IDENTITY) == []
+        assert report.citations_rejected >= 1
+
+
+def test_reincarnation_single_anchor_flip_at_gold_and_fence() -> None:
+    """REINCARNATION (single-anchor family per 7c-fix): a single-anchored confirmation
+    lands the edge at its gold k and is edge-level fenced — mirroring TRANSMIGRATED_INTO."""
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid, ids = _setup_sample(repo)
+        wc = frozenset({"Wren", "Caelum"})
+        # Single-anchored clue (names NEITHER entity) occurs in ch4 -> REINCARNATION gold k=4.
+        script = {(wc, 4): IdentityVerdict(True, "REINCARNATION", TRANSMIG_CLUE)}
+        report = infer_identities(wid, repo, model=FakeIdentity(script))
+
+        assert report.edges_added == 1
+        assert report.citations_rejected == 0  # the single-anchored citation was ACCEPTED
+        edges = repo.list_edges_by_tier(wid, RelationTier.IDENTITY)
+        assert len(edges) == 1
+        edge = edges[0]
+        assert edge.relation == "REINCARNATION"  # subtype discipline: exactly REINCARNATION
+        assert edge.revealed_chapter == 4  # flip at gold, never earlier
+        assert {edge.source_id, edge.target_id} == {ids["Wren"], ids["Caelum"]}
+        assert edge.source_id != edge.target_id
+        # Edge-level fence: both endpoints are visible by ch2, but the edge stays hidden
+        # until its own revealed_chapter (4) — proven independent of the endpoints.
+        assert "REINCARNATION" not in {e.relation for e in fence.visible_edges(repo, wid, 3)}
+        assert "REINCARNATION" in {e.relation for e in fence.visible_edges(repo, wid, 4)}
+
+
+def test_reincarnation_without_valid_citation_writes_no_edge() -> None:
+    """REINCARNATION counterpart to test B: even in the single-anchor family the
+    fabrication floor holds — a paraphrase not in the passage writes nothing."""
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid, _ = _setup_sample(repo)
+        wc = frozenset({"Wren", "Caelum"})
+        script = {
+            (wc, k): IdentityVerdict(True, "REINCARNATION", "reborn from an ancient soul")
+            for k in (1, 2, 3, 4)
+        }
+        report = infer_identities(wid, repo, model=FakeIdentity(script))
+        assert report.edges_added == 0
+        assert repo.list_edges_by_tier(wid, RelationTier.IDENTITY) == []
+        assert report.citations_rejected >= 1
 
 
 def test_relation_normalization_stays_within_tier3() -> None:

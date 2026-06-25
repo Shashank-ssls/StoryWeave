@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from storyweave.api import jobs
 
 
@@ -30,7 +32,7 @@ def test_set_and_get_status_roundtrip() -> None:
     assert jobs.get_status("w") is not st
 
 
-def test_run_errors_when_ml_env_missing(monkeypatch) -> None:
+def test_run_errors_when_ml_env_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("STORYWEAVE_ML_PYTHON", str(Path("nonexistent") / "python.exe"))
     jobs._run("w", db_path=":memory:")
     st = jobs.get_status("w")
@@ -39,6 +41,6 @@ def test_run_errors_when_ml_env_missing(monkeypatch) -> None:
     assert ".venv-ml" in st.detail or "ML environment" in st.detail
 
 
-def test_ml_python_honours_override(monkeypatch) -> None:
+def test_ml_python_honours_override(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("STORYWEAVE_ML_PYTHON", "C:/custom/py.exe")
     assert jobs.ml_python() == Path("C:/custom/py.exe")
