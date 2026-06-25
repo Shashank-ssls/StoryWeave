@@ -11,6 +11,9 @@ D. SAME_AS + REINCARNATION — the two relations the sample never exercises, mad
    deterministically test-ready as siblings of A/B. LIVE-UNCONFIRMED: no real sample
    co-names a plain SAME_AS or a REINCARNATION reveal, so live proof stays PARKED;
    deterministic readiness is NOT live proof.
+E. MALFORMED-RELATION ROBUSTNESS — a single uncoercible `relation` blob (the qwen
+   JSON-object bug) skips only that pair + is counted, never zeroes the run; DISTINCT
+   from genuine model/infra degradation (which still degrades the whole run, as before).
 
 The live model is exercised separately, non-blocking, in eval/identity_eval.py (and
 the opt-in smoke at the bottom), per the repo's eval-script convention.
@@ -453,6 +456,62 @@ def test_reincarnation_without_valid_citation_writes_no_edge() -> None:
         assert report.edges_added == 0
         assert repo.list_edges_by_tier(wid, RelationTier.IDENTITY) == []
         assert report.citations_rejected >= 1
+
+
+# --------------------------------------------------------------------------- #
+# E. MALFORMED-RELATION ROBUSTNESS (the qwen2.5:7b JSON-object `relation` bug). One bad
+# `relation` blob must degrade AT MOST that one candidate pair, never zero the whole run.
+# This is robustness, not a correctness/over-merge change — it is DISTINCT from genuine
+# model/infra degradation (model raises -> whole run degraded), which is tested separately
+# (test_graceful_degradation_keeps_the_floor) and stays unchanged.
+# --------------------------------------------------------------------------- #
+def test_one_malformed_relation_skips_only_that_pair_not_the_whole_run() -> None:
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid, ids = _setup_sample(repo)
+        wc = frozenset({"Wren", "Caelum"})
+        sv = frozenset({"Gray Sparrow", "Lady Veris"})
+        # The bad pair: a confident YES whose `relation` was an uncoercible blob (the model
+        # wrapper sets malformed_relation=True; relation normalized to None).
+        bad = IdentityVerdict(True, None, "they are the same", malformed_relation=True)
+        script = {
+            (wc, 2): bad, (wc, 3): bad, (wc, 4): bad,  # malformed every k -> no edge for wc
+            (sv, 3): IdentityVerdict(True, "ALIAS", ALIAS_CLUE),  # a well-formed pair
+            (sv, 4): IdentityVerdict(True, "ALIAS", ALIAS_CLUE),
+        }
+        report = infer_identities(wid, repo, model=FakeIdentity(script))
+
+        # The run was NOT zeroed by the one malformed pair...
+        assert report.degraded is False
+        # ...the malformed pair is observable + distinct from a clean NO / a rejected cite...
+        assert report.malformed_relations >= 1
+        # ...and the OTHER pair STILL wrote its edge (the whole point: not whole-run dead).
+        edges = repo.list_edges_by_tier(wid, RelationTier.IDENTITY)
+        assert len(edges) == 1
+        assert edges[0].relation == "ALIAS"
+        assert edges[0].revealed_chapter == 3
+        assert {edges[0].source_id, edges[0].target_id} == {ids["Gray Sparrow"], ids["Lady Veris"]}
+
+
+def test_normalize_relation_tolerates_non_str_without_raising() -> None:
+    """The qwen JSON-object bug: a dict/list/number `relation` must coerce or return None,
+    NEVER raise (a raise is what used to escalate into a whole-run degrade)."""
+    # Coerce an unambiguous string out of a wrapper object / 1-element list.
+    assert normalize_relation({"relation": "SAME_AS"}) == "SAME_AS"
+    assert normalize_relation({"value": "secret identity"}) == "SECRET_IDENTITY"
+    assert normalize_relation(["ALIAS"]) == "ALIAS"
+    assert normalize_relation({"type": "Transmigrated-Into"}) == "TRANSMIGRATED_INTO"
+    # Ambiguous / unreadable blobs -> None (the unrecognized-relation no-edge path).
+    assert normalize_relation({"a": "SAME_AS", "b": "ALIAS"}) is None
+    assert normalize_relation(["SAME_AS", "ALIAS"]) is None
+    assert normalize_relation(42) is None
+    assert normalize_relation(True) is None
+    assert normalize_relation([]) is None
+    assert normalize_relation({}) is None
+    assert normalize_relation(None) is None
+    # A valid string still normalizes exactly as before.
+    assert normalize_relation("secret identity") == "SECRET_IDENTITY"
+    assert normalize_relation("Ally") is None  # a known-but-Tier-2 string is still None
 
 
 def test_relation_normalization_stays_within_tier3() -> None:

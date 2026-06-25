@@ -106,6 +106,8 @@ class IdentityVerdict:
     same: bool
     relation: str | None  # one of TIER3_RELATIONS (normalized), or None
     clue: str  # the model's quoted supporting clause (verified by the orchestrator)
+    malformed_relation: bool = False  # YES whose `relation` field was a non-str blob we
+    # could not coerce (the qwen JSON-object bug) — skipped + counted, never raises.
 
 
 class IdentityProtocol(Protocol):
@@ -114,12 +116,39 @@ class IdentityProtocol(Protocol):
     def infer(self, a: str, b: str, text: str, k: int) -> IdentityVerdict: ...
 
 
-def normalize_relation(raw: str | None) -> str | None:
-    """Map a model relation string onto the Tier-3 vocabulary (or None)."""
-    if not raw:
-        return None
-    key = re.sub(r"[\s\-]+", "_", raw.strip()).upper()
-    return key if key in set(TIER3_RELATIONS) else None
+def normalize_relation(raw: object) -> str | None:
+    """Map a model relation value onto the Tier-3 vocabulary (or None).
+
+    Tolerant of a MALFORMED relation field by design: qwen2.5:7b intermittently emits
+    `relation` as a JSON object/list instead of a string. The old code did ``raw.strip()``
+    and RAISED on a non-str, which the orchestrator's broad except then escalated into
+    zeroing the WHOLE identity run. Here we instead coerce an unambiguous string out of a
+    1-element list or a single-value / known-key dict, and otherwise return None — the
+    same "unrecognized relation -> no edge" path as an unknown string. It NEVER raises.
+    """
+    if isinstance(raw, str):
+        if not raw.strip():
+            return None
+        key = re.sub(r"[\s\-]+", "_", raw.strip()).upper()
+        return key if key in set(TIER3_RELATIONS) else None
+    if isinstance(raw, (list, tuple)):
+        return normalize_relation(raw[0]) if len(raw) == 1 else None
+    if isinstance(raw, dict):
+        for wrapper_key in ("relation", "type", "value", "name", "label"):
+            if wrapper_key in raw:
+                return normalize_relation(raw[wrapper_key])
+        values = list(raw.values())
+        return normalize_relation(values[0]) if len(values) == 1 else None
+    return None  # None, number, bool, or anything else -> unrecognized, never raises
+
+
+def _relation_is_malformed(raw: object, normalized: str | None) -> bool:
+    """True iff a non-null, non-str relation blob failed to coerce to a Tier-3 relation.
+
+    Distinguishes the qwen JSON-object bug (a dict/list/number we could not read) from
+    the ordinary "model gave a null or an unknown STRING relation" no-edge path.
+    """
+    return normalized is None and raw is not None and not isinstance(raw, str)
 
 
 class LlmIdentityModel:
@@ -139,10 +168,13 @@ class LlmIdentityModel:
             f"quote the proving clause from the passage. JSON only."
         )
         obj = self._client.complete_json(SYSTEM_PROMPT, user)
+        raw_relation = obj.get("relation") if isinstance(obj, dict) else None
+        relation = normalize_relation(raw_relation)
         return IdentityVerdict(
             same=bool(obj.get("same") is True),
-            relation=normalize_relation(obj.get("relation") if isinstance(obj, dict) else None),
+            relation=relation,
             clue=str(obj.get("clue", "") if isinstance(obj, dict) else "").strip(),
+            malformed_relation=_relation_is_malformed(raw_relation, relation),
         )
 
 
@@ -246,6 +278,7 @@ class IdentityReport:
     per_relation: dict[str, int] = field(default_factory=dict)
     pairs_tested: int = 0
     citations_rejected: int = 0  # same=YES dropped for a missing/invalid in-range citation
+    malformed_relations: int = 0  # same=YES whose relation field was an uncoercible blob
     disabled: bool = False  # llm_enabled=False — produced nothing by design
     degraded: bool = False  # model unavailable/failed mid-run — floor kept intact
 
@@ -263,7 +296,8 @@ class IdentityReport:
         by_rel = ", ".join(f"{r}:{n}" for r, n in sorted(self.per_relation.items())) or "none"
         return (
             f"work id={self.work_id}: {self.edges_added} Tier-3 identity edges ({by_rel}); "
-            f"{self.pairs_tested} pairs tested, {self.citations_rejected} uncited YES rejected"
+            f"{self.pairs_tested} pairs tested, {self.citations_rejected} uncited YES rejected, "
+            f"{self.malformed_relations} malformed relations skipped"
         )
 
 
@@ -353,6 +387,10 @@ def infer_identities(
                     continue
                 relation = verdict.relation
                 if relation is None:
+                    # A malformed (uncoercible non-str) relation degrades THIS pair-k only —
+                    # it is counted and skipped, never escalated to a whole-run `degraded`.
+                    if verdict.malformed_relation:
+                        report.malformed_relations += 1
                     continue
                 if not citation_valid(verdict.clue, fed, relation, src.name, tgt.name):
                     report.citations_rejected += 1  # YES without a valid in-range citation
