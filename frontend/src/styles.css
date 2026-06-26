@@ -64,10 +64,6 @@ button {
     var(--ground);
 }
 
-.cover-inner {
-  max-width: 540px;
-}
-
 .eyebrow {
   font-family: var(--mono);
   font-size: 12px;
@@ -117,18 +113,6 @@ button {
 .enter:disabled {
   opacity: 0.4;
   cursor: default;
-}
-
-.enter-work {
-  font-family: var(--display);
-  font-style: italic;
-  font-weight: 500;
-}
-
-.enter-meta {
-  font-family: var(--mono);
-  font-size: 11px;
-  opacity: 0.7;
 }
 
 /* ── App shell ─────────────────────────────────────────────────────────────── */
