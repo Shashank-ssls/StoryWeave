@@ -8,6 +8,16 @@ import Composer from "./Composer";
 
 const EMPTY: GraphElements = { nodes: [], edges: [] };
 
+// Default-on degree view (Part 1): open the graph showing only the connected core so a
+// dense work (e.g. 84-node Shadow Slave ch3) opens legible instead of as a hairball.
+// Chosen FROM THE DATA, not guessed: at that graph degree-0 nodes are true orphans
+// (`governments`, `city`) and degree-1 nodes are single-mention background leaves
+// (`rusty bench`, `national militaries`, the privileged-casts chain) — so hiding
+// degree < 2 drops exactly that periphery (9 of 84) while keeping every node with ≥2
+// links. PURE VIEW: nothing is deleted; dragging the filter to "all" (0) reveals every
+// node, and the "X of Y" readout keeps it honest that nodes are hidden, not gone.
+const DEFAULT_MIN_DEGREE = 2;
+
 function Legend(): JSX.Element {
   return (
     <div className="legend" aria-label="Entity types">
@@ -177,10 +187,11 @@ function ChapterBox({
   );
 }
 
-// The min-connections view filter (Part B): hide background props with few links so the
-// hubs read clearly. PURE DISPLAY — it never re-queries or touches the fence, only hides a
-// subset of already-fenced nodes. Default 0 ("all", nothing hidden until the user reaches
-// for it). Stepped −/+ so it can't land on a half-typed value.
+// The min-connections view filter: hide background props with few links so the hubs read
+// clearly. PURE DISPLAY — it never re-queries or touches the fence, only hides a subset of
+// already-fenced nodes. Default-ON at DEFAULT_MIN_DEGREE so the graph opens on its
+// connected core; − steps down to "all" (0 = every node back), + hides more. Stepped −/+
+// so it can't land on a half-typed value.
 function DegreeFilter({
   value,
   max,
@@ -222,7 +233,7 @@ export default function App(): JSX.Element {
   const [composing, setComposing] = useState(false);
   const [appending, setAppending] = useState(false);
   const [n, setN] = useState(1);
-  const [minDegree, setMinDegree] = useState(0);
+  const [minDegree, setMinDegree] = useState(DEFAULT_MIN_DEGREE);
   const [elements, setElements] = useState<GraphElements>(EMPTY);
   const [sel, setSel] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
@@ -263,7 +274,7 @@ export default function App(): JSX.Element {
   const enter = useCallback((w: WorkModel) => {
     setWork(w);
     setN(1);
-    setMinDegree(0); // open every novel showing ALL nodes (filter is opt-in)
+    setMinDegree(DEFAULT_MIN_DEGREE); // open on the clean connected core; "all" reveals every node
     setElements(EMPTY);
     setSel(null);
     setAppending(false);
@@ -358,8 +369,10 @@ export default function App(): JSX.Element {
 
   // Keep the threshold in range as the graph changes size with the slider (a sparse early
   // chapter has a lower max degree) — never leaves the user stuck on an all-hidden view.
+  // Guarded on maxDegree > 0 so the default isn't stomped to 0 in the empty frame between
+  // entering a work and its first fenced payload arriving (elements EMPTY ⇒ maxDegree 0).
   useEffect(() => {
-    if (minDegree > maxDegree) setMinDegree(maxDegree);
+    if (maxDegree > 0 && minDegree > maxDegree) setMinDegree(maxDegree);
   }, [maxDegree, minDegree]);
 
   if (!work) {
