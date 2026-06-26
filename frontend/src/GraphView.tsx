@@ -28,6 +28,9 @@ interface Props {
   // filter). It never re-queries and never touches the fence — it can only ever hide a
   // SUBSET of nodes the server already revealed at N. Empty = show everything.
   hiddenIds: Set<string>;
+  // Type isolation: when set, light up nodes of this entity type and dim the rest. Pure
+  // view — null = no isolation.
+  highlightType: string | null;
 }
 
 const reducedMotion =
@@ -145,7 +148,12 @@ function toCyElements(elements: GraphElements): ElementDefinition[] {
 // call it. PURE VIEW: it can only add/remove the `.hidden`/`.dim`/`.focus` display classes
 // on a SUBSET of already-fenced elements; it never re-queries, never touches `n`/the fence,
 // and deletes nothing — so it cannot change what the fence reveals.
-function paint(cy: Core, focusId: string | null, hidden: Set<string>): void {
+function paint(
+  cy: Core,
+  focusId: string | null,
+  hidden: Set<string>,
+  highlightType: string | null,
+): void {
   const target = focusId ? cy.getElementById(focusId) : null;
   const active = target && target.nonempty() ? target : null;
   const edgeHidden = (e: EdgeSingular): boolean =>
@@ -169,8 +177,26 @@ function paint(cy: Core, focusId: string | null, hidden: Set<string>): void {
         e.toggleClass("dim", !keep);
         e.toggleClass("focus", keep);
       });
+    } else if (highlightType) {
+      // Type isolation: every node of this type lights up (REVEALED even if degree/
+      // background-hidden — "show me all the Places"); the rest dim. Edges between two
+      // lit nodes show (intra-type structure); the rest dim, hiding only those whose
+      // dimmed endpoint is filtered out.
+      cy.nodes().forEach((n) => {
+        const lit = n.data("type") === highlightType;
+        n.toggleClass("hidden", !lit && hidden.has(n.id()));
+        n.toggleClass("dim", !lit);
+        n.toggleClass("focus", lit);
+      });
+      cy.edges().forEach((e) => {
+        const both =
+          e.source().data("type") === highlightType && e.target().data("type") === highlightType;
+        e.toggleClass("hidden", !both && edgeHidden(e));
+        e.toggleClass("dim", !both);
+        e.toggleClass("focus", both);
+      });
     } else {
-      // No focus: just the degree filter, nothing dimmed.
+      // No focus or type filter: just the degree/background filter, nothing dimmed.
       cy.nodes().forEach((n) => {
         n.toggleClass("hidden", hidden.has(n.id()));
         n.removeClass("dim focus");
@@ -183,16 +209,22 @@ function paint(cy: Core, focusId: string | null, hidden: Set<string>): void {
   });
 }
 
-export default function GraphView({ elements, onSelect, hiddenIds }: Props): JSX.Element {
+export default function GraphView({
+  elements,
+  onSelect,
+  hiddenIds,
+  highlightType,
+}: Props): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<Core | null>(null);
   const layoutRef = useRef<cytoscape.Layouts | null>(null);
   const firstFit = useRef(true);
-  // Sticky click-focus target (survives mouse-move; null = no focus) and a live mirror of
-  // the degree-filter prop, both read by `paint` from inside cytoscape event handlers that
-  // close over the mount effect (so they can't read the latest prop directly).
+  // Sticky click-focus target (survives mouse-move; null = no focus) and live mirrors of the
+  // degree-filter + type-isolation props, all read by `paint` from inside cytoscape event
+  // handlers that close over the mount effect (so they can't read the latest prop directly).
   const focusedIdRef = useRef<string | null>(null);
   const hiddenIdsRef = useRef<Set<string>>(hiddenIds);
+  const highlightTypeRef = useRef<string | null>(highlightType);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -210,11 +242,11 @@ export default function GraphView({ elements, onSelect, hiddenIds }: Props): JSX
     // sticky click-focus, so moving the mouse can't fight a node the user clicked to pin.
     cy.on("mouseover", "node", (e) => {
       if (focusedIdRef.current) return;
-      paint(cy, (e.target as NodeSingular).id(), hiddenIdsRef.current);
+      paint(cy, (e.target as NodeSingular).id(), hiddenIdsRef.current, highlightTypeRef.current);
     });
     cy.on("mouseout", "node", () => {
       if (focusedIdRef.current) return;
-      paint(cy, null, hiddenIdsRef.current);
+      paint(cy, null, hiddenIdsRef.current, highlightTypeRef.current);
     });
     // Click is the STICKY focus (and tap on mobile): pin the node + its neighbours lit,
     // dim the rest. Clicking the same node again toggles focus off. Selecting also opens
@@ -224,7 +256,7 @@ export default function GraphView({ elements, onSelect, hiddenIds }: Props): JSX
       const next = focusedIdRef.current === id ? null : id;
       focusedIdRef.current = next;
       onSelect(next ? { kind: "node", data: e.target.data() } : null);
-      paint(cy, next, hiddenIdsRef.current);
+      paint(cy, next, hiddenIdsRef.current, highlightTypeRef.current);
     });
     cy.on("tap", "edge", (e) => onSelect({ kind: "edge", data: e.target.data() }));
     // Empty space resets focus to the current degree view (and clears the selection).
@@ -232,7 +264,7 @@ export default function GraphView({ elements, onSelect, hiddenIds }: Props): JSX
       if (e.target !== cy) return;
       focusedIdRef.current = null;
       onSelect(null);
-      paint(cy, null, hiddenIdsRef.current);
+      paint(cy, null, hiddenIdsRef.current, highlightTypeRef.current);
     });
 
     cyRef.current = cy;
@@ -314,8 +346,18 @@ export default function GraphView({ elements, onSelect, hiddenIds }: Props): JSX
     hiddenIdsRef.current = hiddenIds;
     const cy = cyRef.current;
     if (!cy) return;
-    paint(cy, focusedIdRef.current, hiddenIds);
+    paint(cy, focusedIdRef.current, hiddenIds, highlightTypeRef.current);
   }, [hiddenIds, elements]);
+
+  // Type isolation (legend click): selecting a type clears any sticky node-focus, then
+  // repaints. Same single `paint` path — composes with the degree/background filter.
+  useEffect(() => {
+    highlightTypeRef.current = highlightType;
+    const cy = cyRef.current;
+    if (!cy) return;
+    if (highlightType) focusedIdRef.current = null;
+    paint(cy, focusedIdRef.current, hiddenIdsRef.current, highlightType);
+  }, [highlightType]);
 
   return <div ref={containerRef} className="graph-canvas" />;
 }

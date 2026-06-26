@@ -186,12 +186,27 @@ button {
 }
 
 .legend-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
   font-family: var(--mono);
   font-size: 10.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-dim);
   margin-bottom: 9px;
+}
+
+.legend-clear {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--reveal);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .legend-grid {
@@ -201,10 +216,34 @@ button {
   font-size: 12.5px;
 }
 
+/* Each legend row is a type-isolation button: transparent chrome, the swatch + label do
+   the work. `.on` = isolated type (brightened); `.off` = the others (faded) while one is on. */
 .legend-item {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  margin: 0;
+  font: inherit;
+  color: var(--ink-dim);
+  text-align: left;
+  cursor: pointer;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.legend-item:hover {
+  color: var(--ink);
+}
+
+.legend-item.on {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.legend-item.off {
+  opacity: 0.4;
 }
 
 .swatch {

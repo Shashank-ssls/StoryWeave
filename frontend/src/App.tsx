@@ -30,16 +30,39 @@ function isBackground(type: string, label: string): boolean {
   return type === "Character" && label === label.toLowerCase();
 }
 
-function Legend(): JSX.Element {
+// The legend doubles as a type-isolation control: click a type to light up all its nodes
+// and dim the rest (a lens over the already-fenced graph — never a re-query or a filter of
+// what the fence reveals). Click the active type, or "clear", to restore.
+function Legend({
+  active,
+  onToggle,
+}: {
+  active: string | null;
+  onToggle: (t: string) => void;
+}): JSX.Element {
   return (
     <div className="legend" aria-label="Entity types">
-      <div className="legend-title">Entities</div>
+      <div className="legend-title">
+        Entities
+        {active ? (
+          <button className="legend-clear" onClick={() => onToggle(active)}>
+            clear
+          </button>
+        ) : null}
+      </div>
       <div className="legend-grid">
         {NODE_TYPES.map((t) => (
-          <span className="legend-item" key={t}>
+          <button
+            className={`legend-item${active === t ? " on" : ""}${
+              active && active !== t ? " off" : ""
+            }`}
+            key={t}
+            aria-pressed={active === t}
+            onClick={() => onToggle(t)}
+          >
             <span className="swatch" style={{ background: TYPE_COLOR[t] }} />
             {t}
-          </span>
+          </button>
         ))}
       </div>
     </div>
@@ -272,6 +295,7 @@ export default function App(): JSX.Element {
   const [n, setN] = useState(1);
   const [minDegree, setMinDegree] = useState(DEFAULT_MIN_DEGREE);
   const [hideBackground, setHideBackground] = useState(true);
+  const [highlightType, setHighlightType] = useState<string | null>(null);
   const [elements, setElements] = useState<GraphElements>(EMPTY);
   const [sel, setSel] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
@@ -314,6 +338,7 @@ export default function App(): JSX.Element {
     setN(1);
     setMinDegree(DEFAULT_MIN_DEGREE); // open on the clean connected core; "all" reveals every node
     setHideBackground(true); // open with generic common-noun characters demoted; toggle reveals them
+    setHighlightType(null); // no type isolation on open
     setElements(EMPTY);
     setSel(null);
     setAppending(false);
@@ -490,9 +515,17 @@ export default function App(): JSX.Element {
             <div className="hint">Is the API running? `uvicorn storyweave.api.app:app`</div>
           </div>
         ) : (
-          <GraphView elements={elements} onSelect={onSelect} hiddenIds={hiddenIds} />
+          <GraphView
+            elements={elements}
+            onSelect={onSelect}
+            hiddenIds={hiddenIds}
+            highlightType={highlightType}
+          />
         )}
-        <Legend />
+        <Legend
+          active={highlightType}
+          onToggle={(t) => setHighlightType((cur) => (cur === t ? null : t))}
+        />
         <DetailPanel sel={sel} />
         {appending ? (
           <Composer
