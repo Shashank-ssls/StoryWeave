@@ -1,0 +1,24 @@
+# Per-work config for the LOCAL Shadow Slave sample (its TEXT stays in gitignored
+# data/raw/ — only this config metadata is committed; no prose here).
+#
+# Shadow Slave's early arc is single-POV: the narrator/addressee is Sunny throughout, so
+# the first/second-person pronouns AND the third-person "he/him/his" all denote the POV
+# character. We therefore ENABLE the Part A conservative coref merge for this work and
+# extend the self-reference surface set to fold those pronoun nodes into Sunny (DATA, not
+# code — the canonical target is resolved per-work via `pov_character`, never hardcoded).
+#
+# The Part A over-merge guard still stands: only EXACT surface matches in the set below are
+# merged. Ambiguous epithets ("the younger soldier", "broad-shouldered man",
+# "shifty-looking guy") are NOT in the set and are left unmerged — they could match more
+# than one character, so guessing them would corrupt data.
+title = "Shadow Slave"
+slug = "shadow-slave"
+
+[coref]
+merge_self_reference = true
+pov_character = "Sunny"
+self_reference_surfaces = [
+    "I", "me", "my", "mine", "myself",
+    "you", "your", "yours", "yourself",
+    "he", "him", "his",
+]
