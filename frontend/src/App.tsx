@@ -177,12 +177,52 @@ function ChapterBox({
   );
 }
 
+// The min-connections view filter (Part B): hide background props with few links so the
+// hubs read clearly. PURE DISPLAY — it never re-queries or touches the fence, only hides a
+// subset of already-fenced nodes. Default 0 ("all", nothing hidden until the user reaches
+// for it). Stepped −/+ so it can't land on a half-typed value.
+function DegreeFilter({
+  value,
+  max,
+  onChange,
+}: {
+  value: number;
+  max: number;
+  onChange: (v: number) => void;
+}): JSX.Element {
+  return (
+    <span className="degree-filter" role="group" aria-label="Minimum connections filter">
+      <span className="df-label">min links</span>
+      <button
+        className="df-btn"
+        aria-label="Show more (lower the minimum)"
+        disabled={value <= 0}
+        onClick={() => onChange(Math.max(0, value - 1))}
+      >
+        −
+      </button>
+      <span className="df-value" aria-live="polite">
+        {value === 0 ? "all" : value}
+      </span>
+      <button
+        className="df-btn"
+        aria-label="Hide more (raise the minimum)"
+        disabled={value >= max}
+        onClick={() => onChange(Math.min(max, value + 1))}
+      >
+        +
+      </button>
+    </span>
+  );
+}
+
 export default function App(): JSX.Element {
   const [works, setWorks] = useState<WorkModel[]>([]);
   const [work, setWork] = useState<WorkModel | null>(null);
   const [composing, setComposing] = useState(false);
   const [appending, setAppending] = useState(false);
   const [n, setN] = useState(1);
+  const [minDegree, setMinDegree] = useState(0);
   const [elements, setElements] = useState<GraphElements>(EMPTY);
   const [sel, setSel] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
@@ -223,6 +263,7 @@ export default function App(): JSX.Element {
   const enter = useCallback((w: WorkModel) => {
     setWork(w);
     setN(1);
+    setMinDegree(0); // open every novel showing ALL nodes (filter is opt-in)
     setElements(EMPTY);
     setSel(null);
     setAppending(false);
@@ -282,6 +323,45 @@ export default function App(): JSX.Element {
     [elements],
   );
 
+  // Part B: degree is computed CLIENT-SIDE from the already-fenced payload — the filter
+  // only ever hides a subset of revealed nodes, never changes what the fence returned.
+  const degreeOf = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const nd of elements.nodes) m.set(nd.data.id, 0);
+    for (const e of elements.edges) {
+      m.set(e.data.source, (m.get(e.data.source) ?? 0) + 1);
+      m.set(e.data.target, (m.get(e.data.target) ?? 0) + 1);
+    }
+    return m;
+  }, [elements]);
+  const maxDegree = useMemo(
+    () => elements.nodes.reduce((mx, nd) => Math.max(mx, degreeOf.get(nd.data.id) ?? 0), 0),
+    [elements, degreeOf],
+  );
+  const hiddenIds = useMemo(() => {
+    const s = new Set<string>();
+    if (minDegree > 0)
+      for (const nd of elements.nodes)
+        if ((degreeOf.get(nd.data.id) ?? 0) < minDegree) s.add(nd.data.id);
+    return s;
+  }, [elements, degreeOf, minDegree]);
+  const visible = useMemo(
+    () => ({
+      nodes: counts.nodes - hiddenIds.size,
+      edges: elements.edges.filter(
+        (e) => !hiddenIds.has(e.data.source) && !hiddenIds.has(e.data.target),
+      ).length,
+    }),
+    [counts, elements, hiddenIds],
+  );
+  const filtering = hiddenIds.size > 0;
+
+  // Keep the threshold in range as the graph changes size with the slider (a sparse early
+  // chapter has a lower max degree) — never leaves the user stuck on an all-hidden view.
+  useEffect(() => {
+    if (minDegree > maxDegree) setMinDegree(maxDegree);
+  }, [maxDegree, minDegree]);
+
   if (!work) {
     return (
       <>
@@ -331,8 +411,12 @@ export default function App(): JSX.Element {
           ) : null}
           <div className="readout">
             <span>ch {n}</span>
-            <span>{counts.nodes} entities</span>
-            <span>{counts.edges} links</span>
+            <span>
+              {filtering ? `${visible.nodes} of ${counts.nodes}` : counts.nodes} entities
+            </span>
+            <span>
+              {filtering ? `${visible.edges} of ${counts.edges}` : counts.edges} links
+            </span>
           </div>
         </div>
       </header>
@@ -344,7 +428,7 @@ export default function App(): JSX.Element {
             <div className="hint">Is the API running? `uvicorn storyweave.api.app:app`</div>
           </div>
         ) : (
-          <GraphView elements={elements} onSelect={onSelect} />
+          <GraphView elements={elements} onSelect={onSelect} hiddenIds={hiddenIds} />
         )}
         <Legend />
         <DetailPanel sel={sel} />
@@ -371,6 +455,7 @@ export default function App(): JSX.Element {
           onChange={(e) => setN(Number(e.target.value))}
         />
         <ChapterBox n={n} max={max} onCommit={setN} />
+        <DegreeFilter value={minDegree} max={maxDegree} onChange={setMinDegree} />
       </footer>
     </div>
   );

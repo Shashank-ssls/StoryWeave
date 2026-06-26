@@ -330,6 +330,16 @@ class Repository:
         ).fetchall()
         return [Node(**dict(r)) for r in rows]
 
+    def delete_node(self, node_id: int) -> None:
+        """Drop a single node (used by the coref merge to remove a folded-away junk node).
+
+        The schema cascades: any edge still referencing it would be deleted too — so the
+        coref merge re-points or deletes the node's edges FIRST, leaving it edgeless, then
+        re-points its mentions onto the canonical node, so nothing incident is lost here.
+        """
+        self.conn.execute("DELETE FROM nodes WHERE id = ?", (node_id,))
+        self.conn.commit()
+
     def get_node(self, node_id: int) -> Node | None:
         row = self.conn.execute("SELECT * FROM nodes WHERE id = ?", (node_id,)).fetchone()
         return Node(**dict(row)) if row else None
@@ -393,6 +403,20 @@ class Repository:
         )
         self.conn.commit()
 
+    def repoint_mentions(self, work_id: int, from_node_id: int, to_node_id: int) -> int:
+        """Move every mention of ``from_node_id`` onto ``to_node_id`` (coref merge).
+
+        Keeps the mention rows (provenance + first-seen evidence) but attributes them to
+        the canonical entity, so the folded-away junk node can be deleted without losing
+        its evidence. Returns the number of mentions re-pointed.
+        """
+        cur = self.conn.execute(
+            "UPDATE mentions SET node_id = ? WHERE work_id = ? AND node_id = ?",
+            (to_node_id, work_id, from_node_id),
+        )
+        self.conn.commit()
+        return cur.rowcount
+
     # --- edges ----------------------------------------------------------- #
 
     def add_edge(self, edge: Edge) -> int:
@@ -421,6 +445,33 @@ class Repository:
             "SELECT * FROM edges WHERE work_id = ? ORDER BY id", (work_id,)
         ).fetchall()
         return [Edge(**dict(r)) for r in rows]
+
+    def update_edge_endpoints(self, edge_id: int, source_id: int, target_id: int) -> None:
+        """Re-point an edge onto new endpoints (coref merge folds a junk endpoint to POV)."""
+        self.conn.execute(
+            "UPDATE edges SET source_id = ?, target_id = ? WHERE id = ?",
+            (source_id, target_id, edge_id),
+        )
+        self.conn.commit()
+
+    def update_edge_reveal(
+        self, edge_id: int, first_seen_chapter: int, revealed_chapter: int
+    ) -> None:
+        """Lower an edge's reveal stamps (coref dedup keeps the EARLIEST of the merged pair).
+
+        Used only to take the min when two edges collapse into one; never raises a stamp,
+        so the fence can never reveal a merged edge later than it already would have.
+        """
+        self.conn.execute(
+            "UPDATE edges SET first_seen_chapter = ?, revealed_chapter = ? WHERE id = ?",
+            (first_seen_chapter, revealed_chapter, edge_id),
+        )
+        self.conn.commit()
+
+    def delete_edge(self, edge_id: int) -> None:
+        """Delete a single edge (coref merge drops self-loops + deduped duplicates)."""
+        self.conn.execute("DELETE FROM edges WHERE id = ?", (edge_id,))
+        self.conn.commit()
 
     def count_edges(self, work_id: int) -> int:
         row = self.conn.execute(

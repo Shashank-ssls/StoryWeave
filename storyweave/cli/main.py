@@ -230,6 +230,36 @@ def identity(
 
 
 @app.command()
+def coref(
+    slug: Annotated[str, typer.Argument(help="Work slug to run the conservative coref merge on.")],
+    config: Annotated[Path | None, typer.Option(help="storyweave.toml with [coref] knobs.")] = None,
+    db: Annotated[Path | None, typer.Option(help="SQLite path override.")] = None,
+) -> None:
+    """Fold self-reference pronoun nodes (`you`/`I`/...) into the POV character.
+
+    The last step of a full rebuild (extract -> relate -> coref). OFF unless the work's
+    `[coref] merge_self_reference = true` (+ a resolvable POV). Idempotent; pure Python,
+    no ML. Re-points each pronoun node's edges onto the canonical entity (dedup, earliest
+    reveal kept) so split edges consolidate; ambiguous epithets are left unmerged.
+    """
+    from storyweave.config import get_settings
+    from storyweave.db.repository import Repository
+    from storyweave.ingest.work_config import load_work_config
+    from storyweave.nlp.coref import merge_coref
+
+    db_path = db or get_settings().db_path
+    work_config = load_work_config(config)
+    with Repository(db_path) as repo:
+        repo.initialize_schema()
+        work = repo.get_work_by_slug(slug)
+        if work is None or work.id is None:
+            typer.echo(f"error: no work with slug '{slug}'", err=True)
+            raise typer.Exit(code=1)
+        report = merge_coref(work.id, repo, work_config)
+    typer.echo(report.summary())
+
+
+@app.command()
 def graph(
     slug: Annotated[str, typer.Argument(help="Work slug.")],
     chapter: Annotated[int, typer.Option("--chapter", "-n", help="Reading position N (fence).")],

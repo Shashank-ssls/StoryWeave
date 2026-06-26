@@ -79,6 +79,29 @@ class IdentityConfig(BaseModel):
     max_candidate_pairs: int = 60
 
 
+class CorefConfig(BaseModel):
+    # --- Conservative coreference merge (entity-level Tier-1/2 cleanup). ---
+    # Fold first/second-person self-reference pronoun NODES (`I`, `you`, ...) into the
+    # single POV character so split edges consolidate. OFF by default: only enable for a
+    # range that is UNAMBIGUOUSLY single-POV (over-merge is worse than the junk). This is
+    # NOT identity inference (Tier-3) — it is string-level coref the Phase-2 clusterer
+    # cannot do (a pronoun shares no surface tokens with the name it refers to).
+    merge_self_reference: bool = False
+    # Explicit POV canonical name (matched by normalized surface). Empty -> auto-detect
+    # the single most-important Character; a tie at the top SKIPS the merge (unsure).
+    # Per-work DATA, never hardcoded in code (no `if work == "Sunny"`).
+    pov_character: str = ""
+    # The self-reference surface set (DATA, overridable per work). English first/second
+    # person singular — these denote the narrator/addressee, i.e. the POV character, in a
+    # single-POV range. Ambiguous group pronouns (we/they) are deliberately excluded.
+    self_reference_surfaces: list[str] = Field(
+        default_factory=lambda: [
+            "I", "me", "my", "mine", "myself",
+            "you", "your", "yours", "yourself",
+        ]
+    )
+
+
 class WorkConfig(BaseModel):
     title: str | None = None
     slug: str | None = None
@@ -88,6 +111,7 @@ class WorkConfig(BaseModel):
     extraction: ExtractionConfig = Field(default_factory=ExtractionConfig)
     relations: RelationConfig = Field(default_factory=RelationConfig)
     identity: IdentityConfig = Field(default_factory=IdentityConfig)
+    coref: CorefConfig = Field(default_factory=CorefConfig)
 
 
 def load_work_config(path: Path | str | None) -> WorkConfig:

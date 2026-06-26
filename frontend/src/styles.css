@@ -328,6 +328,7 @@ button {
   font-family: var(--display);
   font-size: 16px;
   color: var(--ink);
+  white-space: nowrap; /* keep "of M" on one line when the footer is tight (mobile) */
 }
 
 .rn-label {
@@ -363,6 +364,53 @@ button {
 .reading-num .of {
   color: var(--ink-dim);
   font-size: 13px;
+}
+
+/* Part B — the min-connections view filter. Neutral chrome (never gold; gold is reserved
+   for identity reveals, DESIGN.md). Stepped −/+ over a mono readout of the threshold. */
+.degree-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.df-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10.5px;
+}
+
+.df-btn {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.df-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--ink-dim) 60%, var(--line));
+}
+
+.df-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.df-value {
+  min-width: 2.4ch;
+  text-align: center;
+  color: var(--ink);
 }
 
 .error {
@@ -860,10 +908,17 @@ button {
   .readout span:nth-child(3) {
     display: none;
   }
-  /* The editable box widens the readout; reclaim room so "of M" never clips. */
+  /* The editable box + min-links control crowd the row; tighten gaps + let the scrubber
+     shrink so the chapter readout and −/+ stay on one clean line. */
   .reading {
-    gap: 12px;
-    padding: 12px 16px;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .scrubber {
+    min-width: 40px;
+  }
+  .reading-num {
+    gap: 5px;
   }
   .reading-label {
     display: none;
@@ -871,5 +926,10 @@ button {
   .reading-num {
     min-width: 0;
     font-size: 15px;
+  }
+  /* Keep the min-links control as just −/+ on phones; the word "min links" is dropped to
+     save room, the value chip stays so the state is still legible. */
+  .df-label {
+    display: none;
   }
 }

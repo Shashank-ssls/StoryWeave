@@ -24,6 +24,10 @@ export type Selection =
 interface Props {
   elements: GraphElements;
   onSelect: (sel: Selection) => void;
+  // PURE VIEW FILTER: ids of already-fenced nodes to HIDE client-side (Part B degree
+  // filter). It never re-queries and never touches the fence — it can only ever hide a
+  // SUBSET of nodes the server already revealed at N. Empty = show everything.
+  hiddenIds: Set<string>;
 }
 
 const reducedMotion =
@@ -98,6 +102,9 @@ const STYLE: cytoscape.StylesheetStyle[] = [
   { selector: "edge.focus", style: { label: "data(rlabel)", "line-color": INK_DIM, color: INK } },
   { selector: "node.dim", style: { opacity: 0.12 } },
   { selector: "edge.dim", style: { opacity: 0.06 } },
+  // Part B degree filter: a hidden element is removed from render + layout (display:none),
+  // not deleted. Toggling it back reveals the same node — purely a view filter.
+  { selector: ".hidden", style: { display: "none" } },
 ];
 
 function colaLayout(): cytoscape.LayoutOptions {
@@ -131,7 +138,7 @@ function toCyElements(elements: GraphElements): ElementDefinition[] {
   return [...nodes, ...edges];
 }
 
-export default function GraphView({ elements, onSelect }: Props): JSX.Element {
+export default function GraphView({ elements, onSelect, hiddenIds }: Props): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<Core | null>(null);
   const layoutRef = useRef<cytoscape.Layouts | null>(null);
@@ -231,6 +238,25 @@ export default function GraphView({ elements, onSelect }: Props): JSX.Element {
     });
 
   }, [elements]);
+
+  // Part B — apply the degree view-filter. Hide the listed nodes and any edge that loses
+  // an endpoint; show everything else. No re-layout, no re-query: remaining nodes keep
+  // their positions, so raising/lowering the threshold is instant and reversible. Runs
+  // after the elements effect so newly-bloomed nodes are filtered consistently.
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.batch(() => {
+      cy.nodes().forEach((n) => {
+        n.toggleClass("hidden", hiddenIds.has(n.id()));
+      });
+      cy.edges().forEach((e) => {
+        const drop =
+          hiddenIds.has(String(e.data("source"))) || hiddenIds.has(String(e.data("target")));
+        e.toggleClass("hidden", drop);
+      });
+    });
+  }, [hiddenIds, elements]);
 
   return <div ref={containerRef} className="graph-canvas" />;
 }
