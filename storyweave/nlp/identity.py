@@ -34,9 +34,19 @@ two nodes with a blooming edge between them. Provenance ``method='llm'``, ``tier
 through the existing ``edges`` table → ``query/fence.py`` unchanged (Phase 5 already
 fences identity edges by the both-endpoints rule).
 
-The five Tier-3 relations are all in the inference VOCABULARY; the sample proves
-three (SECRET_IDENTITY, ALIAS, TRANSMIGRATED_INTO). SAME_AS and REINCARNATION are
-schema-and-prompt-ready but UNPROVEN until a sample exercises them.
+The five Tier-3 relations are all in the inference VOCABULARY. SECRET_IDENTITY, ALIAS
+and TRANSMIGRATED_INTO have gold cases + live confirmation on the sample; SAME_AS and
+REINCARNATION are DETERMINISTICALLY test-ready (fake-client gold + regressions, section
+D of tests/test_identity.py), LIVE-UNCONFIRMED (no real sample co-names them).
+
+Subtype-LABELING precision is a measured model limitation, NOT a prompt/normalizer gap:
+a 3-variant live probe (plain / tightened canonical definitions / +few-shot) showed
+qwen2.5:7b STABLY emits REINCARNATION (or SECRET_IDENTITY) for body-takeover transmigration
+reveals and never TRANSMIGRATED_INTO, while correctly emitting REINCARNATION for a genuine
+rebirth — so no label-only normalizer can separate the two without reading evidence
+semantics (the PARKED NLI concern). Both observed mislabels stay WITHIN the single-anchor
+family, so the family-aware citation gate, the edge, and its revealed_chapter are correct;
+only the displayed label is imprecise. See PROGRESS.md "subtype-labeling precision".
 
 Tests inject a fake model via :class:`IdentityProtocol`; the real model wraps the
 wired :class:`~storyweave.nlp.llm.LlmClient`. No heavy import here — stdlib only.
