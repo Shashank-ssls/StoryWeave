@@ -397,6 +397,44 @@ button {
   color: var(--ink);
 }
 
+/* Salience-demotion toggle: same neutral mono chrome as the degree filter (never gold). */
+.bg-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bg-toggle:hover {
+  border-color: color-mix(in srgb, var(--ink-dim) 60%, var(--line));
+}
+
+.bg-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-dim);
+  background: transparent;
+}
+
+/* Pressed = background is SHOWN: fill the dot + brighten the label. */
+.bg-toggle[aria-pressed="true"] {
+  color: var(--ink);
+}
+
+.bg-toggle[aria-pressed="true"] .bg-dot {
+  background: var(--ink-dim);
+}
+
 .error {
   position: absolute;
   inset: 0;
@@ -892,13 +930,16 @@ button {
   .readout span:nth-child(3) {
     display: none;
   }
-  /* The editable box + min-links control crowd the row; tighten gaps + let the scrubber
-     shrink so the chapter readout and −/+ stay on one clean line. */
+  /* The editable box + min-links + background toggle overflow 390px on one row, so wrap:
+     the slider takes the top row, the controls center on a second row. */
   .reading {
-    gap: 10px;
+    gap: 10px 12px;
     padding: 12px 14px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
   .scrubber {
+    flex: 1 1 100%;
     min-width: 40px;
   }
   .reading-num {

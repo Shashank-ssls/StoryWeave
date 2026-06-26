@@ -18,6 +18,18 @@ const EMPTY: GraphElements = { nodes: [], edges: [] };
 // node, and the "X of Y" readout keeps it honest that nodes are hidden, not gone.
 const DEFAULT_MIN_DEGREE = 2;
 
+// Salience demotion (default-ON view layer): "background" nodes are generic common-noun
+// pseudo-characters GLiNER over-promotes — `policeman`, `soldier`, `child`, `the younger
+// soldier` — which are distinct/background people, NOT one salient character (proven by a
+// coref measurement: they must NOT be merged). A real Character name is a proper noun and
+// carries an uppercase letter; a generic common-noun reference is all-lowercase. So the
+// signal is precise and needs no model: Character + no uppercase = background. This is a
+// reversible VIEW judgement (a toggle), never a persisted salience verdict or a deletion —
+// per the navigation principle that importance stays user-driven and every node reachable.
+function isBackground(type: string, label: string): boolean {
+  return type === "Character" && label === label.toLowerCase();
+}
+
 function Legend(): JSX.Element {
   return (
     <div className="legend" aria-label="Entity types">
@@ -227,6 +239,31 @@ function DegreeFilter({
   );
 }
 
+// Salience demotion toggle: hide/show the generic common-noun "characters" (background).
+// Default hidden; the count tells the user there's demoted detail, not absence. PURE VIEW —
+// reversible, never persisted, every node still reachable.
+function BackgroundToggle({
+  hidden,
+  count,
+  onToggle,
+}: {
+  hidden: boolean;
+  count: number;
+  onToggle: () => void;
+}): JSX.Element {
+  return (
+    <button
+      className="bg-toggle"
+      aria-pressed={!hidden}
+      onClick={onToggle}
+      title="Generic common-noun characters (e.g. ‘policeman’, ‘soldier’) — distinct background people, demoted from the default view."
+    >
+      <span className="bg-dot" aria-hidden />
+      {hidden ? `show background (${count})` : "hide background"}
+    </button>
+  );
+}
+
 export default function App(): JSX.Element {
   const [works, setWorks] = useState<WorkModel[]>([]);
   const [work, setWork] = useState<WorkModel | null>(null);
@@ -234,6 +271,7 @@ export default function App(): JSX.Element {
   const [appending, setAppending] = useState(false);
   const [n, setN] = useState(1);
   const [minDegree, setMinDegree] = useState(DEFAULT_MIN_DEGREE);
+  const [hideBackground, setHideBackground] = useState(true);
   const [elements, setElements] = useState<GraphElements>(EMPTY);
   const [sel, setSel] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
@@ -275,6 +313,7 @@ export default function App(): JSX.Element {
     setWork(w);
     setN(1);
     setMinDegree(DEFAULT_MIN_DEGREE); // open on the clean connected core; "all" reveals every node
+    setHideBackground(true); // open with generic common-noun characters demoted; toggle reveals them
     setElements(EMPTY);
     setSel(null);
     setAppending(false);
@@ -349,13 +388,23 @@ export default function App(): JSX.Element {
     () => elements.nodes.reduce((mx, nd) => Math.max(mx, degreeOf.get(nd.data.id) ?? 0), 0),
     [elements, degreeOf],
   );
+  // How many revealed nodes are background (generic common-noun characters) — drives the
+  // toggle label so the user knows there's hidden detail, not absence.
+  const backgroundCount = useMemo(
+    () => elements.nodes.filter((nd) => isBackground(nd.data.type, nd.data.label)).length,
+    [elements],
+  );
+  // Both view filters compose into ONE hidden set (degree threshold + salience demotion);
+  // each is independently reversible. Pure client-side over the fenced payload.
   const hiddenIds = useMemo(() => {
     const s = new Set<string>();
-    if (minDegree > 0)
-      for (const nd of elements.nodes)
-        if ((degreeOf.get(nd.data.id) ?? 0) < minDegree) s.add(nd.data.id);
+    for (const nd of elements.nodes) {
+      const lowDegree = minDegree > 0 && (degreeOf.get(nd.data.id) ?? 0) < minDegree;
+      const background = hideBackground && isBackground(nd.data.type, nd.data.label);
+      if (lowDegree || background) s.add(nd.data.id);
+    }
     return s;
-  }, [elements, degreeOf, minDegree]);
+  }, [elements, degreeOf, minDegree, hideBackground]);
   const visible = useMemo(
     () => ({
       nodes: counts.nodes - hiddenIds.size,
@@ -469,6 +518,13 @@ export default function App(): JSX.Element {
         />
         <ChapterBox n={n} max={max} onCommit={setN} />
         <DegreeFilter value={minDegree} max={maxDegree} onChange={setMinDegree} />
+        {backgroundCount > 0 ? (
+          <BackgroundToggle
+            hidden={hideBackground}
+            count={backgroundCount}
+            onToggle={() => setHideBackground((v) => !v)}
+          />
+        ) : null}
       </footer>
     </div>
   );
