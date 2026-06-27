@@ -50,3 +50,7 @@ frontend/.vite/
 # --- LLM runner + GGUF weights (Phase 7b; large, on F:, re-downloadable) ---
 .llm-cache/
 tools/
+
+# --- Local scratch / planning notes (not project deliverables) ---
+SKILL.md
+next_steps.md

@@ -1,5 +1,9 @@
 # StoryWeave
 
+[![CI](https://github.com/Shashank-ssls/StoryWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/Shashank-ssls/StoryWeave/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
+
 > A spoiler-aware knowledge engine for web novels — a living, chapter-fenced knowledge graph that only ever shows you what you’ve already read.
 
 StoryWeave ingests the chapters of a web novel and builds a **knowledge graph** of the
