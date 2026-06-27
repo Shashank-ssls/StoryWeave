@@ -319,6 +319,77 @@ button {
   color: var(--ink-dim);
 }
 
+/* Connections list (richer detail panel): each revealed link as neighbour + relation +
+   the chapter it was revealed. Scrolls when a hub has many (e.g. a POV character). */
+.connections {
+  margin-top: 15px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.conn-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 9px;
+}
+
+.connections ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 232px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.conn {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1px 8px;
+  align-items: baseline;
+  font-size: 13px;
+}
+
+.conn-node {
+  grid-column: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+}
+
+.conn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.conn-ch {
+  grid-column: 2;
+  grid-row: 1;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-dim);
+}
+
+.conn-rel {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--ink-dim);
+}
+
+.conn.id .conn-rel {
+  color: var(--reveal);
+}
+
 /* ── Reading position (the slider, reframed as a timeline) ─────────────────── */
 .reading {
   display: flex;
@@ -472,6 +543,57 @@ button {
 
 .bg-toggle[aria-pressed="true"] .bg-dot {
   background: var(--ink-dim);
+}
+
+/* Path-trace toggle: same mono chrome; pressed = tracing (gold, since a path is a guided
+   highlight act, kin to the reveal). */
+.path-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 4px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.path-toggle:hover {
+  border-color: color-mix(in srgb, var(--ink-dim) 60%, var(--line));
+}
+
+.path-glyph {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.path-toggle[aria-pressed="true"] {
+  color: var(--reveal);
+  border-color: color-mix(in srgb, var(--reveal) 45%, var(--line));
+}
+
+/* Path result banner — centered under the header while tracing. */
+.path-status {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--reveal) 35%, var(--line));
+  border-radius: 4px;
+  padding: 7px 14px;
+  backdrop-filter: blur(3px);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .error {

@@ -51,11 +51,56 @@ export const IDENTITY_RELATIONS = new Set([
   "TRANSMIGRATED_INTO",
 ]);
 
-// Human-readable edge labels (shown on hover/select): "OwnsItem" -> "owns item",
-// "SECRET_IDENTITY" -> "secret identity".
+// Curated human-readable edge labels. A relation is only labelled in the graph if it is
+// in this map; anything else (the generic `RelatedTo` fallback, or any stray/garbage
+// relation) is treated as LOW-QUALITY and its label is HIDDEN — the edge still draws, it
+// just carries no noisy text. `RelatedTo` is deliberately omitted: it means only "these
+// co-occur", carries no relation, and dominates the graph (~170 edges), so showing "related
+// to" everywhere is clutter, not information.
+export const RELATION_LABELS: Record<string, string> = {
+  // Tier 1 — structural
+  AffiliatedWith: "affiliated with",
+  LocatedIn: "in",
+  MemberOf: "member of",
+  LeaderOf: "leads",
+  HasAbility: "has ability",
+  OwnsItem: "owns",
+  HasTitle: "holds",
+  ParticipatedIn: "took part in",
+  // (RelatedTo intentionally omitted -> label hidden)
+  // Tier 2 — social
+  Ally: "ally of",
+  Enemy: "enemy of",
+  Rival: "rival of",
+  Mentor: "mentor of",
+  Student: "student of",
+  Family: "family of",
+  Parent: "parent of",
+  Child: "child of",
+  Sibling: "sibling of",
+  Spouse: "spouse of",
+  Romantic: "romantic with",
+  Betrayed: "betrayed",
+  Serves: "serves",
+  Killed: "killed",
+  Protects: "protects",
+  Fears: "fears",
+  Respects: "respects",
+  // Tier 3 — identity (always meaningful, always labelled)
+  SAME_AS: "same as",
+  ALIAS: "alias",
+  SECRET_IDENTITY: "secret identity",
+  REINCARNATION: "reincarnation of",
+  TRANSMIGRATED_INTO: "transmigrated into",
+};
+
+// Graph/hover label: the curated label, or "" for low-quality/unknown relations (hidden).
 export function relationLabel(relation: string): string {
-  return relation
-    .replace(/_/g, " ")
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .toLowerCase();
+  return RELATION_LABELS[relation] ?? "";
+}
+
+// Path/connection label: like relationLabel but never empty — in a traced path or a
+// connections list you always want to name the hop, so a hidden relation reads "linked".
+export function relationStepLabel(relation: string): string {
+  return RELATION_LABELS[relation] ?? "linked";
 }

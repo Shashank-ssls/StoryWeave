@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { deleteWork, fetchGraph, fetchWorks } from "./api";
-import type { GraphElements, WorkModel } from "./types";
-import { DEMO_SLUG, NODE_TYPES, TYPE_COLOR, relationLabel } from "./ontology";
+import type { GraphElements, GraphNodeData, WorkModel } from "./types";
+import { DEMO_SLUG, NODE_TYPES, TYPE_COLOR, relationStepLabel, typeColor } from "./ontology";
 import GraphView, { type Selection } from "./GraphView";
 import Library from "./Library";
 import Composer from "./Composer";
@@ -28,6 +28,49 @@ const DEFAULT_MIN_DEGREE = 2;
 // per the navigation principle that importance stays user-driven and every node reachable.
 function isBackground(type: string, label: string): boolean {
   return type === "Character" && label === label.toLowerCase();
+}
+
+// Path-finding: the shortest chain of relations connecting two entities ("how is A related
+// to B"). Pure client-side BFS over the already-fenced payload (undirected — a relationship
+// reads both ways) — never a re-query, never touches the fence. Returns the node ids and the
+// edge ids along one shortest path, or null if they're unconnected at this reading position.
+function shortestPath(
+  elements: GraphElements,
+  startId: string,
+  endId: string,
+): { nodeIds: string[]; edgeIds: string[] } | null {
+  if (startId === endId) return { nodeIds: [startId], edgeIds: [] };
+  const adj = new Map<string, { to: string; edge: string }[]>();
+  for (const e of elements.edges) {
+    const { id, source, target } = e.data;
+    (adj.get(source) ?? adj.set(source, []).get(source)!).push({ to: target, edge: id });
+    (adj.get(target) ?? adj.set(target, []).get(target)!).push({ to: source, edge: id });
+  }
+  const prev = new Map<string, { node: string; edge: string }>();
+  const seen = new Set([startId]);
+  const queue = [startId];
+  while (queue.length) {
+    const cur = queue.shift()!;
+    if (cur === endId) break;
+    for (const { to, edge } of adj.get(cur) ?? []) {
+      if (!seen.has(to)) {
+        seen.add(to);
+        prev.set(to, { node: cur, edge });
+        queue.push(to);
+      }
+    }
+  }
+  if (!seen.has(endId)) return null;
+  const nodeIds: string[] = [];
+  const edgeIds: string[] = [];
+  for (let cur = endId; cur !== startId; ) {
+    nodeIds.push(cur);
+    const p = prev.get(cur)!;
+    edgeIds.push(p.edge);
+    cur = p.node;
+  }
+  nodeIds.push(startId);
+  return { nodeIds: nodeIds.reverse(), edgeIds: edgeIds.reverse() };
 }
 
 // The legend doubles as a type-isolation control: click a type to light up all its nodes
@@ -69,11 +112,65 @@ function Legend({
   );
 }
 
-function DetailPanel({ sel }: { sel: Selection }): JSX.Element | null {
+// One revealed connection of the selected node (payload-only: neighbour + relation + the
+// chapter the link was revealed). `outgoing` preserves the relation's direction so it reads
+// naturally ("→ owns heron ring" vs "Wren owns →").
+interface Connection {
+  neighborId: string;
+  label: string;
+  type: string;
+  relation: string;
+  chapter: number;
+  tier: number;
+  outgoing: boolean;
+}
+
+function DetailPanel({
+  sel,
+  elements,
+}: {
+  sel: Selection;
+  elements: GraphElements;
+}): JSX.Element | null {
+  const nodeIndex = useMemo(() => {
+    const m = new Map<string, GraphNodeData>();
+    for (const nd of elements.nodes) m.set(nd.data.id, nd.data);
+    return m;
+  }, [elements]);
+
+  // Connections of the selected node — derived ENTIRELY from the already-fenced payload
+  // (so they can only ever list what the reader may see at N). Identity links first, then
+  // by chapter, then alphabetical.
+  const connections = useMemo<Connection[]>(() => {
+    if (!sel || sel.kind !== "node") return [];
+    const id = sel.data.id;
+    const out: Connection[] = [];
+    for (const e of elements.edges) {
+      if (e.data.source !== id && e.data.target !== id) continue;
+      const outgoing = e.data.source === id;
+      const neighborId = outgoing ? e.data.target : e.data.source;
+      const nb = nodeIndex.get(neighborId);
+      out.push({
+        neighborId,
+        label: nb?.label ?? neighborId,
+        type: nb?.type ?? "",
+        relation: e.data.relation,
+        chapter: e.data.revealed_chapter,
+        tier: e.data.tier,
+        outgoing,
+      });
+    }
+    out.sort((a, b) => b.tier - a.tier || a.chapter - b.chapter || a.label.localeCompare(b.label));
+    return out;
+  }, [sel, elements, nodeIndex]);
+
   if (!sel) return null;
   if (sel.kind === "node") {
     const d = sel.data;
     const props = Object.entries(d.properties);
+    const lastLink = connections.length
+      ? Math.max(...connections.map((c) => c.chapter))
+      : null;
     return (
       <aside className="detail" role="complementary">
         <div className="detail-kind" style={{ color: TYPE_COLOR[d.type as keyof typeof TYPE_COLOR] }}>
@@ -83,6 +180,13 @@ function DetailPanel({ sel }: { sel: Selection }): JSX.Element | null {
         <dl>
           <dt>Revealed</dt>
           <dd>chapter {d.revealed_chapter}</dd>
+          <dt>First seen</dt>
+          <dd>
+            chapter {d.first_seen_chapter}
+            {lastLink !== null && lastLink !== d.first_seen_chapter
+              ? ` · last link ch ${lastLink}`
+              : ""}
+          </dd>
           {d.evidence_span && (
             <>
               <dt>Evidence</dt>
@@ -102,6 +206,29 @@ function DetailPanel({ sel }: { sel: Selection }): JSX.Element | null {
             </>
           )}
         </dl>
+        {connections.length > 0 && (
+          <div className="connections">
+            <div className="conn-title">
+              {connections.length} connection{connections.length === 1 ? "" : "s"}
+            </div>
+            <ul>
+              {connections.map((c, i) => (
+                <li key={`${c.neighborId}-${c.relation}-${i}`} className={c.tier === 3 ? "conn id" : "conn"}>
+                  <span className="conn-rel">
+                    {c.outgoing ? "" : "← "}
+                    {relationStepLabel(c.relation)}
+                    {c.outgoing ? " →" : ""}
+                  </span>
+                  <span className="conn-node">
+                    <span className="conn-dot" style={{ background: typeColor(c.type) }} />
+                    {c.label}
+                  </span>
+                  <span className="conn-ch">ch {c.chapter}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="prov">via {d.extraction_method}</div>
       </aside>
     );
@@ -113,7 +240,7 @@ function DetailPanel({ sel }: { sel: Selection }): JSX.Element | null {
       <div className="detail-kind" style={d.tier === 3 ? { color: "var(--reveal)" } : undefined}>
         {kind}
       </div>
-      <h2 className="rel">{relationLabel(d.relation)}</h2>
+      <h2 className="rel">{relationStepLabel(d.relation)}</h2>
       <dl>
         <dt>Revealed</dt>
         <dd>chapter {d.revealed_chapter}</dd>
@@ -287,6 +414,24 @@ function BackgroundToggle({
   );
 }
 
+// Path-finding toggle: enter "how is A related to B" mode. While on, clicking two nodes
+// traces the shortest chain between them; the rest dims. PURE VIEW — reversible, no re-query.
+function PathToggle({ on, onToggle }: { on: boolean; onToggle: () => void }): JSX.Element {
+  return (
+    <button
+      className="path-toggle"
+      aria-pressed={on}
+      onClick={onToggle}
+      title="Trace the shortest chain of relations between two entities. Click to enable, then click two nodes."
+    >
+      <span className="path-glyph" aria-hidden>
+        ⤳
+      </span>
+      {on ? "tracing" : "trace a path"}
+    </button>
+  );
+}
+
 export default function App(): JSX.Element {
   const [works, setWorks] = useState<WorkModel[]>([]);
   const [work, setWork] = useState<WorkModel | null>(null);
@@ -296,6 +441,9 @@ export default function App(): JSX.Element {
   const [minDegree, setMinDegree] = useState(DEFAULT_MIN_DEGREE);
   const [hideBackground, setHideBackground] = useState(true);
   const [highlightType, setHighlightType] = useState<string | null>(null);
+  const [pathMode, setPathMode] = useState(false);
+  const [pathStart, setPathStart] = useState<string | null>(null);
+  const [pathEnd, setPathEnd] = useState<string | null>(null);
   const [elements, setElements] = useState<GraphElements>(EMPTY);
   const [sel, setSel] = useState<Selection>(null);
   const [error, setError] = useState<string | null>(null);
@@ -339,6 +487,9 @@ export default function App(): JSX.Element {
     setMinDegree(DEFAULT_MIN_DEGREE); // open on the clean connected core; "all" reveals every node
     setHideBackground(true); // open with generic common-noun characters demoted; toggle reveals them
     setHighlightType(null); // no type isolation on open
+    setPathMode(false);
+    setPathStart(null);
+    setPathEnd(null);
     setElements(EMPTY);
     setSel(null);
     setAppending(false);
@@ -441,6 +592,47 @@ export default function App(): JSX.Element {
   );
   const filtering = hiddenIds.size > 0;
 
+  // Path-finding (pure client-side over the fenced payload). pathIds = the nodes+edges on the
+  // shortest chain to LIGHT; pathStatus = the human-readable result. Endpoints survive the
+  // degree/background filters (the chain may pass through a demoted node — show it).
+  const labelOf = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const nd of elements.nodes) m.set(nd.data.id, nd.data.label);
+    return m;
+  }, [elements]);
+  const { pathIds, pathStatus } = useMemo(() => {
+    if (!pathMode || !pathStart) return { pathIds: null as Set<string> | null, pathStatus: "" };
+    const a = labelOf.get(pathStart) ?? "?";
+    if (!pathEnd) return { pathIds: new Set([pathStart]), pathStatus: `from ${a} — pick a target` };
+    const b = labelOf.get(pathEnd) ?? "?";
+    const found = shortestPath(elements, pathStart, pathEnd);
+    if (!found) return { pathIds: new Set([pathStart, pathEnd]), pathStatus: `${a} ✕ ${b} — no path at chapter ${n}` };
+    const hops = found.edgeIds.length;
+    return {
+      pathIds: new Set([...found.nodeIds, ...found.edgeIds]),
+      pathStatus: `${a} → ${b} · ${hops} hop${hops === 1 ? "" : "s"}`,
+    };
+  }, [pathMode, pathStart, pathEnd, elements, labelOf, n]);
+
+  // In path mode a node click picks endpoints: 1st = start, 2nd = target, 3rd starts over.
+  const onPathPick = useCallback(
+    (id: string) => {
+      if (!pathStart || pathEnd) {
+        setPathStart(id);
+        setPathEnd(null);
+      } else if (id !== pathStart) {
+        setPathEnd(id);
+      }
+    },
+    [pathStart, pathEnd],
+  );
+  // Toggling path mode (or leaving the work) clears the pending selection.
+  const togglePathMode = useCallback(() => {
+    setPathMode((on) => !on);
+    setPathStart(null);
+    setPathEnd(null);
+  }, []);
+
   // Keep the threshold in range as the graph changes size with the slider (a sparse early
   // chapter has a lower max degree) — never leaves the user stuck on an all-hidden view.
   // Guarded on maxDegree > 0 so the default isn't stomped to 0 in the empty frame between
@@ -520,13 +712,21 @@ export default function App(): JSX.Element {
             onSelect={onSelect}
             hiddenIds={hiddenIds}
             highlightType={highlightType}
+            pathMode={pathMode}
+            onPathPick={onPathPick}
+            pathIds={pathIds}
           />
         )}
+        {pathMode ? (
+          <div className="path-status" role="status">
+            {pathStatus || "click a node to start"}
+          </div>
+        ) : null}
         <Legend
           active={highlightType}
           onToggle={(t) => setHighlightType((cur) => (cur === t ? null : t))}
         />
-        <DetailPanel sel={sel} />
+        <DetailPanel sel={sel} elements={elements} />
         {appending ? (
           <Composer
             mode="append"
@@ -558,6 +758,7 @@ export default function App(): JSX.Element {
             onToggle={() => setHideBackground((v) => !v)}
           />
         ) : null}
+        <PathToggle on={pathMode} onToggle={togglePathMode} />
       </footer>
     </div>
   );

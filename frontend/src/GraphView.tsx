@@ -11,6 +11,7 @@ import {
   IDENTITY_RELATIONS,
   REVEAL,
   relationLabel,
+  relationStepLabel,
   typeColor,
 } from "./ontology";
 
@@ -31,6 +32,11 @@ interface Props {
   // Type isolation: when set, light up nodes of this entity type and dim the rest. Pure
   // view — null = no isolation.
   highlightType: string | null;
+  // Path-finding: in pathMode a node tap PICKS an endpoint (onPathPick) instead of focusing;
+  // pathIds = the nodes+edges on the shortest chain to light (null = none). Pure view.
+  pathMode: boolean;
+  onPathPick: (id: string) => void;
+  pathIds: Set<string> | null;
 }
 
 const reducedMotion =
@@ -101,8 +107,10 @@ const STYLE: cytoscape.StylesheetStyle[] = [
       "z-index": 10,
     },
   },
-  // A neighbourhood edge in focus shows its relation; everything else stays quiet.
-  { selector: "edge.focus", style: { label: "data(rlabel)", "line-color": INK_DIM, color: INK } },
+  // A neighbourhood/path edge in focus shows its relation; everything else stays quiet.
+  // Uses `plabel` (never blank) so a generic `RelatedTo` hop in a traced path still reads
+  // ("linked") even though its label is hidden in the calm default view.
+  { selector: "edge.focus", style: { label: "data(plabel)", "line-color": INK_DIM, color: INK } },
   // Out-of-focus: dim hard and turn labels OFF so the focused entity's world reads cleanly.
   { selector: "node.dim", style: { opacity: 0.1, "text-opacity": 0 } },
   { selector: "edge.dim", style: { opacity: 0.05, "text-opacity": 0 } },
@@ -136,7 +144,13 @@ function toCyElements(elements: GraphElements): ElementDefinition[] {
   }));
   const edges: ElementDefinition[] = elements.edges.map((e) => ({
     group: "edges",
-    data: { ...e.data, rlabel: relationLabel(e.data.relation) },
+    // rlabel = the calm default label (blank for low-quality relations like RelatedTo);
+    // plabel = the never-blank label used when an edge is focused/traced ("linked" fallback).
+    data: {
+      ...e.data,
+      rlabel: relationLabel(e.data.relation),
+      plabel: relationStepLabel(e.data.relation),
+    },
     classes: IDENTITY_RELATIONS.has(e.data.relation) ? "identity" : undefined,
   }));
   return [...nodes, ...edges];
@@ -153,13 +167,29 @@ function paint(
   focusId: string | null,
   hidden: Set<string>,
   highlightType: string | null,
+  pathIds: Set<string> | null,
 ): void {
   const target = focusId ? cy.getElementById(focusId) : null;
   const active = target && target.nonempty() ? target : null;
   const edgeHidden = (e: EdgeSingular): boolean =>
     hidden.has(String(e.data("source"))) || hidden.has(String(e.data("target")));
   cy.batch(() => {
-    if (active) {
+    if (pathIds && pathIds.size) {
+      // Path trace (highest priority): light the chain's nodes+edges (revealed even if
+      // filtered out), dim everything else hard. The path edges show their relation labels.
+      cy.nodes().forEach((n) => {
+        const on = pathIds.has(n.id());
+        n.toggleClass("hidden", !on && hidden.has(n.id()));
+        n.toggleClass("dim", !on);
+        n.toggleClass("focus", on);
+      });
+      cy.edges().forEach((e) => {
+        const on = pathIds.has(e.id());
+        e.toggleClass("hidden", !on && edgeHidden(e));
+        e.toggleClass("dim", !on);
+        e.toggleClass("focus", on);
+      });
+    } else if (active) {
       // Focus: the node + its 1-hop neighbourhood stay lit; everything else dims hard.
       // The neighbourhood is REVEALED even if degree-filtered out ("show this node's
       // world"); non-neighbours keep the degree filter.
@@ -214,17 +244,24 @@ export default function GraphView({
   onSelect,
   hiddenIds,
   highlightType,
+  pathMode,
+  onPathPick,
+  pathIds,
 }: Props): JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const cyRef = useRef<Core | null>(null);
   const layoutRef = useRef<cytoscape.Layouts | null>(null);
   const firstFit = useRef(true);
   // Sticky click-focus target (survives mouse-move; null = no focus) and live mirrors of the
-  // degree-filter + type-isolation props, all read by `paint` from inside cytoscape event
+  // view-state props, all read by `paint` (and the tap handler) from inside cytoscape event
   // handlers that close over the mount effect (so they can't read the latest prop directly).
   const focusedIdRef = useRef<string | null>(null);
   const hiddenIdsRef = useRef<Set<string>>(hiddenIds);
   const highlightTypeRef = useRef<string | null>(highlightType);
+  const pathIdsRef = useRef<Set<string> | null>(pathIds);
+  const pathModeRef = useRef<boolean>(pathMode);
+  const onPathPickRef = useRef<(id: string) => void>(onPathPick);
+  onPathPickRef.current = onPathPick;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -240,31 +277,38 @@ export default function GraphView({
 
     // Hover is the TRANSIENT preview (desktop nicety); it only paints while there is no
     // sticky click-focus, so moving the mouse can't fight a node the user clicked to pin.
+    const repaint = (focusId: string | null): void =>
+      paint(cy, focusId, hiddenIdsRef.current, highlightTypeRef.current, pathIdsRef.current);
+    // Hover preview is suppressed while a path trace or sticky focus is active.
     cy.on("mouseover", "node", (e) => {
-      if (focusedIdRef.current) return;
-      paint(cy, (e.target as NodeSingular).id(), hiddenIdsRef.current, highlightTypeRef.current);
+      if (focusedIdRef.current || pathModeRef.current) return;
+      paint(cy, (e.target as NodeSingular).id(), hiddenIdsRef.current, highlightTypeRef.current, null);
     });
     cy.on("mouseout", "node", () => {
-      if (focusedIdRef.current) return;
-      paint(cy, null, hiddenIdsRef.current, highlightTypeRef.current);
+      if (focusedIdRef.current || pathModeRef.current) return;
+      repaint(null);
     });
-    // Click is the STICKY focus (and tap on mobile): pin the node + its neighbours lit,
-    // dim the rest. Clicking the same node again toggles focus off. Selecting also opens
-    // the detail panel (and deselects on un-focus).
+    // In path mode a node tap PICKS an endpoint; otherwise it's the STICKY focus (pin the
+    // node + its neighbours lit, dim the rest; re-clicking toggles focus off).
     cy.on("tap", "node", (e) => {
       const id = (e.target as NodeSingular).id();
+      onSelect({ kind: "node", data: e.target.data() });
+      if (pathModeRef.current) {
+        onPathPickRef.current(id);
+        return; // App will hand back new pathIds, which repaints via the effect
+      }
       const next = focusedIdRef.current === id ? null : id;
       focusedIdRef.current = next;
-      onSelect(next ? { kind: "node", data: e.target.data() } : null);
-      paint(cy, next, hiddenIdsRef.current, highlightTypeRef.current);
+      if (!next) onSelect(null);
+      repaint(next);
     });
     cy.on("tap", "edge", (e) => onSelect({ kind: "edge", data: e.target.data() }));
-    // Empty space resets focus to the current degree view (and clears the selection).
+    // Empty space resets focus to the current view (and clears the selection).
     cy.on("tap", (e) => {
       if (e.target !== cy) return;
       focusedIdRef.current = null;
       onSelect(null);
-      paint(cy, null, hiddenIdsRef.current, highlightTypeRef.current);
+      repaint(null);
     });
 
     cyRef.current = cy;
@@ -346,7 +390,7 @@ export default function GraphView({
     hiddenIdsRef.current = hiddenIds;
     const cy = cyRef.current;
     if (!cy) return;
-    paint(cy, focusedIdRef.current, hiddenIds, highlightTypeRef.current);
+    paint(cy, focusedIdRef.current, hiddenIds, highlightTypeRef.current, pathIdsRef.current);
   }, [hiddenIds, elements]);
 
   // Type isolation (legend click): selecting a type clears any sticky node-focus, then
@@ -356,8 +400,18 @@ export default function GraphView({
     const cy = cyRef.current;
     if (!cy) return;
     if (highlightType) focusedIdRef.current = null;
-    paint(cy, focusedIdRef.current, hiddenIdsRef.current, highlightType);
+    paint(cy, focusedIdRef.current, hiddenIdsRef.current, highlightType, pathIdsRef.current);
   }, [highlightType]);
+
+  // Path trace: a new selection/result repaints. Path takes precedence over node-focus.
+  useEffect(() => {
+    pathModeRef.current = pathMode;
+    pathIdsRef.current = pathIds;
+    const cy = cyRef.current;
+    if (!cy) return;
+    if (pathMode || pathIds) focusedIdRef.current = null;
+    paint(cy, focusedIdRef.current, hiddenIdsRef.current, highlightTypeRef.current, pathIds);
+  }, [pathMode, pathIds]);
 
   return <div ref={containerRef} className="graph-canvas" />;
 }
