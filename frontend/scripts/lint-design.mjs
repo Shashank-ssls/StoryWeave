@@ -56,9 +56,10 @@ const RED_PERMITTED = {
     "the hidden #/_type token gallery — must render the --accent/--accent-hi/" +
     "--accent-soft swatches to document them; never reader-facing.",
   "codex/Landing/Landing.module.css":
-    "the landing kicker — explicitly on DESIGN_SPEC §2's red-discipline allow-list " +
-    "(\"the landing kicker\" is named alongside identity edges/reveal UI/bookmark " +
-    "marker/changed tags/next-stepper/Stemma filter as a permitted --accent use).",
+    "the landing kicker, the try-it stepper's dashed 'next' button, and the try-it " +
+    "prompt row's eye glyph (§4.4: \"the eye glyph is the reveal marker\" — landing " +
+    "try-it prompt named explicitly) — all three on DESIGN_SPEC §2's red-discipline " +
+    "allow-list by name (landing kicker / next-stepper / reveal UI).",
   "codex/Dossier/Dossier.module.css":
     "identity kicker + the linked other name in the identity sentence (§6.2 item 5) and " +
     "the \"changed\" cast tag (§6.2 item 3) — all three named on the P2 allow-list.",

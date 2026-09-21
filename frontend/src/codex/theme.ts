@@ -156,6 +156,39 @@ export const codexTheme = {
   chronicleRevealOf: "{i} of {n}",
   chronicleTieTooltip: "{rel} · Chapter {n}",
   chronicleIdentityTooltip: "{kicker} · Chapter {n}",
+
+  // ---- R8: Landing & states (§6.1, §6.7) ----
+  landingLede:
+    "StoryWeave remembers every name, tie and hidden identity a reader has met so far — " +
+    "and refuses to show anything past that point. Written in red only where the text has earned it.",
+  landingTrust: "The seal is enforced in the database query, not the browser. Later chapters are never sent to your screen, so there is nothing to peek at.",
+  howSealWorks: "How the seal works",
+  sourceLink: "Source",
+  sealExplainTitle: "How the seal works",
+  sealExplainBody: [
+    "You tell StoryWeave which chapter you've finished — nothing more.",
+    "Every request the app makes carries that number, and the server's own query filters on it: WHERE revealed_chapter <= your bookmark.",
+    "A row past your bookmark is never sent, so there is nothing later for the browser to accidentally show.",
+  ],
+  sealExplainDiagram: "Reader → bookmark N → SQL WHERE revealed_chapter ≤ N → only those rows leave the server",
+  tryTheSample: "Try the sample",
+  sampleMeta: "sample novel · {n} chapters",
+  landingPrompt: "Step forward. Someone is not who they seem.",
+  exploreFullBook: "Explore the full book →",
+  yourShelf: "Your shelf:",
+  addNovel: "Add a novel",
+  addNovelCaption: "paste chapters, build its map",
+  openSample: "Open the sample",
+  stateEmptyShelf: {
+    label: "Empty shelf",
+    headline: "No books on the shelf yet.",
+    body: "Open the sample to see how it works, or add a novel of your own.",
+  },
+  stateDemoMissing: {
+    label: "Setup",
+    headline: "The sample book is missing.",
+    body: "Run `storyweave seed-demo` to restore it.",
+  },
 } as const;
 
 /** Fills `{token}` placeholders in a theme string, e.g. fence copy's `{n}`. */

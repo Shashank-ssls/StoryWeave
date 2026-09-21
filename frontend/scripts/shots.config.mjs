@@ -480,6 +480,56 @@ export async function getShots(phase) {
         },
       ];
     }
+    case "8": {
+      // R8 — Landing & states. The try-it panel at every demo chapter, the explainer, and
+      // each §6.7 state card (route interception simulates empty/error backends).
+      const SLUG = "the-hollow-crown";
+      const KEY = `storyweave:bookmark:${SLUG}`;
+      const landingAt = async (page, baseUrl, n) => {
+        await page.goto(`${baseUrl}/#/`, { waitUntil: "networkidle" });
+        await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, String(n)]);
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForSelector('[data-testid="landing-mini-graph"]');
+        await page.waitForTimeout(300);
+      };
+      return [
+        { name: "landing-ch1", run: (p, b) => landingAt(p, b, 1) },
+        { name: "landing-ch2", run: (p, b) => landingAt(p, b, 2) },
+        { name: "landing-ch3", run: (p, b) => landingAt(p, b, 3) },
+        { name: "landing-ch4", run: (p, b) => landingAt(p, b, 4) },
+        {
+          name: "landing-explainer",
+          async run(page, baseUrl) {
+            await landingAt(page, baseUrl, 1);
+            await page.click('[data-testid="how-seal-works"]');
+            await page.waitForSelector('[data-testid="explainer-panel"]');
+          },
+        },
+        {
+          name: "state-empty-shelf",
+          async run(page, baseUrl) {
+            await page.route(/\/api\/v1\/works$/, async (route) => {
+              await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ works: [] }) });
+            });
+            await page.goto(`${baseUrl}/#/`, { waitUntil: "networkidle" });
+            await page.waitForSelector('[data-testid="state-empty-shelf"]');
+          },
+        },
+        {
+          name: "state-shelf-error",
+          expectedConsoleErrors: [
+            "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+          ],
+          async run(page, baseUrl) {
+            await page.route(/\/api\/v1\/works$/, async (route) => {
+              await route.fulfill({ status: 500, body: "boom" });
+            });
+            await page.goto(`${baseUrl}/#/`, { waitUntil: "networkidle" });
+            await page.waitForSelector('[data-testid="state-shelf-error"]');
+          },
+        },
+      ];
+    }
     default:
       throw new Error(`No shots defined for phase "${phase}" yet — add one to shots.config.mjs.`);
   }

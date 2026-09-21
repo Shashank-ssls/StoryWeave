@@ -163,8 +163,9 @@
 
 - **Date:** 2026-09-22
 - **Model / effort:** Sonnet 5, high effort
-- **Phase(s):** R7 (of R7→R8→R9 planned for this session)
-- **Commits:** 782998b → (this commit; see `git log`)
+- **Phase(s):** R7, R8 (of R7→R8→R9 planned for this session; stopped before R9 on
+  explicit user instruction mid-session — see below)
+- **Commits:** 782998b → b475ded (R7) → (R8 commit; see `git log`)
 - **Done:**
   - `graph/chronicleModel.ts` (new, pure, 13 unit tests): `chronicleRows` (reuses
     `stemmaModel.visibleGraph`'s principal/everyone filter), `columnLayout` (small ≤12 /
@@ -196,5 +197,52 @@
   dependency. Root-caused both with a throwaway Playwright script reading
   `scrollLeft`/`getBoundingClientRect` directly rather than guessing from screenshots.
   Nothing left BROKEN.
-- **Stopped at:** R7 green, committed and pushed.
-- **Next:** R8 Landing & states (Sonnet 5).
+
+**R7 done, pushed (b475ded). Continued straight into R8 per the session plan.**
+
+- **R8 done:**
+  - `codex/Landing/TryItPanel.tsx`: the try-it panel is its own `<ChapterProvider
+    slug={DEMO_SLUG}>` + real `<RevealChrome>`/`<ChapterChrome/>` — a second MOUNT of the
+    exact machinery the rest of the app uses, not a reimplementation, so it shares the same
+    `storyweave:bookmark:the-hollow-crown` key and plays the real R6 overlay on a reveal.
+  - `codex/Landing/ChapterStepper.tsx` (per-chapter buttons ≤8 chapters, compact
+    prev/current/next above that), `MiniGraph.tsx` (non-interactive codexStyle Cytoscape
+    from the same ViewModel — F9 holds by construction), `ExplainerPanel.tsx` ("How the
+    seal works": 3 sentences + inline SVG diagram).
+  - `Landing.tsx` rebuilt: header, left column (real lede/trust line), try-it slot
+    (loading/error/demo-missing/live off a plain `/works` fetch), footer shelf (real
+    works + "Add a novel" → the existing `#/_legacy` Composer, no new ingestion UI built
+    per the brief). All §6.7 state cards wired.
+  - New suite `tests/landing.spec.ts` (9/9): F9, F2, stepper forward/backward through the
+    real commit path, "Explore the full book", all three /works-driven states, the
+    explainer, and a CLS (`PerformanceObserver` layout-shift) check ≤2%. Un-fixme'd F4
+    (search) and F9 in `fence.spec.ts` with real tests (29/31, 2 fixme: F6/F7, still
+    config-absent). Phase-8 shots (14, both widths) vs artboards 1 and 7.
+- **R8 decisions:** the eye-glyph prompt copy is generic ("Step forward. Someone is not
+  who they seem."), not spec's literal chapter-naming example — read literally as a
+  computed runtime string, that example would itself be the F9 hint it forbids; kept it
+  theme-string-generic instead. Demo-missing and empty-shelf render together when
+  `/works` returns 0 (no API signal to tell them apart, per the brief's own escape hatch).
+- **R8 issues:** MEASURED, a real font-swap CLS bug found via the new test, not guessed —
+  the H1's serif fallback rendered ~88px taller than Pirata One, and the stepper's 4
+  buttons wrapped onto two rows under the fallback UI font before collapsing to one; ~6%
+  CLS combined, 3x budget. `font-size-adjust: from-font` didn't help; a `min-height`
+  reservation fixed the number but left a permanent visible gap. Fixed with `max-height:
+  264px; overflow: hidden` on the H1 (local fonts resolve in single-digit ms, so nothing
+  is perceptibly clipped) and `flex-wrap: nowrap` + shrinkable buttons on the stepper
+  (removes the wrap state a font-metric change could ever move something between rows
+  of). Root-caused with a throwaway script sampling `PerformanceObserver` layout-shift
+  sources' `previousRect`/`currentRect`. Two PRE-EXISTING tests had stale hardcoded
+  expectations once landing had its own live graph/provider (a network-request-count
+  assertion in `fence.spec.ts`, a cytoscape-instance-count assertion in
+  `stemma.spec.ts`) — both updated with the reasoning inline, not silently patched.
+  Nothing left BROKEN.
+- **Stopped at:** R8 green, committed and pushed — **on the user's explicit instruction
+  mid-session to stop before R9**, not a context or failure boundary. R9 has not been
+  started: no files touched, no plan drafted beyond what FRONTEND_OVERHAUL §9's existing
+  "Next" note already said.
+- **Next:** R9 Polish & acceptance (fix the logged Stemma camera-fit bug first, then label
+  legibility, keyboard map, screen-reader mirror, responsive breakpoints, reduced-motion
+  audit, favicon/OG, delete `#/_legacy` + all legacy code, run the §16 checklist). A fresh
+  session should read this entry, confirm clean on `redesign/codex`, and start R9 from
+  scratch — nothing here is mid-phase.

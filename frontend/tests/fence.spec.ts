@@ -403,8 +403,11 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     await page.goForward();
     await waitForBookmark(page, 1);
     await page.waitForTimeout(300);
-    // n=3 (the confirm, aborted) then n=1 (the fresh mount's initial load). Never 3 again.
-    expect(log.urls.map(nOf)).toEqual([3, 1]);
+    // n=3 (the confirm, aborted), then n=1 twice: R8's landing try-it panel (its own
+    // ChapterProvider for the same demo slug) fetches once on mounting the landing hash,
+    // and the Dossier's own remount on goForward fetches again independently. Never 3
+    // again, and never anything above the bookmark from either provider.
+    expect(log.urls.map(nOf)).toEqual([3, 1, 1]);
     await attachLog(log);
   });
 
@@ -434,7 +437,19 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     expect(text).not.toMatch(/appears? later|later chapter|not yet|will appear/);
     expect(await page.locator('[data-testid="entity-main"]').count()).toBe(0);
   });
-  test.fixme("F4 (search, R8) — Stemma/landing search no-match copy never confirms a name exists later", async () => {});
+  test("F4 (search, R8) — Stemma search no-match copy never confirms a name exists later", async ({ page }) => {
+    await page.goto(`/#/work/${SLUG}/web`);
+    await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "2"] as const);
+    await page.reload();
+    await page.waitForSelector('[data-testid="stemma-footer"]');
+    await page.fill('[data-testid="stemma-search"]', "Veris"); // first revealed chapter 3
+    const card = page.locator('[data-testid="search-no-match"]');
+    await expect(card).toBeVisible();
+    const text = (await card.innerText()).toLowerCase();
+    expect(text).toContain("no one by that name, as of chapter ii.");
+    expect(text).not.toContain("veris");
+    expect(text).not.toMatch(/appears? later|later chapter|not yet|will appear/);
+  });
   test.fixme("F6 (R3 arcs — inactive: D6 arc config absent, blocks-of-100 fallback carries no names) — arc names hidden until start <= bookmark", async () => {});
   test.fixme("F7 (R7) — chapter titles, if added, follow F6", async () => {});
   test("F8 (R4) — \"changed\" tags come from graph(n) and graph(n−1) only: exactly those two requests, both fenced", async ({ page }) => {
@@ -449,5 +464,21 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     expect(tagged).toEqual(["11", "12"]);
     await attachLog(log);
   });
-  test.fixme("F9 (R8) — demo/landing mini-graph obeys F1-F3, no hint of the upcoming reveal edge", async () => {});
+  test("F9 (R8) — demo/landing mini-graph obeys F1-F3, no hint of the upcoming reveal edge", async ({ page }) => {
+    const log = recordGraphRequests(page);
+    await page.goto("/#/");
+    await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "1"] as const);
+    await page.reload();
+    await page.waitForSelector('[data-testid="landing-mini-graph"]');
+    await page.waitForTimeout(300);
+    // ch.2 introduces Prince Caelum and the Wren/Caelum identity edge — neither may exist
+    // in the DOM (mini-graph or otherwise) while the landing bookmark is still ch.1.
+    const nodeIds = (await page.locator('[data-testid="landing-mini-graph"]').getAttribute("data-nodes"))?.split(",") ?? [];
+    const edgeIds = (await page.locator('[data-testid="landing-mini-graph"]').getAttribute("data-edges"))?.split(",") ?? [];
+    expect(nodeIds).not.toContain("7"); // Prince Caelum
+    expect(edgeIds).not.toContain("e12"); // the SECRET_IDENTITY edge, revealed ch.2
+    expect(await page.evaluate(() => document.body.innerText)).not.toContain("Prince Caelum");
+    assertNoGraphRequestAbove(log, 1);
+    await attachLog(log);
+  });
 });

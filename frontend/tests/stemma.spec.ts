@@ -231,8 +231,12 @@ test.describe("Stemma — fenced canvas at every step", () => {
     await page.goto("/#/");
     await page.waitForSelector('[data-testid="landing-root"]');
     await page.waitForTimeout(200);
+    // R8: the Stemma's own instance is gone (this test's job), but the landing page
+    // itself now mounts one cytoscape instance of its own (the try-it panel's mini-graph,
+    // a `concentric`, non-continuous layout) — so "leaving the work" no longer means
+    // "zero instances anywhere in the app", just "zero of the Stemma's".
     const gone = await reg();
-    expect(gone.i).toBe(0);
+    expect(gone.i).toBe(1);
     expect(gone.l).toBe(0);
   });
 });

@@ -57,21 +57,251 @@
   font-size: 92px; /* spec's exact Landing H1 role-size, not a named scale step */
   line-height: var(--lh-display);
   margin: 0 0 var(--s-6);
+  /* MEASURED (Chromium): the Georgia/serif fallback renders this 3-line heading ~88px
+     taller than Pirata One does, and that collapse once the real font loads cascades into
+     everything below it — a real font-swap layout shift (§6.1 "no layout shift beyond
+     2%"). Pirata One is a local, same-origin font that resolves within single-digit
+     milliseconds, so the fallback is only ever on screen for a frame or two; clipping the
+     box at its final (Pirata One) height rather than reserving the fallback's taller one
+     removes the shift with no permanent-gap side effect, at the cost of an imperceptible
+     clipped fallback glyph for that one frame. */
+  max-height: 264px;
+  overflow: hidden;
 }
 
 .tryItPanel {
   flex: 1;
   min-width: 0;
+  /* Reserves the loaded panel's own height (title row + stepper + 230px mini-graph +
+     prompt row + gaps + padding) so the brief loading-card -> real-content swap right
+     after the initial /works + /graph fetches resolve doesn't reflow the footer shelf
+     below it — a real, measured layout shift (§6.1 "no layout shift beyond 2%"), not a
+     hypothetical one. */
+  min-height: 542px;
   background: var(--panel);
   border: var(--border);
   padding: 30px 34px;
   box-sizing: border-box;
 }
 
-.footer {
+.lede {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-24, 24px);
+  color: var(--dim);
+  margin: 0 0 var(--s-6);
+  max-width: 520px;
+}
+.trustLine {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  color: var(--dim);
+  max-width: 480px;
+  margin: 0;
+}
+
+.headerLink {
+  all: unset;
+  cursor: pointer;
+}
+.headerLink:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+/* ---------- try-it panel contents ---------- */
+
+.tryIt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.tryItTitleRow {
   display: flex;
   align-items: baseline;
-  gap: var(--s-4);
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.tryItTitle {
+  font-family: var(--font-display);
+  font-size: 30px;
+  color: var(--ink);
+}
+.tryItMeta {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
+}
+
+.stepper {
+  display: flex;
+  gap: var(--s-2);
+  /* MEASURED (Chromium, 1280px): with `wrap`, the fallback sans's wider label metrics
+     push these 4 buttons onto two rows before Alegreya Sans loads, then they collapse
+     onto one row once it does — a real layout shift (§6.1 "no layout shift beyond 2%").
+     `nowrap` + letting each button shrink removes the wrap state entirely, so there is
+     no row count for a font-metric change to ever affect. */
+  flex-wrap: nowrap;
+}
+.step {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  min-height: 36px;
+  padding: 0 var(--s-3);
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-1);
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.step_current {
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 700;
+  border-color: var(--ink);
+}
+.step_next {
+  border: 1px dashed var(--accent);
+  color: var(--accent);
+}
+.step_sealed {
+  background: var(--deep);
+  color: var(--faint);
+  border-color: var(--deep);
+  cursor: default;
+}
+.stepLock {
+  opacity: 0.8;
+}
+
+.stepperCompact {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.stepChevron {
+  all: unset;
+  cursor: pointer;
+  color: var(--dim);
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.stepChevron:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+.stepCurrentCompact {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  color: var(--ink);
+}
+.stepNextCompact {
+  all: unset;
+  cursor: pointer;
+  color: var(--accent);
+  font-family: var(--font-ui);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+.stepNextCompact:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.miniGraph {
+  height: 230px;
+  background: var(--bg);
+  border: var(--border);
+}
+
+.promptRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.promptEye {
+  color: var(--accent);
+  flex: none;
+}
+.promptText {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 20px;
+  color: var(--ink);
+}
+
+.exploreButton {
+  align-self: flex-start;
+}
+
+/* ---------- explainer panel (§9.2) ---------- */
+
+.explainerScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--scrim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.explainerPanel {
+  width: 600px;
+  max-width: calc(100vw - 48px);
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  padding: var(--s-6) var(--s-8);
+  box-sizing: border-box;
+}
+.explainerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.explainerTitle {
+  font-family: var(--font-display);
+  font-size: 36px;
+  margin: 0;
+  color: var(--ink);
+}
+.explainerSteps {
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+  color: var(--dim);
+  padding-left: var(--s-6);
+  margin: var(--s-4) 0;
+}
+.explainerSteps li + li {
+  margin-top: var(--s-2);
+}
+.explainerDiagram {
+  width: 100%;
+  height: 60px;
+}
+.explainerDiagramText {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  fill: var(--faint);
+}
+
+/* ---------- footer shelf ---------- */
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
   margin-top: auto;
   padding-top: var(--s-16);
   font-family: var(--font-ui);
@@ -81,6 +311,52 @@
 
 .shelfLabel {
   color: var(--ink);
+}
+
+.shelfLoading {
+  display: block;
+  width: 320px;
+  height: 88px;
+  border: 1px dashed var(--line);
+}
+
+.shelf {
+  display: flex;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+.shelfCard,
+.shelfAdd {
+  width: 200px;
+  min-height: 88px;
+  border: var(--border);
+  background: var(--panel);
+  padding: var(--s-3);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  text-decoration: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.shelfAdd {
+  background: transparent;
+  border-style: dashed;
+  align-items: flex-start;
+}
+.shelfAddPlus {
+  font-family: var(--font-display);
+  font-size: 24px;
+}
+.shelfCardTitle {
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+}
+.shelfCardMeta {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
 }
 
 .placeholder {

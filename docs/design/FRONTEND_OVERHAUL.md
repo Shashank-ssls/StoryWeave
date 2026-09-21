@@ -1282,3 +1282,153 @@ Commit: (see SESSION_LOG.md Session 8) pushed: yes.
 Next: **R8 — Landing & states** (§6.1 + §6.7 + §9.1 F9: the real landing page wired to the
 SAME per-work bookmark provider, "How the seal works" explainer, remaining state cards,
 un-fixme F9 and F4's search variant). Model: Sonnet 5 is fine.
+
+## Phase 8 — Landing & states — GREEN
+
+Scope delivered:
+- **`codex/Landing/TryItPanel.tsx`**: the try-it panel is its OWN `<ChapterProvider slug={DEMO_SLUG}>` wrapped in the real `<RevealChrome>` + `<ChapterChrome/>` — not a second
+  implementation of the bookmark/fetch/reveal machinery. It reads and writes the SAME
+  `storyweave:bookmark:the-hollow-crown` key the Dossier/Stemma/Chronicle use, so stepping
+  forward on the landing page goes through the identical commit path (`requestChapter`)
+  and plays the real R6 reveal overlay unchanged when a step crosses one.
+- **`codex/Landing/ChapterStepper.tsx`**: one button per chapter (read / current / next
+  dashed-accent / sealed) for chapter counts ≤8; a `‹ prev · current · next →` compact
+  control above that, per spec.
+- **`codex/Landing/MiniGraph.tsx`**: a non-interactive `codexStyle` Cytoscape instance
+  built from the SAME `ViewModel` the rest of the app builds from the bookmark's fenced
+  payload — F9 holds by construction (there is nothing else in scope to draw), exactly
+  like the Dossier's ego graph (R4) and the Stemma (R5).
+- **`codex/Landing/ExplainerPanel.tsx`**: "How the seal works" — 3 sentences + an inline-
+  SVG one-line diagram, all from the theme, same scrim/Esc/click-outside language as the
+  Change-chapter dialog.
+- **`codex/Landing/Landing.tsx`** rebuilt: header (wordmark, explainer trigger, Source →
+  the real GitHub repo URL), left column (kicker/H1 already existed; lede + trust line now
+  real copy), try-it panel slot (loading / error / demo-missing / live, based on a plain
+  `/works` fetch), footer shelf (real works from `/works`, each a link into its Dossier;
+  "Add a novel"). "Explore the full book" appears once the reader has stepped past chapter
+  1, opening the real Dossier at the same bookmark.
+- **"Add a novel"** (§6.1 point 4, per the brief's own instruction not to build a new
+  ingestion screen): the backend's real ingest endpoint (`POST /api/v1/works`) is already
+  wired up behind the legacy Composer at `#/_legacy` (R0 recon confirmed this). Both the
+  footer's dashed "Add a novel" card and the empty-shelf state's action button link there
+  as-is; no new ingestion UI was built.
+- **State cards** (§6.7, StateCard component, unchanged): loading, error (`/works`
+  unreachable — shown in both the try-it slot and the footer independently), empty shelf
+  (0 works — footer), demo missing (0 works, or works present but none is the demo slug —
+  try-it slot). Per the brief's own escape hatch ("if [demo-missing vs. empty-shelf] isn't
+  detectable from the API, document the fallback"): there is no dedicated signal for "was
+  a demo ever seeded", so demo-missing is inferred from `works.some(w => w.slug ===
+  DEMO_SLUG)` being false, which the empty-shelf case trivially satisfies too — both cards
+  render together when there are zero works at all, which is the correct combined message
+  (no sample AND nothing else on the shelf), not a conflict.
+- Theme: 17 new `chronicle*`→ correction, `landing*`/`seal*`/`state*` keys (all Landing
+  copy from R2's placeholders onward now real).
+
+Spec sections covered: §6.1 complete, §6.7 (empty shelf, error, demo missing), §9.1 F9,
+§9.2 (the explainer).
+
+Visual comparison (artboards 1 and 7, MEASURED — `.shots/phase-8/*`, 14 shots × 2 widths,
+inspected; two fix loops, both a genuine measured layout-shift bug, not cosmetic tuning):
+| Element | Status | Note |
+|---|---|---|
+| Header: wordmark, "How the seal works", "Source" | matches | Source → github.com/Shashank-ssls/StoryWeave |
+| Kicker/H1 | matches | unchanged from R2 |
+| Lede + trust line | matches | real spec-derived copy |
+| Try-it title row: novel name + "sample novel · N chapters" | matches | |
+| Chapter stepper: read/current/next(dashed accent)/sealed | matches | 4 buttons, demo length |
+| Mini-graph, real codexStyle, concentric, non-interactive | matches | shows the identity edge once revealed (ch.3+), never before |
+| Eye-glyph prompt row | matches | generic, non-spoiling copy (see deviations) |
+| "Explore the full book" | matches | appears after the first forward step, opens the real Dossier |
+| Explainer panel: 3 sentences + inline diagram | matches | Esc / click-outside close |
+| Footer shelf: real works, "Add a novel" | matches | routes to `#/_legacy`'s Composer |
+| Empty shelf + demo-missing state cards | matches spec | shown together when `/works` returns 0, see note above |
+| Error state (try-it + footer) | matches | independent StateCards, both driven by the one `/works` fetch |
+| Red only in: kicker, next-stepper, prompt eye glyph | matches | lint:design 9 red-permitted files, comment updated to name all three |
+| No horizontal scroll at 1280×720 | matches | test:geometry + test:style |
+
+Fence tests: **29/31 passed, 2 fixme** MEASURED (`npm run test:fence`) — F4(search) and F9
+un-fixme'd this phase with real tests (Stemma no-match copy; landing mini-graph draws
+neither the ch.2-only node nor its identity edge while the bookmark is ch.1). F6/F7 stay
+fixme (D6/D7-equivalent config still absent). One PRE-EXISTING test's hardcoded request
+count went stale, not broken by a bug: "navigating away (browser back)" asserted the
+network log ended `[3, 1]`; it's now legitimately `[3, 1, 1]`, because landing (`#/`) now
+has its own `ChapterProvider` for the demo slug and fetches once on mount, same as any
+other screen — updated the expectation with the reasoning inline, the same way R4 updated
+three R3 expectations when its own new fetch appeared. Likewise `stemma.spec.ts`'s
+"leaving the work leaves none" lifecycle check now finds one cytoscape instance on landing
+(the mini-graph) instead of zero — updated to say what's actually true: zero of the
+Stemma's own instances, not zero anywhere in the app.
+
+New suite: **`test:landing` 9/9** MEASURED. Covers: F9 at every chapter (mini-graph node
+set == the fenced fixture's drawn nodes, nothing above); F2 (no later-chapter name in any
+page text); stepper forward crossing a reveal → the real overlay, then "Explore the full
+book" appears; backward → the real "sealed again" toast; "Explore the full book" opens the
+Dossier at the same bookmark; all three /works-driven states (empty, demo-missing, error)
+independently reachable via route interception; the explainer opens/closes; cumulative
+layout shift ≤ 2% through first paint (`PerformanceObserver` layout-shift entries,
+buffered).
+
+Style/static checks: MEASURED. `lint:design`: 80 files, 0 failures (red-permitted 9,
+Landing's own entry's reasoning expanded to name all three accent uses, not just the
+kicker). `test:style` 5/5. `test:geometry` 13/13 (Landing's own dimensions were already
+asserted at R2). `typecheck`/`build` clean. `shoot --phase=8`: 14/14 shots, zero console
+errors.
+
+Deleted old code: none (R2's Landing placeholders replaced in place; the legacy Composer
+stays reachable at `#/_legacy` until R9 deletes the legacy route wholesale).
+
+Backend deps hit: none new — `/works` and `/graph` (already used everywhere), plus D8's
+absence (no larger precomputed demo) is why the >8-chapter compact stepper variant is only
+exercised by a unit-level prop, not the real demo.
+
+Deviations kept (with reason):
+- **The eye-glyph prompt copy is generic** ("Step forward. Someone is not who they seem."),
+  not spec's literal example ("Step to Chapter III. Someone is not who they seem."). The
+  literal example names a specific future chapter as having a reveal — which, read
+  literally as something the RUNNING APP computes and displays, would itself be exactly
+  the kind of "hint of the upcoming reveal edge" F9 forbids. Treated the example as
+  illustrative marketing copy rather than a literal per-chapter computed string, and kept
+  it chapter-agnostic so the same rule (never confirm what's ahead) that governs the
+  mini-graph also governs this line.
+- **A real, measured font-swap layout-shift bug, found and fixed via the CLS test, not
+  guessed:** the Georgia/serif fallback in the Pirata One stack rendered the landing H1
+  ~88px taller than Pirata One does, and a second, independent shift came from the try-it
+  stepper's 4 buttons wrapping onto two rows under the fallback UI font's wider label
+  metrics before Alegreya Sans loaded, then collapsing to one row — together ~6% CLS,
+  three times the 2% budget. `font-size-adjust: from-font` was tried first and made it
+  worse (no visible effect on Chromium's rendering here); a `min-height` reservation fixed
+  the CLS number but left a permanent visible gap once the real font settled (min-height
+  doesn't shrink back down). Fixed instead with `max-height: 264px; overflow: hidden` on
+  the H1 (clips the taller fallback for the single frame it's visible — local, same-origin
+  fonts resolve in single-digit milliseconds, so nothing is ever perceptibly cut off) and
+  `flex-wrap: nowrap` + shrinkable buttons on the stepper (removes the wrap state
+  entirely, so a font-metric change can no longer move a button between rows). Root-caused
+  with a throwaway Playwright script sampling `PerformanceObserver` layout-shift entries
+  and their `previousRect`/`currentRect` sources, not guessed from screenshots.
+- **Default `Cast size` for the mini-graph/stepper flow has no rail control** (unlike the
+  Stemma) — the whole 13-node demo graph is small enough that the Principal/Everyone
+  distinction doesn't matter at landing scale; not spec'd as a control here.
+
+BROKEN / open: none.
+
+Interview-defence note: the try-it panel is the one place this phase's engineering claim
+lives — it is not a demo widget with its own pretend state, it is a second MOUNT of the
+exact same `ChapterProvider`/`RevealChrome` the rest of the app uses, pointed at the demo
+slug. That's why stepping forward on the landing page and stepping forward in the Dossier
+share one bookmark, one fence, and one reveal experience with zero duplicated logic — the
+"single source of truth through the R3 provider" requirement is satisfied by reuse, not
+by two implementations kept in sync by hand.
+
+MEASURED (regression guards): backend `pytest` 124 passed / 6 skipped (unchanged).
+`test:unit` 63/63 (unchanged — no new pure logic this phase beyond UI). `test:dossier`
+6/6 (one isolated run flaked on the reveal-overlay-blocks-next-click timing under this
+session's heavy concurrent load, same class R6 already noted; re-ran clean). `test:stemma`
+10/10 (after updating the lifecycle count, see above). `test:reveal` 11/11.
+`test:reveal-choreography` 3/3. `test:chronicle` 8/8.
+
+Commit: (see SESSION_LOG.md Session 8) pushed: yes.
+
+Next: **R9 — Polish & acceptance** (fix the logged Stemma camera-fit bug first, label
+legibility, global keyboard map, screen-reader mirror, responsive breakpoints, reduced-
+motion audit, favicon/OG, delete `#/_legacy` and all legacy code, run the §16 acceptance
+checklist). Not started this session — stopped here on the user's instruction.
