@@ -8,6 +8,7 @@ REM   dev.bat ml      -> activates .venv-ml (GLiNER/torch pipeline: ingest/extra
 set "REPO_ROOT=%~dp0"
 set "PIP_CACHE_DIR=%REPO_ROOT%.local\pip_cache"
 set "TORCH_HOME=%REPO_ROOT%.local\torch_cache"
+set "PLAYWRIGHT_BROWSERS_PATH=%REPO_ROOT%.local\ms-playwright"
 REM HF_HOME intentionally not set here - see dev.ps1 for why (app already defaults it to
 REM <repo>\.hf-cache and the models are already downloaded there).
 

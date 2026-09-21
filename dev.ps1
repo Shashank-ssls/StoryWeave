@@ -16,6 +16,7 @@ $RepoRoot = $PSScriptRoot
 # --- Caches routed to the project drive, never C: ---
 $env:PIP_CACHE_DIR = Join-Path $RepoRoot ".local\pip_cache"
 $env:TORCH_HOME = Join-Path $RepoRoot ".local\torch_cache"
+$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $RepoRoot ".local\ms-playwright"
 # HF_HOME is intentionally NOT set here: storyweave.config.Settings already defaults it to
 # <repo>\.hf-cache (storyweave/nlp/extractor.py:configure_hf_cache, applied via
 # os.environ.setdefault before any HuggingFace import) and the models are already downloaded

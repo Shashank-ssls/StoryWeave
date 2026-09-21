@@ -42,6 +42,8 @@ frontend/.vite/
 # --- Visual-gate tooling (Playwright browsers + local screenshots; never committed) ---
 .pw-cache/
 .shots/
+test-results/
+playwright-report/
 
 # --- Vector store artifacts (rebuildable) ---
 .chroma/

@@ -166,10 +166,151 @@ Commit: <hash> pushed: yes/no
 ## 9. Progress log (append-only; newest at bottom)
 
 ### Recon
-_(Phase 0 fills this: frontend map, payload field names, D1/D4 verdicts, start commands.)_
+
+**Frontend map.** Entry `frontend/src/main.tsx` renders `<App/>` (no router of any kind —
+confirmed no router package in `package.json` and no route/URL state anywhere; the app
+renders `<Library/>` when `work === null`, else the graph shell, purely off React state).
+`App.tsx` (765 lines) owns everything: works list, current work, chapter `n`, four
+independent client-side view filters (min-degree, background-salience toggle, type
+isolation, path-finding), selection, error, delete-confirm. `GraphView.tsx` (417 lines) is
+the only Cytoscape init site — one `cytoscape({ container, style: STYLE })` in a mount
+effect, `cytoscape.use(cola)` registered at module scope; imperative throughout (refs +
+effects, not a wrapper library). `Composer.tsx` (235 lines) is the paste-a-novel ingest/
+append UI. `Library.tsx` (100 lines) is the shelf/landing view. `api.ts` / `ontology.ts` /
+`types.ts` are thin typed helpers, all already TypeScript (frontend is TS throughout, so
+`cytoscape-style.js` ports to `.ts`, per §1).
+
+**Fetching.** `api.ts` → `fetchGraph(slug, n)` GETs `/api/v1/works/{slug}/graph?n={n}`
+(server 422s without `n` — reading position is never optional, already true of the old
+API). `App.tsx`'s effect re-fetches on every `[work, n]` change: no cache, no
+AbortController, one fetch per change — the new build's single-in-flight-request +
+payload-cache work (Phase 3) is a genuinely new layer, not a refactor of existing caching.
+
+**Payload shape** (`GraphResponse` in `types.ts`, mirrors `storyweave/api/schemas.py`
+exactly): `{ slug, n, elements: { nodes: [{data: GraphNodeData}], edges: [{data:
+GraphEdgeData}] } }`. `GraphNodeData` = id/label/type/subtype/importance/
+first_seen_chapter/revealed_chapter/extraction_method/evidence_span/properties.
+`GraphEdgeData` = id/source/target/relation/tier/first_seen_chapter/revealed_chapter/
+extraction_method/evidence_span.
+
+**Live fixtures captured** (MEASURED — hit the running API, not read off schema code) for
+the Hollow Crown demo at every chapter → `frontend/tests/fixtures/hollow-crown/
+graph-n{1..4}.json`. Growth: 6/5 → 10/9 → 12/12 → 13/13 nodes/edges (matches
+SETUP_NOTES.md's prior spot-check). Findings from the real payloads:
+- A `Title` node (`"Prince"`, type `Title`) is present from n=2 on — confirms DESIGN_SPEC
+  §7.1's "Title never drawn as a node" rule is load-bearing on real data, not hypothetical.
+- The Gray Sparrow/Lady Veris pair carries a `RelatedTo` (tier 1) edge AND an `ALIAS`
+  (tier 3) edge between the same two node ids — confirms the §7.3 "identity edge absorbs
+  the parallel social edge" merge rule is needed for real data, not a hypothetical case.
+- `ontology.ts`'s `IDENTITY_RELATIONS` set (SAME_AS/ALIAS/SECRET_IDENTITY/REINCARNATION/
+  TRANSMIGRATED_INTO) matches DESIGN_SPEC §7.4's relation-copy table exactly, all five
+  present; no missing enum to add.
+
+**Existing frontend tests: none.** No `*.test.*`/`*.spec.*` file exists anywhere under
+`frontend/src`, and no test runner (Vitest/Jest/RTL) is configured in `package.json`. Per
+the branching instructions: there is nothing to delete or rewrite when a later phase
+replaces an old component — noted here so a later phase doesn't go looking for tests that
+were never there.
+
+**Start commands** (see SETUP_NOTES.md for the full walkthrough):
+```
+# Backend (from repo root, light venv)
+.\dev.ps1
+$env:STORYWEAVE_DB_PATH="storyweave-demo.sqlite"; uvicorn storyweave.api.app:app --port 8000
+
+# Frontend dev server (separate terminal)
+cd frontend && npm run dev            # http://localhost:5173
+
+# Screenshot harness (needs both of the above already running)
+cd frontend && npm run shoot -- --phase=<id>
+cd frontend && npm run test:fence
+```
+
+**D1 verdict — quote clause for identity edges: CONFIRMED PRESENT, populated.**
+`GraphEdgeData.evidence_span` (schemas.py:186-195) exists and is serialized in the fenced
+`/graph` response. Verified live: `n=2`'s `SECRET_IDENTITY` edge carries
+`evidence_span: "Wren was Caelum."`; `n=3`'s `ALIAS` edge carries `"the Sparrow and Veris
+were one"`; `n=4`'s `TRANSMIGRATED_INTO` edge carries `"an older soul, drowned prince"`.
+No fallback needed for the Dossier identity-block quote (DESIGN_SPEC §6.2 point 5) or the
+Reveal-card quote (§6.5 point 4).
+
+**D4 verdict — entity aliases list for search: ABSENT as a dedicated field, but the gap is
+narrower than it looks.** No `aliases: string[]` field exists anywhere in `schemas.py` or
+`types.ts`, and no separate endpoint returns one. However every alias/secret-identity/
+reincarnation counterpart is modelled as its OWN node with its own `label` (e.g. "Wren"
+and "Prince Caelum" are two distinct nodes joined by a `SECRET_IDENTITY` edge, not one
+node with an alias list) — confirmed in the live n=4 fixture. So DESIGN_SPEC §6.3's
+"searches name and aliases present in the fenced payload only" is satisfiable by a plain
+search over all node labels in the fenced payload, with no new field needed: every name a
+reader has learned (including revealed alter egos) is already its own searchable node
+label. The D4 fallback ("search names only") is therefore effectively the same as the
+full feature here — flagging in case a future novel's data models aliases differently
+(e.g. a name-variant list on one node) rather than as separate nodes, which WOULD need the
+fallback for real.
 
 ### Backend deps hit
-_(Any spec feature running on its fallback, and why.)_
+- D1 (quote clause): not needed — confirmed present (see verdict above).
+- D4 (alias list): running on the fallback (search node labels only), but per the verdict
+  above this is observationally equivalent to the full feature for how this backend
+  actually models identities. Revisit if a future work's data shows aliases modelled any
+  other way.
 
 ### Phase reports
-_(Paste each phase report here.)_
+
+## Phase 0 — Recon + verification harness — GREEN
+Scope delivered: frontend recon (§9 above); live payload fixtures for the Hollow Crown
+demo at n=1..4; D1/D4 verdicts; Playwright installed locally (`@playwright/test` +
+`cross-env` as devDependencies) and driven via system Chrome (`channel: "chrome"`) rather
+than a Playwright-managed download — the bundled Chromium download timed out repeatedly
+against `cdn.playwright.dev` on this network (3 retries, all `ETIMEDOUT`); system Chrome
+is already present at the standard Windows path and Playwright supports it natively with
+no behavioural difference for this harness. `PLAYWRIGHT_BROWSERS_PATH` still set in
+`dev.ps1`/`dev.bat`/both npm scripts pointing at `.local/ms-playwright`, so a bundled
+install can proceed into the repo-local dir later if the network allows it, with no script
+changes needed. `frontend/scripts/shoot.mjs` (+ `scripts/shots.config.mjs`) — the visual
+harness — and `frontend/tests/fence.spec.ts` (+ `tests/fenceHelpers.ts`) — the fence test
+skeleton, all 9 rules F1-F9 as `test.fixme` since the chapter/bookmark model doesn't exist
+yet — both built and run. Baseline screenshots of the current "constellation" UI at
+1440×900 and 1280×720 (library + graph views) captured to `.shots/phase-0/`. §1 file
+normalisation: design package confirmed already in `docs/design/`; old `frontend/
+DESIGN.md` marked superseded (one-line header, per §1's table). Branching: `main` had
+uncommitted environment-setup + design-package files from the prior session pending
+review — per your direction, committed + pushed those to `main` first (commit `d995a70`),
+confirmed clean, then created and pushed `redesign/codex` from it.
+
+Spec sections covered: §1 (file normalisation), FRONTEND_OVERHAUL §3 (all 7 points).
+
+Visual comparison: N/A this phase (no artboard to compare against yet — these are
+baseline "before" shots of the OLD UI, not the redesign).
+
+Fence tests: 0/9 run (all `test.fixme` by design, per §3 point 5) — MEASURED via
+`npm run test:fence`: all 9 report as fixme/skipped, exit 0, no browser download
+triggered.
+
+Style/static checks: N/A this phase (§4.2/§4.3 checks start Phase 1, once real tokens/
+components exist to check).
+
+Deleted old code: none (recon-only phase; §1 also did not require deleting anything).
+
+Backend deps hit: see above (D1 clear, D4 fallback is a non-issue for this backend's data
+model).
+
+Deviations kept (with reason):
+- Chromium bundled-browser install skipped in favour of system Chrome via `channel:
+  "chrome"` — network-blocked download, documented above, fully reversible (no code path
+  depends on the browser being Playwright-managed vs. system-installed).
+- `frontend/src/styles/tokens.css`, `frontend/src/graph/codexStyle.ts`, and
+  `frontend/src/assets/mural-codex.svg` (the "live" copies §1's table lists) were NOT
+  created this phase — only the reference copies in `docs/design/` exist so far. Phase 1
+  wires tokens.css globally and Phase 5 ports the Cytoscape style; creating unused copies
+  in `frontend/src/` now would be scaffolding those phases early (§2 rule 8/"one phase at
+  a time"), and Phase 0's own constraint is explicitly "no visual or behavioural changes."
+
+BROKEN / open: none.
+
+Commit: (pending — see below) pushed: pending.
+
+MEASURED: pytest 124 passed / 6 skipped (matches SETUP_NOTES.md's baseline, zero
+regression). `npm run build` (`tsc -b && vite build`) clean, one pre-existing chunk-size
+warning (unrelated, already known). `npm run shoot -- --phase=0`: 4/4 shots OK, zero
+non-benign console errors. `npm run test:fence`: 9/9 fixme, exit 0.

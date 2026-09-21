@@ -1,5 +1,7 @@
 # StoryWeave — frontend design system (Phase 8 rebuild)
 
+> SUPERSEDED by docs/design/DESIGN_SPEC.md (Heretic's Codex).
+
 > The token pass (skill: brainstorm → critique → build). Every color/type/layout
 > decision below is derived here and the code follows it exactly.
 

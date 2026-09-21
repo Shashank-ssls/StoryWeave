@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "shoot": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright node scripts/shoot.mjs",
+    "test:fence": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/fence.spec.ts"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.2.7",
@@ -19,10 +21,12 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/cytoscape": "^3.21.8",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
+    "cross-env": "^10.1.0",
     "typescript": "~5.6.3",
     "vite": "^5.4.11"
   }
