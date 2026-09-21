@@ -1,0 +1,10 @@
+.root {
+  min-height: 100vh;
+}
+
+/* Above the fixed mural/vignette layers (z-index 0); real content, not decorative. */
+.content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}

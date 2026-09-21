@@ -1,0 +1,71 @@
+/* DESIGN_SPEC.md §6.3 The Stemma. Tokens only. */
+
+.stemma {
+  display: flex;
+  min-height: 100vh;
+}
+
+.rail {
+  width: var(--rail-left);
+  flex: none;
+  background: var(--panel);
+  border-right: var(--border);
+  padding: 30px 26px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+}
+
+.wordmark {
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  color: var(--dim);
+}
+
+.novelTitle {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: var(--lh-display);
+  color: var(--ink);
+}
+
+/* .canvas supplies layout only — the visual centre-mask background comes from the
+   global `web-canvas-mask` class (tokens.css §4.6 rule 3), applied alongside it. */
+.canvas {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  padding: var(--s-6);
+  box-sizing: border-box;
+}
+
+.canvasTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.focusLabel {
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  color: var(--dim);
+}
+
+.rightPanel {
+  width: var(--rail-right-web);
+  flex: none;
+  background: var(--panel);
+  border-left: var(--border);
+  padding: 30px 24px;
+  box-sizing: border-box;
+}
+
+.placeholder {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--faint);
+  border: 1px dashed var(--line);
+  padding: var(--s-4);
+  margin-top: var(--s-6);
+}

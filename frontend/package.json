@@ -11,6 +11,7 @@
     "shoot": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright node scripts/shoot.mjs",
     "test:fence": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/fence.spec.ts",
     "test:style": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/style.spec.ts",
+    "test:geometry": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/geometry.spec.ts",
     "lint:design": "node scripts/lint-design.mjs"
   },
   "dependencies": {

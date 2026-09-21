@@ -1,0 +1,92 @@
+/* DESIGN_SPEC.md §6.1 Landing. Tokens only. */
+
+.landing {
+  padding: 34px 80px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  /* 26px is a spec role-size (§6.1), not one of the 12 scale steps tokens.css names —
+     the "tokens only" rule binds font-FAMILY, not every one-off role size (see also H1
+     below, and DESIGN_SPEC §4.2's own Usage table, full of sizes off the named scale). */
+  font-size: 26px;
+  color: var(--ink);
+}
+
+.headerLinks {
+  display: flex;
+  gap: var(--s-6);
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+
+.mainRow {
+  display: flex;
+  gap: 64px;
+  margin-top: var(--s-16);
+  flex: 1;
+  min-width: 0;
+}
+
+.leftColumn {
+  width: 580px;
+  flex: none;
+  min-width: 0;
+}
+
+.kicker {
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+  color: var(--accent); /* P2-permitted: names the reveal-product (spec §6.1 point 1) */
+  margin: 0 0 var(--s-4);
+}
+
+.h1 {
+  font-family: var(--font-display);
+  font-size: 92px; /* spec's exact Landing H1 role-size, not a named scale step */
+  line-height: var(--lh-display);
+  margin: 0 0 var(--s-6);
+}
+
+.tryItPanel {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel);
+  border: var(--border);
+  padding: 30px 34px;
+  box-sizing: border-box;
+}
+
+.footer {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  margin-top: auto;
+  padding-top: var(--s-16);
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+
+.shelfLabel {
+  color: var(--ink);
+}
+
+.placeholder {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--faint);
+  border: 1px dashed var(--line);
+  padding: var(--s-4);
+}

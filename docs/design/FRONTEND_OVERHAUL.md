@@ -433,3 +433,107 @@ definitions of the same names — see the degradation note above).
 Next: **R2 — Shell** (router, mural + vignette mount, three-column layouts, theme
 strings). Same model recommendation as before (Sonnet 5) — R2 is layout/structural work
 with a clear screenshot-verifiable done-when, not a phase needing extra design judgment.
+
+## Phase 2 — Shell — GREEN
+
+Scope delivered: hand-rolled hash router (`router/useHashRoute.ts` + `router/
+AppRouter.tsx`) covering all six routes — `#/` (landing), `#/work/:slug/entity/:id`
+(Dossier), `#/work/:slug/web?focus=:id` (Stemma), `#/work/:slug/chronicle` (Chronicle),
+`#/_type` (now a real route, replacing R1's hash hack), `#/_legacy` (the entire old app).
+`#/work/:slug` with no entity resolves to `entity/_pending` and normalises the visible URL
+via `history.replaceState` (no spurious history entry). Unknown routes fall through to
+landing. The bookmark never appears in any URL — nothing in R2 reads or writes a chapter
+number at all yet (that's R3). `LegacyRoute.tsx` mounts `<App/>` unchanged, loading
+`styles.css` lazily (dynamic `import()`) only when this route actually renders — confirmed
+in the production build, which now emits a separate `styles-*.css` chunk. Mural + vignette
+mounted as fixed background layers in `CodexApp.tsx`, using tokens.css's own global
+`.mural`/`.vignette` classes (§4.6 rules 1-2); Stemma's canvas region carries the global
+`web-canvas-mask` class (rule 3); rails/panels/header bars use `--panel`, main/chart
+regions use solid `--bg` (rule 4 and the P6 "not under body text" clause). Four screen
+shells built with real geometry (Landing §6.1, Dossier §6.2, Stemma §6.3, Chronicle §6.4)
+and placeholder content boxes — no fake story data, only dev-marker text naming which
+phase owns each region. Tabs (R1 primitive) route between the three in-work screens and
+reflect the active route. Theme strings object (`codex/theme.ts`) with all 10 §12 keys
+plus the two additional tab-label keys the table doesn't spell out; used for real in
+Landing's kicker/H1 (P2-permitted accent) and the tabs, the rest defined and ready for
+the phases that render them. `useWorkTitle` hook reads the real `/works` endpoint and
+resolves the current work's title in Dossier/Stemma/Chronicle's rail — the first real
+data on screen; nothing else fetches.
+
+Spec sections covered: §4.3 (spacing/radii/borders), §4.6 (mural placement rules 1/2/3/4),
+§5 (routes, no-bookmark-in-URL), §6.1-§6.4 (geometry only), §12 (theme strings).
+
+Visual comparison (geometry only — content is placeholder; MEASURED via
+`npm run test:geometry`, `getComputedStyle`/`boundingBox`, plus screenshots at 1440×900
+and 1280×720, inspected against artboards 1-4):
+| Element | Status | Note |
+|---|---|---|
+| Dossier rail width | matches | 290px @1440, 260px @1280 (breakpoint) |
+| Dossier right panel width | matches | 400px @1440, 320px @1280 |
+| Stemma rail width | matches | 290px @1440, 260px @1280 |
+| Stemma right panel width | matches | 350px @1440, 320px @1280 |
+| Chronicle header bar height | matches | 76px, no left rail (correct — spec has none) |
+| Chronicle right panel width | matches | 330px at both widths — tokens.css has no 1280-1439 override for `--rail-right-chronicle` (only `--rail-left`/`--rail-right-dossier`/`--rail-right-web` are overridden); used as authored, not silently "fixed" |
+| Landing left column / gap | matches | 580px / 64px |
+| Mural: fixed, non-interactive, z-index 0 | matches | `getComputedStyle` confirms `position:fixed; pointer-events:none; z-index:0` |
+| Stemma canvas centre mask | matches | `web-canvas-mask` class present; visible as a faint radial fade at the canvas edges in the screenshot, solid centre |
+| No horizontal scroll @1280×720 | matches | landing/dossier/stemma/chronicle all pass |
+| Tabs active-state reflects route | matches | underline on the correct tab per screenshot, for all three in-work screens |
+| Red discipline | matches | `--accent` only in Landing's kicker (spec-permitted) and `#/_type`'s swatch demo (R1 allow-list) |
+
+Fence tests: 0/9 run, 9/9 still `test.fixme`, unchanged (`npm run test:fence`, MEASURED,
+exit 0) — R2 touches no chapter/bookmark logic.
+
+Style/static checks: MEASURED. `npm run test:style`: 5/5 passed, unchanged from R1.
+`npm run test:geometry` (new, R2): 13/13 passed — the 4 screens' rail/panel/header
+dimensions at both breakpoints, mural/vignette computed-style, the Stemma mask class,
+`#/_legacy`'s interaction check (library → click a work → graph canvas → scrubber
+visible), and no-horizontal-scroll for all 4 new screens. `npm run lint:design`: 39 files
+checked, 0 failures (2 legacy-allow-listed, 2 red-permitted — added `codex/Landing/
+Landing.module.css` for the spec-permitted kicker accent) — includes the new R2 collision
+check (plain, non-module CSS only; `.module.css` files are exempt since Vite hashes their
+class names at build time, so a shared source-level name can never collide at runtime —
+documented in the script).
+
+Deleted old code: none this phase (the legacy app moves behind `#/_legacy`, it isn't
+deleted — R9 deletes it).
+
+Backend deps hit: none (only reused the already-existing, unchanged `fetchWorks()`).
+
+Deviations kept (with reason):
+- **Corrected an R1 assumption, not a new deviation**: the R1 report guessed `styles.css`
+  and `ontology.ts`'s old color constants would shrink piecemeal across R2/R4/R5/R7/R8.
+  Building `#/_legacy` this phase made the real mechanism concrete — they're reachable
+  ONLY via that route from R2 on (no longer globally imported), so they don't shrink at
+  all until R9 deletes the legacy route wholesale. `lint-design.mjs`'s `LEGACY_FILES`
+  entries and comments updated to say R9, with the correction noted inline.
+- A real bug found and fixed during this phase (not a deviation, noting for the record):
+  the new R2 lint:design collision check initially flagged `Button.css`/`Ornament.css`/
+  `Tabs.css`/`tokens.css` for "colliding" on class names `md`/`css` — the regex was
+  matching `.md`/`.css` inside comment text like "DESIGN_SPEC.md" and "tokens.css".
+  Fixed by stripping `/* ... */` comments before extracting class selectors.
+- Phase 0/1's `library`/`graph`/`*-expected-degraded` shot configs now fail if re-run,
+  because they navigate to the bare `baseUrl`, which pre-R2 resolved to the old app and
+  now correctly resolves to the new Landing route. This is R2 working as intended, not a
+  regression — documented inline in `shots.config.mjs` rather than rewritten to keep
+  "passing" against a URL contract that no longer applies. Phase 2's own `legacy` shot
+  (at `#/_legacy`) is the up-to-date equivalent, and the geometry test suite's `#/_legacy`
+  interaction check covers the same ground as an assertion.
+
+BROKEN / open: none.
+
+MEASURED (regression guards): pytest 124 passed / 6 skipped (unchanged). `npm run build`
+clean — confirms `styles.css` now code-splits into its own chunk, loaded only for
+`#/_legacy`. `npm run typecheck` clean.
+
+Commit: (pending — see below) pushed: pending.
+
+Next: **R3 — Chapter model + fence** (the most important correctness phase: bookmark
+state, `ChapterDialog`, fetch layer with single in-flight + AbortController, payload
+cache with purge-on-back, forward/backward flows, un-fixme F1/F2/F3/F5 and the aborted/
+error-banner tests with real network logs attached). Recommend staying on Sonnet 5 for
+the mechanical plumbing (fetch layer, cache, dialog), but this is the phase where
+correctness bugs are most costly (it's the project's core engineering claim) — if you
+want an extra pass of scrutiny on the fence logic specifically, an Opus-driven review
+after the Sonnet build (rather than building on Opus outright) would be the efficient way
+to get that without slowing the whole phase down.

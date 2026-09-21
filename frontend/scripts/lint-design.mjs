@@ -6,6 +6,8 @@
 //   2. no `var(--accent...)` outside the explicit red-permitted allow-list (DESIGN_SPEC
 //      P2 / FRONTEND_OVERHAUL §2 rule 4 — red means reveal, nowhere else)
 //   3. no literal `font-family:` outside tokens.css / the Cytoscape style module
+//   4. (R2) no new-code class name also defined in the legacy stylesheet — see the
+//      "CSS collision rule" note below.
 //
 // Two DIFFERENT allow-lists, for two different reasons — do not merge them:
 //   LEGACY_FILES — old (pre-redesign) files not yet replaced, each naming the redesign
@@ -15,6 +17,13 @@
 //   RED_PERMITTED — files legitimately allowed to reference --accent. Not a "pending
 //     removal" list; these are meant to use accent permanently, per the red-discipline
 //     rule's own allow-list of contexts.
+//
+// As of R2, the legacy app (App.tsx, GraphView.tsx, Library.tsx, Composer.tsx,
+// styles.css, ontology.ts's old color constants) is reachable ONLY via the `#/_legacy`
+// route (LegacyRoute.tsx loads styles.css lazily, only there) — so none of it shrinks
+// piecemeal as new screens land; it is deleted whole, together with `#/_legacy` itself,
+// at R9. (The R1 report guessed a piecemeal timeline for styles.css/ontology.ts before
+// `#/_legacy` existed — corrected here now that the real mechanism is in place.)
 
 import fs from "node:fs";
 import path from "node:path";
@@ -23,25 +32,32 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcRoot = path.resolve(__dirname, "..", "src");
 
-// The Cytoscape style module: hex/font-family literals are allowed here by hard rule
-// (§2 rule 6 — Cytoscape can't read CSS vars). Currently the old GraphView.tsx plays this
-// role (its inline Cytoscape stylesheet); Phase 5 splits it into graph/codexStyle.ts,
-// which then becomes the (only) exempt file in its place.
+// The ACTIVE Cytoscape style module: hex/font-family literals are allowed here by hard
+// rule (§2 rule 6 — Cytoscape can't read CSS vars). Currently GraphView.tsx (old, but
+// still the only Cytoscape stylesheet that exists) plays this role. R5 ports
+// graph/codexStyle.ts for the new Stemma, which becomes the new exempt file in its
+// place — at that point GraphView.tsx moves out of this exemption and into LEGACY_FILES
+// (still exempt, but as legacy-pending-R9, not "the" Cytoscape module).
 const CYTOSCAPE_STYLE_FILE = "GraphView.tsx";
 
 const LEGACY_FILES = {
   "ontology.ts":
-    "R5 — TYPE_COLOR/REVEAL/GROUND/INK/INK_DIM/EDGE_QUIET only serve the old Cytoscape " +
-    "stylesheet; removed when Phase 5 ports codexStyle.ts.",
+    "R9 — TYPE_COLOR/REVEAL/GROUND/INK/INK_DIM/EDGE_QUIET only serve the old " +
+    "GraphView.tsx Cytoscape stylesheet, reachable only via #/_legacy as of R2; removed " +
+    "together with the legacy route at R9.",
   "styles.css":
-    "R2/R4/R5/R7/R8 (piecemeal) — the old app's global stylesheet; shrinks as each old " +
-    "screen (shell chrome, graph canvas, library) is replaced, fully gone by R8 (Landing).",
+    "R9 — the old app's global stylesheet, loaded only by LegacyRoute.tsx for #/_legacy " +
+    "as of R2 (no longer globally imported); deleted whole alongside the legacy route.",
 };
 
 const RED_PERMITTED = {
   "dev/TypeScale.tsx":
     "the hidden #/_type token gallery — must render the --accent/--accent-hi/" +
     "--accent-soft swatches to document them; never reader-facing.",
+  "codex/Landing/Landing.module.css":
+    "the landing kicker — explicitly on DESIGN_SPEC §2's red-discipline allow-list " +
+    "(\"the landing kicker\" is named alongside identity edges/reveal UI/bookmark " +
+    "marker/changed tags/next-stepper/Stemma filter as a permitted --accent use).",
 };
 
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/g;
@@ -50,6 +66,7 @@ const ACCENT_RE = /var\(--accent/g;
 // ("'font-family': 'X'") — NOT React's camelCase `fontFamily: "var(--x)"` inline style,
 // which is the tokens-only pattern components are expected to use.
 const FONT_FAMILY_LITERAL_RE = /font-family['"]?\s*:\s*['"`]/g;
+const CLASS_SELECTOR_RE = /\.([a-zA-Z_][a-zA-Z0-9_-]*)/g;
 
 function walk(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -58,6 +75,17 @@ function walk(dir, out = []) {
     else if (/\.(ts|tsx|css)$/.test(entry.name)) out.push(p);
   }
   return out;
+}
+
+function extractClassNames(cssText) {
+  // Strip /* ... */ comments first — otherwise a comment like "DESIGN_SPEC.md" or
+  // "tokens.css" reads as class selectors ".md"/".css" (caught live: both showed up as
+  // bogus "collisions" before this fix).
+  const withoutComments = cssText.replace(/\/\*[\s\S]*?\*\//g, "");
+  const names = new Set();
+  let m;
+  while ((m = CLASS_SELECTOR_RE.exec(withoutComments))) names.add(m[1]);
+  return names;
 }
 
 const files = walk(srcRoot);
@@ -86,6 +114,26 @@ for (const file of files) {
   if (!isTokensCss && !isCytoscapeStyleFile && !legacyReason) {
     const literal = text.match(FONT_FAMILY_LITERAL_RE);
     if (literal) failures.push(`${rel}: literal font-family outside tokens.css/Cytoscape style file`);
+  }
+}
+
+// 4. CSS collision rule (R2). Only PLAIN (non-module) CSS files are checked: a
+// `.module.css` class name is hashed by Vite at build time, so it can never actually
+// collide with anything at runtime regardless of what the source calls it — that's the
+// point of using CSS Modules for every R2+ component, so checking them here would just be
+// noise. Plain global CSS (tokens.css, the R1 primitives, this file's own future additions)
+// is the part that's genuinely at risk, same as `.swatch` was in R1.
+const legacyCssPath = path.join(srcRoot, "styles.css");
+const legacyClassNames = extractClassNames(fs.readFileSync(legacyCssPath, "utf8"));
+
+for (const file of files) {
+  if (!file.endsWith(".css") || file.endsWith(".module.css")) continue;
+  if (file === legacyCssPath) continue;
+  const rel = path.relative(srcRoot, file).replace(/\\/g, "/");
+  const names = extractClassNames(fs.readFileSync(file, "utf8"));
+  const collisions = [...names].filter((n) => legacyClassNames.has(n));
+  if (collisions.length > 0) {
+    failures.push(`${rel}: class name(s) collide with legacy styles.css — ${collisions.join(", ")}`);
   }
 }
 
