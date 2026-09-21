@@ -1147,3 +1147,138 @@ width sealed band, right panel with reveal cycling and "Read on" → confirm flo
 highlighting explicitly deferred from R6 to here per the brief. Model: Sonnet 5 is fine —
 layout + timeline logic over an already-fenced, already-tested data layer; no design
 judgment calls left open like R6's had.
+
+## Phase 7 — Chronicle — GREEN
+
+Scope delivered:
+- **`graph/chronicleModel.ts`** (new, pure, unit-tested): `chronicleRows` (reuses
+  `stemmaModel.visibleGraph`'s principal/everyone filter — same rule as the Stemma, not a
+  reimplementation — then groups person/order/place/thing); `columnLayout` (small mode
+  ≤12 chapters-to-bookmark: 240px columns; large mode: 28px proportional columns + blocks-
+  of-50 header bands, D6 arc names absent so the fallback is the only path, per F6); `F3`
+  by construction — `sealedWidth` always equals `colWidth`, independent of remaining
+  chapters; `stitches` (non-identity visible-to-visible edges); `identityTimeline`, which
+  does NOT reclassify anything — it replays the already-tested `diffGraphs` (R6) across
+  every consecutive pair of cached chapters 1..bookmark, so a deepening pair naturally
+  yields both its first (normal) and later (deepen) marker as two separate timeline
+  entries with zero new classification logic.
+- **`ChapterProvider.ensureHistory(upTo)`** (new): backfills chapters 1..min(upTo,
+  bookmark) into the same cache F8 already reads, so `identityTimeline` has full history
+  to replay. F1-safe by construction (never requests above the bookmark), never touches
+  `bookmark`/`data`/`banner`, best-effort per chapter (a failed backfill just leaves that
+  one pair's deepening undetectable, same honesty rule R6's replay already uses for an
+  uncached earlier chapter).
+- **`codex/Chronicle/Chronicle.tsx`** rebuilt from the R2 placeholder: Cast-size control
+  (Principal default, reusing the Stemma's own copy strings); a two-part chart — a plain
+  sticky-free name column (200px, person rows bold ink, order/place rows italic dim) beside
+  a horizontally-scrollable `<svg>` (chapter/band headers, presence threads with a 5px start
+  dot running to the bookmark boundary, curved stitches, identity links with ringed dots +
+  short-relation labels that flip to the left near the sealed edge, the 2px bookmark line +
+  label, the constant-width sealed rect + "sealed / never sent here" label rotated 90° in
+  large mode); right panel (kicker, Display title with both names as clickable links, quote,
+  a theme-string explanation — the given spec example ["two threads … are one person"] used
+  for every normal reveal, a distinct "what began in Chapter N goes further" line for
+  deepening — prev/next pager, "Read on to Chapter N+1" → `m.openDialog(bookmark+1)`, hidden
+  at the last chapter). Rendered as one SVG inside React, no new library.
+- Theme strings: 15 new `chronicle*` keys (§12-style, no hardcoded copy).
+
+Spec sections covered: §6.4 complete, §7.4 (relation copy reused for the panel sentence),
+§8.1 (Read on → the existing confirm dialog), §9.1 F3 (both modes).
+
+Visual comparison (artboard 4, MEASURED — `.shots/phase-7/*`, 14 shots × 2 widths,
+inspected; two fix loops, both real bugs, not cosmetic tuning):
+| Element | Status | Note |
+|---|---|---|
+| Header 76px, tabs, subtitle | matches | unchanged from R2 |
+| Cast size control above chart | matches | same Principal/Everyone copy as the Stemma |
+| Rows: name col 200px, principal bold, org/place italic dim | matches | |
+| Columns 240px (small-N) | matches | I/II/III/IV headers, bookmark column bold |
+| Presence threads: ink (principal person) / dim (minor person) / dotted faint (org/place) | matches | reuses the Stemma's own principal rule (degree≥2 or identity edge), applied per-row |
+| Ties as curved faint stitches at their reveal chapter | matches | dotted for structural (e.g. AffiliatedWith) |
+| Identity links: vertical accent line, ringed dots, short-relation label | matches (after fix) | label was unreadable near the sealed edge on the first pass — fixed by flipping it left of the line |
+| Deepening pair: BOTH markers shown (ch.2 "secret identity", ch.4 "transmigration") | matches | exactly the spec's own worked example |
+| Bookmark line + "Chapter N · bookmark" label | matches | |
+| Sealed band: constant width, "sealed / never sent here" | matches | horizontal in small mode, rotated 90° in large mode (28px columns are too narrow for the horizontal string) |
+| Selected reveal's accent-soft capsule | matches | |
+| Right panel: kicker/title/quote/explanation/pager/Read on | matches | |
+| Large-N (>12 chapters-to-bookmark): proportional columns + "Chapters 1–N" band, clipped to the bookmark | matches | synthetic 40-chapter book, bookmark 37 |
+| Red only in: identity links/labels/kicker, bookmark line/label, selected capsule | matches | lint:design 9 red-permitted files (+1) |
+| Horizontal scroll confined to the chart | matches (after fix) | see BROKEN/open below — a real bug, not a screenshot nit |
+
+Fence tests: **27/27 passed, 4 fixme** MEASURED (`npm run test:fence`) — unchanged rule
+set; F7 (chapter titles follow F6) stays fixme because the backend has no chapter-titles
+field at all (D7-equivalent absent), same reason F6 itself is inactive.
+
+New suite: **`test:chronicle` 8/8** MEASURED. Covers: the 1→2→3→4→2 walk (rows, stitches
+and the FULL identity timeline — not just the current chapter's merged edge — independently
+re-derived from the R0 fixtures at every step; zero requests above the bookmark; only n∈
+{1,2,3,4} ever requested); the deepening pair showing both markers with the "Before"-style
+explanation line; F3 in both the demo (small mode) and a synthetic 40/90-chapter book (large
+mode), each mode's width constant across different remaining-chapter counts; "Read on"
+opens the dialog with zero network until confirm, and is absent at the last chapter; no
+page-level horizontal scroll at 1280×720 with a large synthetic cast (70+ rows) or a large
+synthetic book (90 chapters) — only the chart's own scroll area may scroll.
+
+Style/static checks: MEASURED. `lint:design`: 76 files, 0 failures (red-permitted 9, +1:
+`Chronicle.module.css`). `test:style` 5/5. `test:geometry` 13/13 (unchanged — Chronicle's
+own header/right-panel dimensions were already asserted at R2). `typecheck`/`build` clean
+(one pre-existing chunk-size warning). `shoot --phase=7`: 14/14 shots, zero console errors.
+
+Deleted old code: none (R2's Chronicle placeholder boxes replaced in place).
+
+Backend deps hit: D6 (arc names) still absent → blocks-of-50 header bands, as specified.
+No new backend dependency.
+
+Deviations kept (with reason):
+- **Proportional column width (28px) and block size (50 chapters)** for the large-N mode
+  are this build's own pragmatic choice — the spec gives the 240px/12-chapter figures for
+  small mode and says "blocks of 50/100" for the fallback, but not a large-mode pixel width
+  or which of 50/100 to use. Picked 50 for a denser, more legible header on a still-small
+  synthetic test book; nothing in the demo data calibrates this for real.
+- **Chronicle's explanation line uses one template for every relation kind** ("Two threads
+  you followed separately since Chapter A and Chapter B are one person"), taken verbatim
+  from the spec's own single given example, even for SECRET_IDENTITY/REINCARNATION/
+  TRANSMIGRATED_INTO where "two threads" is a slightly loose fit narratively. The spec
+  names only one template, not a per-relation table for this panel specifically (unlike
+  §7.4's dossier/reveal copy table) — flagged rather than silently inventing three more
+  variants the spec never asked for.
+- **Both names in the panel's Display title are clickable accent-hi links**, not just "the
+  other" one (Dossier's convention, which has a well-defined "current entity" to exclude).
+  Chronicle has no current entity — both names are equally "other" — so both link out.
+
+BROKEN / open (found and fixed in this phase, not left open — recorded for the record):
+- **React StrictMode double-invoke silently broke the "opens scrolled to the bookmark"
+  behaviour.** The scroll-into-view effect scheduled a `requestAnimationFrame` and marked
+  a ref "done" before that frame fired; StrictMode's dev-mode mount→cleanup→mount cancelled
+  the first frame, and the second invocation's guard then believed the scroll had already
+  happened. Fixed by only marking the ref done inside the frame callback, once the scroll
+  is actually applied. Caught by comparing a 1440 and a 1280 screenshot side by side (the
+  1280 one visibly hadn't scrolled as far), then confirmed and root-caused with a
+  throwaway Playwright script reading `scrollLeft`/`getBoundingClientRect` directly rather
+  than guessing from pixels.
+- **A second, subtler timing bug in the same effect**, found while fixing the first: the
+  chapter bookmark updates in `ChapterProvider` BEFORE `data`/the view model does (the
+  bookmark is set synchronously; the payload commits only once the fetch resolves), so the
+  effect's dependencies (`bookmark`, `layout.totalWidth`) had already taken their final
+  value on the render where the chart's own DOM (and `scrollRef`) didn't exist yet — and
+  never changed again once the chart actually mounted, so the effect never re-ran. Fixed by
+  adding `vm` (whether the chart is mounted at all) as a real dependency, not a lint
+  appeasement; documented inline in `Chronicle.tsx` since it's a non-obvious ordering
+  invariant of `ChapterProvider`, not something visible from Chronicle's own code alone.
+
+Interview-defence note: the identity timeline is the one place this phase touches
+correctness rather than layout, and it's built by REPLAYING R6's own `diffGraphs` across
+every cached chapter rather than writing a second classifier — so "does this pair's
+reveal deepen" has exactly one implementation in the whole codebase, exercised by both the
+Reveal moment and the Chronicle. `ensureHistory` exists only to make sure that replay has
+full history to work with; it does not change what counts as a reveal.
+
+MEASURED (regression guards): backend `pytest` 124 passed / 6 skipped (unchanged).
+`test:unit` 63/63 (+13 in `chronicleModel.test.ts`, unchanged elsewhere). `test:dossier`
+6/6. `test:stemma` 10/10. `test:reveal` 11/11. `test:reveal-choreography` 3/3.
+
+Commit: (see SESSION_LOG.md Session 8) pushed: yes.
+
+Next: **R8 — Landing & states** (§6.1 + §6.7 + §9.1 F9: the real landing page wired to the
+SAME per-work bookmark provider, "How the seal works" explainer, remaining state cards,
+un-fixme F9 and F4's search variant). Model: Sonnet 5 is fine.

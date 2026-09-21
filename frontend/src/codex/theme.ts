@@ -140,6 +140,22 @@ export const codexTheme = {
   revealReplayLabel: "Replay this reveal",
   revealNextPage: "Next reveal",
   revealPrevPage: "Previous reveal",
+
+  // ---- R7: Chronicle (§6.4) ----
+  chronicleSubtitle: "the chronicle, as far as you have read",
+  chronicleCastSizeLabel: "Cast size",
+  chronicleSealed: "sealed / never sent here",
+  chronicleBookmarkLabel: "Chapter {n} · bookmark",
+  chronicleNoReveals: "No identities revealed yet.",
+  chronicleReveal: "{kicker} · Chapter {n}",
+  chronicleExplain: "Two threads you followed separately since Chapter {a} and Chapter {b} are one person.",
+  chronicleExplainDeepen: "What began in Chapter {a} goes further than you knew.",
+  chronicleReadOn: "Read on to Chapter {n}",
+  chroniclePrevReveal: "Previous reveal",
+  chronicleNextReveal: "Next reveal",
+  chronicleRevealOf: "{i} of {n}",
+  chronicleTieTooltip: "{rel} · Chapter {n}",
+  chronicleIdentityTooltip: "{kicker} · Chapter {n}",
 } as const;
 
 /** Fills `{token}` placeholders in a theme string, e.g. fence copy's `{n}`. */

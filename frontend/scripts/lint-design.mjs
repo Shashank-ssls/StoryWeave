@@ -77,6 +77,10 @@ const RED_PERMITTED = {
   "codex/reveal/RevealChrome.module.css":
     "the quiet-mode toast's identity/deepen kicker (§8.2 \"Reveal quietly\" preference) " +
     "— the same reveal content, just delivered as a toast instead of an overlay.",
+  "codex/Chronicle/Chronicle.module.css":
+    "identity links + their ringed dots/labels, the bookmark line + its label, and the " +
+    "selected-reveal kicker/capsule (§6.4) — identity edges, reveal UI and the bookmark " +
+    "marker are all named on the P2 allow-list.",
 };
 
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/g;

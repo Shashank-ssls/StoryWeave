@@ -1,4 +1,6 @@
-/* DESIGN_SPEC.md §6.4 Chronicle. Tokens only. */
+/* DESIGN_SPEC.md §6.4 Chronicle. Tokens only.
+   --accent appears here ONLY for: identity links + their labels/dots, the bookmark line
+   and its label, and the selected-reveal kicker/capsule (all P2-permitted reveal marks). */
 
 .chronicle {
   display: flex;
@@ -26,7 +28,7 @@
 
 .novelTitle {
   font-family: var(--font-display);
-  font-size: 26px; /* spec role-size, §6.4 header */
+  font-size: 26px;
   color: var(--ink);
 }
 
@@ -46,10 +48,185 @@
 .chart {
   flex: 1;
   min-width: 0;
-  background: var(--bg); /* solid — no mural under body text (§4.6 P6) */
-  padding: var(--s-8);
+  background: var(--bg); /* no mural under body text (§4.6 P6) */
+  padding: var(--s-6) var(--s-8);
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  overflow: hidden;
 }
+
+.castRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  flex: none;
+}
+.castLabel {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+.segmented {
+  display: inline-flex;
+  border: var(--border);
+}
+.segment {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  min-height: var(--control-h);
+  padding: 0 var(--s-5);
+  background: transparent;
+  color: var(--dim);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.segment + .segment {
+  border-left: var(--border);
+}
+.segmentOn {
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 700;
+}
+
+.chartBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-y: auto;
+}
+
+.nameCol {
+  flex: none;
+  border-right: var(--border);
+}
+.nameHeaderSpacer {
+  flex: none;
+}
+.nameRow {
+  display: flex;
+  align-items: center;
+  padding-right: var(--s-4);
+  box-sizing: border-box;
+  font-size: var(--fs-19, 19px);
+  border-bottom: var(--border);
+}
+.namePerson {
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+.nameOther {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--dim);
+}
+
+/* Only the SVG side scrolls horizontally — the name column is a plain sibling, never
+   part of the scroll, so it stays put while chapters scroll (§6.4: "inside the chart
+   only, never the page"). */
+.scrollArea {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.svg {
+  display: block;
+}
+
+.colHeader,
+.colHeaderOn {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  fill: var(--dim);
+}
+.colHeaderOn {
+  fill: var(--ink);
+  font-weight: 700;
+}
+.bandRule {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.bandLabel {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  fill: var(--dim);
+}
+
+.sealedRect {
+  fill: var(--deep);
+}
+.sealedLabel {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-13);
+  fill: var(--faint);
+}
+
+.bookmarkLine {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.bookmarkLabel {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  fill: var(--accent);
+}
+
+.selectedCapsule {
+  fill: var(--accent-soft);
+}
+
+.threadInk {
+  stroke: var(--ink);
+  fill: var(--ink);
+  stroke-width: 3;
+}
+.threadDim {
+  stroke: var(--dim);
+  fill: var(--dim);
+  stroke-width: 3;
+}
+.threadFaint {
+  stroke: var(--faint);
+  fill: var(--faint);
+  stroke-width: 3;
+}
+
+.stitch {
+  stroke: var(--faint);
+  stroke-width: 1;
+  fill: none;
+}
+
+.identityLink {
+  cursor: pointer;
+}
+.identityLine {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.ringDotInner {
+  fill: var(--accent);
+  stroke: none;
+}
+.ringDotOuter {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.identityLabel {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  fill: var(--accent);
+}
+
+/* ---------- right panel ---------- */
 
 .rightPanel {
   width: var(--rail-right-chronicle);
@@ -58,12 +235,67 @@
   border-left: var(--border);
   padding: 30px 24px;
   box-sizing: border-box;
+  overflow-y: auto;
 }
-
-.placeholder {
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-height: 100%;
+}
+.kickerAccent {
   font-family: var(--font-ui);
   font-size: var(--fs-13);
-  color: var(--faint);
-  border: 1px dashed var(--line);
-  padding: var(--s-4);
+  color: var(--accent);
+}
+.panelTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 38px;
+  line-height: var(--lh-heading);
+  color: var(--ink);
+}
+.link {
+  all: unset;
+  cursor: pointer;
+  color: var(--accent-hi);
+  font-style: italic;
+}
+.link:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+.panelQuote {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-21);
+  color: var(--dim);
+  margin: 0;
+}
+.explain {
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+  color: var(--dim);
+  margin: 0;
+}
+.noReveals {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-18);
+  color: var(--dim);
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+.panelSpacer {
+  flex: 1;
+}
+.readOn {
+  width: 100%;
+  min-height: var(--control-h-lg);
 }

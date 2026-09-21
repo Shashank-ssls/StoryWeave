@@ -85,6 +85,14 @@ export interface ChapterModel {
    *  never visited/prefetched this session (replay then falls back to a normal reveal —
    *  see `graph/diff.ts`'s `classifyReveal`). */
   getCachedPayload(n: number): GraphElements | null;
+  /** R7 (Chronicle §6.4): fetches every chapter 1..min(upTo, bookmark) not already cached,
+   *  so the identity timeline (which pair was revealed when, and whether it later deepened)
+   *  can be reconstructed from `getCachedPayload` alone. F1-safe by construction — it never
+   *  requests above the current bookmark, and never touches `bookmark`/`data`/`banner`; a
+   *  request that fails is simply left uncached (the timeline degrades per-pair, the same
+   *  honesty rule replay already uses). Never aborts, and is never aborted by, the main
+   *  request. Resolves once every attempt has settled. */
+  ensureHistory(upTo: number): Promise<void>;
 }
 
 const ChapterContext = createContext<ChapterModel | null>(null);
@@ -333,6 +341,34 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
   const dismissReveal = useCallback((): void => setPendingReveal(null), []);
   const getCachedPayload = useCallback((n: number): GraphElements | null => cache.current.get(n) ?? null, []);
 
+  const historyInFlight = useRef<Promise<void> | null>(null);
+  const ensureHistory = useCallback(
+    async (upTo: number): Promise<void> => {
+      if (historyInFlight.current) await historyInFlight.current;
+      const top = Math.min(upTo, bookmarkRef.current);
+      const missing: number[] = [];
+      for (let k = 1; k <= top; k++) if (!cache.current.has(k)) missing.push(k);
+      if (missing.length === 0) return;
+      const run = (async (): Promise<void> => {
+        const controller = new AbortController();
+        for (const k of missing) {
+          if (k > bookmarkRef.current) break; // bookmark moved back mid-run
+          try {
+            const payload = await fetchFencedGraph(slug, k, controller.signal);
+            if (k <= bookmarkRef.current) cache.current.set(k, payload);
+          } catch {
+            // best-effort: a chapter that fails to backfill just stays uncached — the
+            // identity timeline degrades for that one pair, it never blocks the screen.
+          }
+        }
+      })();
+      historyInFlight.current = run;
+      await run;
+      historyInFlight.current = null;
+    },
+    [slug],
+  );
+
   const value = useMemo<ChapterModel>(
     () => ({
       slug,
@@ -354,10 +390,11 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       dismissBanner,
       dismissReveal,
       getCachedPayload,
+      ensureHistory,
     }),
     [slug, work, workError, chapterCount, bookmark, data, prevData, loading, banner, toast, dialog,
       pendingReveal, requestChapter, openDialog, closeDialog, dismissToast, dismissBanner,
-      dismissReveal, getCachedPayload],
+      dismissReveal, getCachedPayload, ensureHistory],
   );
 
   return <ChapterContext.Provider value={value}>{children}</ChapterContext.Provider>;

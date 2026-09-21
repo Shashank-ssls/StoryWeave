@@ -416,6 +416,70 @@ export async function getShots(phase) {
         },
       ];
     }
+    case "7": {
+      // R7 — Chronicle. Small-N (real demo, 4 chapters) + a synthetic large-N book to
+      // exercise the proportional-columns/blocks-of-50 fallback path (§6.4 scaling rule).
+      const SLUG = "the-hollow-crown";
+      const KEY = `storyweave:bookmark:${SLUG}`;
+      const GRAPH_RE = /\/api\/v1\/works\/[^/]+\/graph\?n=\d+/;
+      const chronicleAt = async (page, baseUrl, n) => {
+        await page.goto(`${baseUrl}/#/work/${SLUG}/chronicle`, { waitUntil: "networkidle" });
+        await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, String(n)]);
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForSelector('[data-testid="chronicle-svg"]');
+        await page.waitForTimeout(300);
+      };
+      return [
+        { name: "chronicle-ch1", run: (p, b) => chronicleAt(p, b, 1) },
+        { name: "chronicle-ch2", run: (p, b) => chronicleAt(p, b, 2) },
+        { name: "chronicle-ch3", run: (p, b) => chronicleAt(p, b, 3) },
+        { name: "chronicle-ch4", run: (p, b) => chronicleAt(p, b, 4) },
+        {
+          name: "chronicle-everyone",
+          async run(page, baseUrl) {
+            await chronicleAt(page, baseUrl, 4);
+            await page.click('[data-testid="chronicle-cast-everyone"]');
+            await page.waitForTimeout(200);
+          },
+        },
+        {
+          name: "chronicle-dialog",
+          async run(page, baseUrl) {
+            await chronicleAt(page, baseUrl, 3);
+            await page.click('[data-testid="chronicle-read-on"]');
+            await page.waitForSelector('[data-testid="chapter-dialog"]');
+          },
+        },
+        {
+          name: "chronicle-large-n",
+          async run(page, baseUrl) {
+            // A small synthetic book spread over 40 chapters — enough to cross the
+            // small-N/large-N boundary (>12) and exercise the blocks-of-50 header.
+            const nodes = [];
+            const edges = [];
+            for (let i = 1; i <= 10; i++) {
+              const chapter = 1 + (i - 1) * 4;
+              nodes.push({ data: { id: String(i), label: `Character ${i}`, type: "Character", subtype: "Person", importance: 0.5, first_seen_chapter: chapter, revealed_chapter: chapter, extraction_method: "gliner", evidence_span: "x", properties: {} } });
+            }
+            edges.push({ data: { id: "se1", source: "1", target: "2", relation: "Ally", tier: 2, first_seen_chapter: 5, revealed_chapter: 5, extraction_method: "rule", evidence_span: "x" } });
+            edges.push({ data: { id: "se2", source: "3", target: "4", relation: "SECRET_IDENTITY", tier: 3, first_seen_chapter: 30, revealed_chapter: 30, extraction_method: "llm", evidence_span: "the two were one" } });
+            await page.route(/\/api\/v1\/works$/, async (route) => {
+              await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ works: [{ id: 1, slug: SLUG, title: "The Hollow Crown", chapter_count: 40 }] }) });
+            });
+            await page.route(GRAPH_RE, async (route) => {
+              const n = Number(/[?&]n=(\d+)/.exec(route.request().url())?.[1]);
+              const fenced = { slug: SLUG, n, elements: { nodes: nodes.filter((x) => x.data.revealed_chapter <= n), edges: edges.filter((x) => x.data.revealed_chapter <= n) } };
+              await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(fenced) });
+            });
+            await page.goto(`${baseUrl}/#/work/${SLUG}/chronicle`, { waitUntil: "networkidle" });
+            await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "37"]);
+            await page.reload({ waitUntil: "networkidle" });
+            await page.waitForSelector('[data-testid="chronicle-svg"]');
+            await page.waitForTimeout(400);
+          },
+        },
+      ];
+    }
     default:
       throw new Error(`No shots defined for phase "${phase}" yet — add one to shots.config.mjs.`);
   }

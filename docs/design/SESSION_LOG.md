@@ -158,3 +158,43 @@
   concurrent-process load from this session; re-ran in isolation, passed clean.
 - **Stopped at:** R6 green, committed and pushed.
 - **Next:** R7 Chronicle (Sonnet 5 recommended).
+
+## Session 8 — R7 Chronicle
+
+- **Date:** 2026-09-22
+- **Model / effort:** Sonnet 5, high effort
+- **Phase(s):** R7 (of R7→R8→R9 planned for this session)
+- **Commits:** 782998b → (this commit; see `git log`)
+- **Done:**
+  - `graph/chronicleModel.ts` (new, pure, 13 unit tests): `chronicleRows` (reuses
+    `stemmaModel.visibleGraph`'s principal/everyone filter), `columnLayout` (small ≤12 /
+    large >12 chapters-to-bookmark, blocks-of-50 header bands, F3 by construction),
+    `stitches`, `identityTimeline` (replays R6's own `diffGraphs` across cached chapters —
+    no new classification logic).
+  - `ChapterProvider.ensureHistory(upTo)` (new): F1-safe best-effort backfill of chapters
+    1..bookmark into the shared cache, so the identity timeline has full history.
+  - `codex/Chronicle/Chronicle.tsx` rebuilt from the R2 placeholder: name column + one
+    horizontally-scrollable SVG (chapter/band headers, presence threads, curved stitches,
+    identity links with ringed dots + labels, bookmark line, constant-width sealed band),
+    right panel (kicker/title/quote/explanation/pager/"Read on"). 15 new theme strings.
+  - New suite `tests/chronicle.spec.ts` (8/8): fenced walk with an independent
+    identity-timeline re-derivation, F3 in both layout modes, "Read on" dialog-only path,
+    no page-level horizontal scroll with a large synthetic cast/book. Phase-7 shots (14,
+    both widths) vs artboard 4.
+- **Decisions:** proportional column width (28px) and block size (50) are this build's own
+  pragmatic choice (spec gives small-mode figures only); Chronicle's explanation line uses
+  one template for every identity relation (the spec's own single given example); both
+  names in the panel title are clickable links (no "current entity" to exclude, unlike
+  Dossier).
+- **Issues:** MEASURED, both found via screenshot comparison and fixed same-session — (1)
+  React StrictMode's dev-mode double-invoke cancelled the scroll-to-bookmark effect's first
+  `requestAnimationFrame` and then the second invocation's "already done" guard skipped it
+  entirely, so the chart silently never scrolled; fixed by only marking the ref done inside
+  the frame callback. (2) `ChapterProvider` sets the bookmark before it commits `data`, so
+  the scroll effect's dependencies had already taken their final value before the chart's
+  own DOM existed and never changed again once it mounted; fixed by adding `vm` as a real
+  dependency. Root-caused both with a throwaway Playwright script reading
+  `scrollLeft`/`getBoundingClientRect` directly rather than guessing from screenshots.
+  Nothing left BROKEN.
+- **Stopped at:** R7 green, committed and pushed.
+- **Next:** R8 Landing & states (Sonnet 5).
