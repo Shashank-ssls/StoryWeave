@@ -1,0 +1,55 @@
+/* Chapter-model overlays: loading wash (§8.1), error banner (§6.7), toasts (§8.1). Tokens only. */
+
+/* 40% --bg wash over the old data while the next chapter loads (§8.1 step 1).
+   Non-interactive; sits under the dialog scrim. */
+.wash {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--bg) 40%, transparent);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: var(--s-16);
+  box-sizing: border-box;
+}
+
+.washText {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-18);
+  color: var(--dim);
+}
+
+.banner {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  background: var(--bg); /* solid: it overlaps real UI, --panel's translucency would show it through */
+  border: var(--border);
+  border-top: none;
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--ink);
+}
+
+.toast {
+  position: fixed;
+  bottom: var(--s-8);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  padding: var(--s-3) var(--s-5);
+  background: var(--ink);
+  color: var(--on-ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  white-space: nowrap;
+}

@@ -11,12 +11,17 @@ export interface GraphRequestLog {
   stop(): void;
 }
 
-/** Starts recording every `/graph` request the page makes. Call `.stop()` when done. */
+/** The fenced graph route (R0 recon: `/api/v1/works/{slug}/graph?n={n}`). Anchored to the
+ *  API path — a loose `includes("/graph")` also matched Vite serving `src/graph/diff.ts`
+ *  (caught live at R3), which would have polluted the fence evidence. */
+export const GRAPH_ROUTE_RE = /\/api\/v1\/works\/[^/?]+\/graph(\?|$)/;
+
+/** Starts recording every fenced-graph API request the page makes. Call `.stop()` when done. */
 export function recordGraphRequests(page: Page): GraphRequestLog {
   const urls: string[] = [];
   const onRequest = (req: Request): void => {
     const url = req.url();
-    if (url.includes("/graph")) urls.push(url);
+    if (GRAPH_ROUTE_RE.test(url)) urls.push(url);
   };
   page.on("request", onRequest);
   return {

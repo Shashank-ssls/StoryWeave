@@ -58,6 +58,9 @@ const RED_PERMITTED = {
     "the landing kicker — explicitly on DESIGN_SPEC §2's red-discipline allow-list " +
     "(\"the landing kicker\" is named alongside identity edges/reveal UI/bookmark " +
     "marker/changed tags/next-stepper/Stemma filter as a permitted --accent use).",
+  "codex/chapter/ChapterDialog.module.css":
+    "the dialog's \"current bookmark\" marker (DESIGN_SPEC §6.6 item 4 spells out " +
+    "--accent for it; \"bookmark marker\" is on the P2 allow-list). One rule, one use.",
 };
 
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/g;

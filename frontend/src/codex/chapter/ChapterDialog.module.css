@@ -1,0 +1,236 @@
+/* DESIGN_SPEC.md §6.6 Change chapter dialog. Tokens only.
+   The scrim is one of the two places a "shadow" is allowed (§2 rule 5: dialog/reveal). */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--scrim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-6);
+  box-sizing: border-box;
+}
+
+.dialog {
+  width: 640px;
+  max-width: 100%;
+  max-height: calc(100vh - 2 * var(--s-6));
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  padding: var(--s-8) var(--s-10);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.closeButton {
+  color: var(--dim);
+  flex: none;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 42px; /* spec role-size, §6.6 item 1 */
+  line-height: var(--lh-heading);
+  color: var(--ink);
+}
+
+.promptRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.prompt {
+  font-family: var(--font-body);
+  font-size: var(--fs-21);
+  color: var(--ink);
+}
+
+.number {
+  width: 110px;
+  height: 64px;
+  box-sizing: border-box;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 40px; /* spec role-size, §6.6 item 2 */
+  background: var(--deep);
+  color: var(--ink);
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 0;
+}
+.number[aria-invalid="true"] {
+  border-color: var(--dim);
+}
+/* The input opens pre-selected; the browser's default blue highlight is off-palette. */
+.number::selection {
+  background: var(--dim);
+  color: var(--on-ink);
+}
+
+.invalid {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--ink);
+}
+.invalid[hidden] {
+  display: none;
+}
+
+.helper {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+
+.context {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: var(--border);
+}
+.ctxRow + .ctxRow {
+  border-top: var(--border);
+}
+
+.ctxRow {
+  height: var(--control-h);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--s-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+  color: var(--ink);
+}
+.ctxRow.read {
+  padding: 0;
+  color: var(--dim);
+}
+.ctxRow.bookmark {
+  background: var(--raise);
+}
+.ctxRow.sealed {
+  background: var(--deep);
+  color: var(--faint);
+}
+
+.ctxButton {
+  all: unset;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0 var(--s-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: inherit;
+  color: inherit;
+}
+.ctxButton:hover {
+  background: var(--raise);
+}
+.ctxButton:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.ctxState {
+  font-style: italic;
+  font-size: var(--fs-16);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+/* "current bookmark" is a spec-permitted accent use (§6.6 item 4: bookmark marker). */
+.ctxCurrent {
+  font-style: italic;
+  font-size: var(--fs-16);
+  color: var(--accent);
+}
+
+.serials {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.serialsLabel {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+
+.blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.block {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  min-height: var(--control-h);
+  padding: 0 var(--s-4);
+  background: transparent;
+  color: var(--dim);
+  border: var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.block:hover,
+.block[aria-pressed="true"] {
+  background: var(--raise);
+  color: var(--ink);
+}
+
+.blockConfirm {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--ink);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin-top: var(--s-2);
+}
+
+/* Artboard 6: the primary spans the row, Cancel is a compact outline beside it. */
+.confirm {
+  flex: 1;
+  min-height: var(--control-h-lg);
+}
+.cancel {
+  min-height: var(--control-h-lg);
+}
+
+.footnote {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
+}

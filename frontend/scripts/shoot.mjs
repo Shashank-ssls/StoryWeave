@@ -98,14 +98,19 @@ for (const shot of shots) {
         JSON.stringify(networkLog, null, 2),
       );
 
-      const realErrors = consoleErrors.filter((e) => !BENIGN_CONSOLE_ERRORS.has(e));
-      const benign = consoleErrors.filter((e) => BENIGN_CONSOLE_ERRORS.has(e));
+      // A shot may declare console messages it deliberately provokes (e.g. R3's
+      // error-banner shot injects a 500 via route interception, and Chrome itself logs
+      // "Failed to load resource ... 500" for it — the app logs nothing). Declared
+      // per-shot, never globally, so an unexpected 500 elsewhere still fails the run.
+      const expected = new Set(shot.expectedConsoleErrors ?? []);
+      const realErrors = consoleErrors.filter((e) => !BENIGN_CONSOLE_ERRORS.has(e) && !expected.has(e));
+      const benign = consoleErrors.filter((e) => BENIGN_CONSOLE_ERRORS.has(e) || expected.has(e));
       if (realErrors.length > 0) {
         anyFailure = true;
         console.error(`[${shotName}] FAILED — console errors:\n  ${realErrors.join("\n  ")}`);
       } else {
         console.log(`[${shotName}] OK -> ${pngPath}`);
-        if (benign.length > 0) console.log(`  (ignored ${benign.length} benign favicon 404)`);
+        if (benign.length > 0) console.log(`  (ignored ${benign.length} benign/declared console message(s))`);
       }
     } catch (err) {
       anyFailure = true;

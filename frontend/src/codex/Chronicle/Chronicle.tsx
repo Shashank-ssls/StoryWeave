@@ -7,7 +7,7 @@ import styles from "./Chronicle.module.css";
 // DESIGN_SPEC.md §6.4 Chronicle geometry. Unlike Dossier/Stemma, there is no left rail —
 // a horizontal 76px header bar instead, carrying the tabs.
 export default function Chronicle({ route }: { route: WorkRoute }): JSX.Element {
-  const title = useWorkTitle(route.slug);
+  const title = useWorkTitle();
 
   return (
     <div className={styles.chronicle} data-testid="chronicle-root">

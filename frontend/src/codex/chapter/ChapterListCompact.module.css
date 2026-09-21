@@ -1,0 +1,101 @@
+/* DESIGN_SPEC.md §6.2 item 2 — "Where are you?" compact chapter list. Tokens only. */
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+
+/* Artboard 2: the row group sits in one hairline frame, rows stacked with no gap. */
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: var(--border);
+}
+.row + .row {
+  border-top: var(--border);
+}
+
+/* Every row — read, bookmark, sealed — is the same fixed height (F3: the sealed row is a
+   constant size and never grows with what remains). */
+.row {
+  height: var(--control-h);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--s-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+  color: var(--ink);
+}
+
+.rowButton {
+  all: unset;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  font: inherit;
+  color: inherit;
+}
+.rowButton:hover {
+  background: var(--raise);
+}
+.rowButton:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.read {
+  color: var(--dim);
+  padding: 0;
+}
+.read .rowButton {
+  padding: 0 var(--s-3);
+}
+
+.bookmark {
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 600;
+}
+
+.sealed {
+  background: var(--deep);
+  color: var(--faint);
+}
+
+.state {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-16);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.bookmark .state {
+  color: var(--on-ink);
+}
+
+.lock {
+  flex: none;
+}
+
+.changeButton {
+  width: 100%;
+  margin-top: var(--s-2);
+}

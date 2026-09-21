@@ -47,6 +47,7 @@ The original build (engine phases 0–9) is complete: backend, extraction pipeli
 - **R3 Backend frozen.** No changes to Python, SQL, API routes or payload shapes during the redesign. Missing data → use the DESIGN_SPEC §13 fallback and log it. Backend pytest must stay 100% passing every phase.
 - **R4 Deleting old frontend code is expected.** When a redesign phase replaces an old frontend component, delete the old component, its styles and its tests in the same phase and list them in the phase report. This does not require asking. Deleting anything outside `frontend/` still requires asking.
 - **R5 Verification.** A UI phase is not green until it has been rendered in a real browser via the Playwright harness, screenshots inspected and compared to the artboards, and fence tests pass. Label every claim MEASURED / ASSERTED / BROKEN.
+- **R6 Session log.** Every session appends an entry to `docs/design/SESSION_LOG.md` before its final commit, including sessions that stop mid-phase. A cold-start session reads the latest SESSION_LOG entry right after FRONTEND_OVERHAUL.md §9.
 
 ## Natural early-exit
 Phases 0–5 (ontology + GLiNER + structural graph + fenced search + keystone fence) is a complete, fully-local, no-VRAM-risk product. (Historical note from the original build.)

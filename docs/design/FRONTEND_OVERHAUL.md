@@ -47,6 +47,7 @@ Use the frontend's existing language (TS or JS). If the frontend is TypeScript, 
 11. **Honesty labels.** Every claim in your phase report is **MEASURED** (you ran it and saw it: screenshot, test output, network log), **ASSERTED** (reasoned but not verified) or **BROKEN**. Never write "works" without MEASURED evidence.
 12. **Stop conditions.** Stop and ask me (don't improvise) if: the spec contradicts itself in a way that changes layout or behaviour; a backend dependency blocks a MUST requirement with no spec fallback; a phase would require touching backend code; the same failure persists after two genuinely different fix attempts.
 13. All work happens on branch `redesign/codex`. main is the frozen, showable old version until Phase 9 is green and I merge.
+14. **Session log.** Every session appends an entry to `docs/design/SESSION_LOG.md` before its final commit, including sessions that stop mid-phase. A cold-start session reads the latest SESSION_LOG entry right after §9 of this file.
 ---
 
 ## 3. Phase 0 — Recon + verification harness (no visual changes)
@@ -158,8 +159,8 @@ Commit: <hash> pushed: yes/no
 
 ## 8. Session management
 
-- If context runs long, finish the current phase to green (or stop cleanly at a sub-step), update §9 with exactly where you stopped and what's next, commit WIP only if tests pass, and tell me to start a new session. A new session starts by reading this file, the spec, and §9.
-- Never rely on memory of earlier sessions; §9 is the memory.
+- If context runs long, finish the current phase to green (or stop cleanly at a sub-step), update §9 with exactly where you stopped and what's next, commit WIP only if tests pass, and tell me to start a new session. A new session starts by reading this file, the spec, §9, and then the latest entry of `docs/design/SESSION_LOG.md`.
+- Never rely on memory of earlier sessions; §9 and SESSION_LOG.md are the memory.
 
 ---
 
@@ -537,3 +538,134 @@ correctness bugs are most costly (it's the project's core engineering claim) —
 want an extra pass of scrutiny on the fence logic specifically, an Opus-driven review
 after the Sonnet build (rather than building on Opus outright) would be the efficient way
 to get that without slowing the whole phase down.
+
+## Phase 3 — Chapter model + fence — GREEN
+
+Scope delivered: `codex/chapter/` — `bookmarkStore.ts` (per-work `storyweave:bookmark:
+<slug>`, default 1 on first visit, stored value validated on every read: integer in
+1..chapter_count else reset to 1 and re-written), `ChapterProvider.tsx` (one instance per
+open work, keyed by slug in `CodexApp`, shared across all three tabs: the fetch layer for
+`/api/v1/works/{slug}/graph?n=` with exactly one request in flight, AbortController on
+every new confirm **and** a request token so a late-resolving superseded response can never
+reach state; in-memory cache holding chapters ≤ bookmark only, purged synchronously on
+any backward move before any await; forward flow keeps old data under the wash and
+commits bookmark+localStorage only on success; backward flow commits at once; §6.7 error
+rule), `ChapterListCompact` (≤5 rows, prev-2 / bookmark / exactly one sealed row of fixed
+44px, "of N" only, "Change chapter" button), `ChapterDialog` (digits-only, clamp with
+inline "There are only N chapters.", zero network while typing, context list with past
+rows filling the input, "For long serials" blocks-of-100 fallback with the confirm-before-
+fill step, focus trap, Esc, Enter-on-valid, Set bookmark / Cancel, footnote),
+`ChapterChrome` (40% wash, error banner with Try again, forward/backward toasts, `[` / `]`
+keys ignored inside inputs and while the dialog is open), `roman.ts`; `graph/diff.ts`
+(pure: new nodes / edges / identity edges). Theme strings for all of the above added to
+`codex/theme.ts`. Vitest 2.x added as a dev dep (Vitest 5 peers on Vite 6+; not
+upgrading the build tool mid-phase) with `npm run test:unit`. Session log created
+(`docs/design/SESSION_LOG.md`, rule R6 / §2 rule 14). Phase 0/1 shot configs retargeted at
+`#/_legacy`/`#/_type` so every shot config in the repo passes again.
+
+Spec sections covered: §5 (bookmark local, never in URL), §6.2 item 2, §6.6 complete,
+§6.7 error rule, §8.1 (minus reveal overlay → R6), §8.5 `[`/`]`, §9.1 F1/F2/F3/F5.
+
+Visual comparison (MEASURED — `.shots/phase-3/*` at 1440×900 and 1280×720, inspected
+against artboards 2 and 6 rendered via Chrome to `.shots/artboards/`; three fix loops
+used on the dialog, one on the rail):
+| Element | Status | Note |
+|---|---|---|
+| Rail "Where are you?" label + rows (artboard 2) | matches | 2 read / bookmark / 1 sealed; single hairline frame, rows stacked; bookmark row `--ink` fill + 600; sealed row `--deep` + `--faint` + lock glyph |
+| Row height | matches (44px) | artboard ≈42px; 44 is the spec's target size, kept |
+| "of 4" on the label row | deviates (additive) | not drawn on the artboard, but §6.2 permits "of N" and it's the only place the book length appears |
+| "Change chapter" button | matches | full width, 44px, 1px `--ink` outline |
+| Dialog frame (artboard 6) | matches | 640px, `--bg`, 1px `--faint`, 72% scrim |
+| Title Display 42 + close 44×44 | matches | |
+| "I have finished chapter [ 3 ] of 4" — 110×64 input, Display 40 | matches | selection highlight re-coloured to tokens (was browser blue) |
+| Helper copy | matches | |
+| Context list: 2 prev / bookmark (`--raise`, red "current bookmark") / sealed | matches | |
+| "For long serials" | deviates | artboard shows explanatory prose; spec §6.6 item 5 says list the arcs or the blocks-of-100 fallback → shows "Chapters 1–4" chip with confirm-before-fill (spec > artboard) |
+| Set bookmark (52px, primary, wide) + Cancel (outline) | matches | |
+| Footnote | matches | |
+| Invalid state | matches spec | "There are only 4 chapters." inline; Set bookmark disabled |
+| Loading wash after confirm | matches spec | 40% `--bg` over old data + loading copy; no spinner |
+| Error banner | matches spec copy | "Couldn't load Chapter IV — still showing Chapter III" + Try again; solid `--bg` |
+| Forward / backward toasts | matches spec copy | bottom-centre, UI 14, 4s |
+
+Fence tests: **25/25 passed, 5 fixme** MEASURED (`npm run test:fence`; every network
+assertion attaches its `/graph` request log as `graph-requests` in `test-results/`). Active:
+F1 ×5 (default visit, dialog forward, `]` fetches nothing, typing incl. 2000 + Enter,
+rapid double confirm), F2/F3, F5 ×2, §8.1 ×2 (confirm-then-back-before-resolve, slow
+older response dropped), §6.7 ×2 (500 keeps data/bookmark; Try again re-requests only
+the failed chapter and any move clears it), persistence across reload, tampered storage
+×6 (`0`, `-3`, `999`, `abc`, `2.5`, empty), tab switch mid-fetch, browser back mid-fetch,
+unknown slug → zero requests, keys inert in inputs, dialog fill/Esc, focus trap. Fixme,
+each named with its activating phase: F4 (R4/R8), F6 (arc names — inactive while D6 is
+absent), F7 (R7), F8 (R4), F9 (R8). Unit: 11/11 (`roman`, `diffGraphs` on the real
+n=1..4 fixtures, `validateBookmark`).
+
+Adversarial review (Step 3) — paths by which chapter > bookmark could be requested,
+cached, rendered or hinted, each → the test that closes it:
+- tampered/hand-edited storage → validateBookmark (unit) + 6 Playwright variants.
+- typing in the dialog / Enter on invalid / out-of-range confirm → "no request while
+  typing"; `requestChapter` re-validates 1..N independently of the dialog.
+- `]` spam / `]` + keys with dialog open → "`]` fetches nothing", "keys never fire inside
+  inputs" (dialog-open guard + typing-target guard).
+- rapid double confirm, confirm-then-back, slow older response → three §8.1 tests (token
+  guard is what closes the late-resolve gap; abort alone would not).
+- error retry → banner test: only the failed (reader-confirmed) chapter is re-requested;
+  any move clears the banner so a stale retry can't fire later.
+- tab switch / browser back during a fetch → both tested; provider is keyed by slug and
+  aborts + invalidates on unmount.
+- multiple works → provider remount per slug (fresh cache); unknown slug → chapter_count
+  unknown → dialog refuses to open, zero requests (found live: `]` opened an inert dialog
+  for an unknown work — fixed by gating `openDialog` on chapter_count).
+- cache above bookmark → set only in `load` after the token check and consumed by
+  `commit` in the same microtask chain; purge on backward runs before any await (F5 test).
+- hints → F2/F3 test: only "of N" and the immediately-next sealed numeral appear.
+- other fetch sites → grep: the only other `graph` fetch is legacy `App.tsx`, reachable
+  only at `#/_legacy`.
+Nothing left open → no BROKEN.
+
+Style/static checks: MEASURED. lint:design 52 files clean (red-permitted now 3: the
+dialog's "current bookmark" marker); test:style 5/5; test:geometry 13/13; typecheck +
+build clean; shoot phases 0/1/2/3 all pass (4 + 6 + 12 + 20 shots), zero console errors.
+`shoot.mjs` gained a per-shot `expectedConsoleErrors` (the error-banner shot injects a 500
+and Chrome logs it itself) — declared per shot, never a global allow.
+
+Deleted old code: R2's standalone fetch-and-find `useWorkTitle` body replaced by a
+context read (the file stays, one function, same name); nothing else replaced this phase.
+
+Backend deps hit: D3 (chapter_count from `/works`) used. D6 (arc config) absent →
+blocks-of-100 fallback, as specified.
+
+Deviations kept (with reason):
+- Backward move whose (uncached) fetch fails: shows "Couldn't load Chapter II." with NO
+  data, rather than §6.7's "keep previous data" — the previous data is from a HIGHER
+  chapter than the new bookmark, so keeping it on screen would display beyond the
+  bookmark. Safer than literal; documented in `ChapterProvider`.
+- `[`/`]` are a window listener with a typing-target + dialog-open guard rather than a
+  handler on the root element: after a click, focus sits on `<body>`, which is outside
+  any root element, so a root-scoped handler would silently never fire.
+- Two real test-harness bugs fixed on the way: `recordGraphRequests` used
+  `includes("/graph")`, which also matched Vite serving `src/graph/diff.ts` — anchored to
+  the API route; and my first "slow older response" test pressed `[` at chapter 1 (a
+  no-op) so it proved nothing — rewritten to start from chapter 2. Both would have made
+  fence evidence wrong in opposite directions.
+
+BROKEN / open: none.
+
+Interview-defence note: the frontend fence is defence-in-depth, not the seal. The seal
+is `query/fence.py` — a `WHERE revealed_chapter <= :n` applied at the SQL/index level, so
+a row past the bookmark never leaves the server regardless of what any client does. The
+UI layer's job is different: it guarantees the client never *asks* for more than the
+reader confirmed (F1), never keeps a payload it shouldn't (F5), never renders a response
+the reader has since moved away from (token + abort), and never hints at what's beyond
+(F2/F3). That closes the UX-level leaks — prefetching, stale renders, cached ghosts —
+that a correct server fence cannot see, while never being something the server relies on.
+
+MEASURED (regression guards): pytest 124 passed / 6 skipped (unchanged).
+
+Commit: (see SESSION_LOG.md Session 4) pushed: yes.
+
+Next: **R4 — Dossier** (rail cast list with degree sort + "changed" tags via
+`graph/diff` (F8), H1/lede/ornament, identity blocks with the D1 quote, ties grid, fence
+line, concentric ego graph, entity-not-present state, default entity = highest-degree
+person). Model: Sonnet 5 is fine — it's layout + view-model work over a fence that is
+now tested; the F8 diff is already a unit-tested pure function.

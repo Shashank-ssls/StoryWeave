@@ -12,7 +12,8 @@
     "test:fence": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/fence.spec.ts",
     "test:style": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/style.spec.ts",
     "test:geometry": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/geometry.spec.ts",
-    "lint:design": "node scripts/lint-design.mjs"
+    "lint:design": "node scripts/lint-design.mjs",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@fontsource/alegreya-sans": "^5.3.0",
@@ -31,6 +32,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^10.1.0",
     "typescript": "~5.6.3",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^2.1.9"
   }
 }
