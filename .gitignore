@@ -2,6 +2,9 @@
 .venv/
 .venv-ml/
 
+# --- Local setup caches (pip/npm/HF/torch), kept off the C: drive (this-session setup) ---
+.local/
+
 # --- Databases (SQLite is local source of truth, rebuildable; not committed) ---
 *.sqlite
 *.sqlite3

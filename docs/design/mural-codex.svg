@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+<!-- PLACEHOLDER sketch. Replace with final engraved art; keep viewBox, stroke #3E2724 (--mural), no fills except small accents. -->
+<g fill="none" stroke="#3E2724" stroke-width="1.2">
+<rect x="24" y="24" width="1392" height="852"></rect><rect x="40" y="40" width="1360" height="820"></rect>
+<path d="M40 200 C80 160 80 120 40 80 M40 400 C90 360 90 300 40 260 M40 620 C80 580 80 540 40 500 M40 820 C90 780 90 720 40 680"></path>
+<path d="M1400 200 C1360 160 1360 120 1400 80 M1400 400 C1350 360 1350 300 1400 260 M1400 620 C1360 580 1360 540 1400 500 M1400 820 C1350 780 1350 720 1400 680"></path>
+<circle cx="720" cy="440" r="250"></circle><circle cx="720" cy="440" r="226"></circle>
+<path d="M950 420 Q990 400 980 440 Q960 470 930 450"></path><circle cx="962" cy="428" r="4" fill="#3E2724"></circle>
+<path d="M720 190 V690 M470 440 H970 M543 263 L897 617 M897 263 L543 617"></path><circle cx="720" cy="440" r="60"></circle>
+<circle cx="200" cy="300" r="46"></circle><path d="M200 346 L170 520 H230Z"></path><circle cx="200" cy="300" r="22"></circle>
+<circle cx="1240" cy="300" r="46"></circle><path d="M1240 346 L1210 520 H1270Z"></path><circle cx="1240" cy="300" r="22"></circle>
+<path d="M140 700 C220 640 300 760 380 700 C440 660 480 700 470 740"></path><path d="M1300 700 C1220 640 1140 760 1060 700 C1000 660 960 700 970 740"></path>
+</g>
+</svg>

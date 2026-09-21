@@ -1,0 +1,98 @@
+/* StoryWeave — "The Heretic's Codex" design tokens.
+   Source of truth for DESIGN_SPEC.md §4. Dark theme only.
+   Cytoscape needs literal hex values: cytoscape-style.js mirrors these. */
+
+@import "@fontsource/pirata-one";
+@import "@fontsource/eb-garamond/400.css";
+@import "@fontsource/eb-garamond/500.css";
+@import "@fontsource/eb-garamond/600.css";
+@import "@fontsource/eb-garamond/400-italic.css";
+@import "@fontsource/alegreya-sans/400.css";
+@import "@fontsource/alegreya-sans/500.css";
+@import "@fontsource/alegreya-sans/700.css";
+
+:root {
+  /* ---- color ---- */
+  --bg: #150B0A;
+  --deep: #0C0605;
+  --panel: rgba(21, 11, 10, 0.90);
+  --raise: rgba(232, 216, 194, 0.07);
+  --line: #3A2420;
+  --ink: #E8D8C2;
+  --dim: #A8917D;
+  --faint: #6B5548;
+  --mural: #3E2724;
+  --accent: #D9503A;            /* rubric red: REVEALS ONLY */
+  --accent-hi: #F4C0B0;
+  --accent-soft: rgba(217, 80, 58, 0.16);
+  --on-ink: #150B0A;
+  --scrim: rgba(0, 0, 0, 0.72);
+
+  /* ---- type ---- */
+  --font-display: "Pirata One", "UnifrakturMaguntia", Georgia, serif;  /* >= 28px only */
+  --font-body: "EB Garamond", Garamond, Georgia, "Times New Roman", serif;
+  --font-ui: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+
+  --fs-13: 13px; --fs-14: 14px; --fs-16: 16px; --fs-18: 18px;
+  --fs-21: 21px; --fs-24: 24px; --fs-30: 30px; --fs-36: 36px;
+  --fs-44: 44px; --fs-60: 60px; --fs-72: 72px; --fs-96: 96px;
+
+  --lh-display: 0.95;
+  --lh-heading: 1.1;
+  --lh-body: 1.5;
+
+  /* ---- space (4px base) ---- */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-7: 28px; --s-8: 32px; --s-10: 40px; --s-12: 48px;
+  --s-14: 56px; --s-16: 64px; --s-20: 80px;
+
+  --rail-left: 290px;
+  --rail-right-dossier: 400px;
+  --rail-right-web: 350px;
+  --rail-right-chronicle: 330px;
+  --control-h: 44px;
+  --control-h-lg: 52px;
+
+  /* ---- shape ---- */
+  --radius: 0;
+  --border: 1px solid var(--line);
+  --border-strong: 1px solid var(--ink);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink);
+
+  /* ---- motion ---- */
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 420ms;
+  --dur-reveal: 1400ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-ink: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  :root { --rail-left: 260px; --rail-right-dossier: 320px; --rail-right-web: 320px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 200ms; --dur-reveal: 200ms; }
+}
+
+/* ---- base ---- */
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font-family: var(--font-body); font-size: var(--fs-18); line-height: var(--lh-body); }
+button, input, select { font-family: var(--font-ui); border-radius: var(--radius); }
+:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+blockquote { font-style: italic; color: var(--dim); margin: 0; }
+
+/* ---- background layers ---- */
+.mural {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--bg) url("./mural-codex.svg") center / cover no-repeat;
+}
+.vignette {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 55%,
+    rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.10) 60%, rgba(0,0,0,0.65) 100%);
+}
+.web-canvas-mask {  /* Stemma canvas: no mural lines under the graph */
+  background: radial-gradient(ellipse at 50% 50%, var(--bg) 0%, var(--bg) 55%, transparent 100%);
+}
