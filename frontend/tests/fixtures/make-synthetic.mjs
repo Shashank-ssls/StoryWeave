@@ -48,14 +48,18 @@ node("Event", "the Sundering", 3);
 const hub = people[0];
 const SOCIAL = ["Ally", "Enemy", "Rival", "Mentor", "Family", "Serves", "RelatedTo"];
 for (let i = 1; i <= 20; i++) edge(hub, people[i], pick(SOCIAL), 1 + (i % 4));
-// a sparse social web over the rest
-for (let i = 1; i < people.length; i++) {
-  const j = 1 + Math.floor(rnd() * (people.length - 1));
+// a sparse social web over people 1..59; people 60..69 are "minor figures": their ONLY
+// tie is membership of an order, so under the Principal cast size they fold into it
+// (§6.3 item 4) — the fixture must contain leaves or folding has nothing to test.
+const LEAF_FROM = 60;
+for (let i = 1; i < LEAF_FROM; i++) {
+  const j = 1 + Math.floor(rnd() * (LEAF_FROM - 1));
   if (j !== i) edge(people[i], people[j], pick(SOCIAL), Math.max(1 + (i % 4), 1 + (j % 4)));
 }
 // structural
 for (let i = 0; i < people.length; i++) {
-  if (i % 3 === 0) edge(people[i], orders[i % orders.length], "MemberOf", 1 + (i % 4));
+  if (i % 3 === 0 || i >= LEAF_FROM) edge(people[i], orders[i % orders.length], "MemberOf", 1 + (i % 4));
+  if (i >= LEAF_FROM) continue;
   if (i % 4 === 1) edge(people[i], places[i % places.length], "LocatedIn", 1 + (i % 4));
   if (i % 9 === 2) edge(people[i], items[i % items.length], "OwnsItem", 1 + (i % 4));
 }

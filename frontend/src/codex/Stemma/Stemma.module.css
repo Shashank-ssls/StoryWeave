@@ -1,9 +1,15 @@
-/* DESIGN_SPEC.md §6.3 The Stemma. Tokens only. */
+/* DESIGN_SPEC.md §6.3 The Stemma. Tokens only.
+   --accent appears here ONLY for: the Show checkboxes' accent-color (§6.3 item 3, on the
+   P2 allow-list as "checkbox accent-color in the Stemma filter") and the selected-link
+   kicker when the link is an identity (§6.3 right panel). */
 
 .stemma {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
+
+/* ---------- left rail ---------- */
 
 .rail {
   width: var(--rail-left);
@@ -15,12 +21,17 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-6);
+  overflow-y: auto;
 }
 
 .wordmark {
   font-family: var(--font-body);
   font-size: var(--fs-16);
   color: var(--dim);
+  text-decoration: none;
+}
+.wordmark:hover {
+  color: var(--ink);
 }
 
 .novelTitle {
@@ -30,6 +41,134 @@
   color: var(--ink);
 }
 
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.fieldLabel {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+  padding: 0;
+}
+.search {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: var(--border);
+  background: var(--deep);
+}
+.resultRow {
+  all: unset;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--s-2) var(--s-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+  color: var(--ink);
+}
+.resultRow:hover,
+.resultRow:focus-visible {
+  background: var(--raise);
+}
+
+/* inline §6.7 no-match card: same language, compact */
+.noMatch :global(h2) {
+  font-size: var(--fs-30);
+}
+.noMatch > * {
+  padding: var(--s-3) 0 0;
+  gap: var(--s-2);
+}
+
+.fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-family: var(--font-ui);
+  font-size: var(--fs-16);
+  color: var(--ink);
+  min-height: 28px;
+  cursor: pointer;
+}
+.checkbox {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+  border-radius: var(--radius);
+}
+
+.segmented {
+  display: inline-flex;
+  border: var(--border);
+}
+.segment {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  min-height: var(--control-h);
+  padding: 0 var(--s-5);
+  background: transparent;
+  color: var(--dim);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  flex: 1;
+  white-space: nowrap;
+}
+.segment + .segment {
+  border-left: var(--border);
+}
+.segmentOn {
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 700;
+}
+
+.caption {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
+}
+
+.railSpacer {
+  flex: 1;
+}
+
+.footer {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+.footerLink {
+  all: unset;
+  cursor: pointer;
+  text-decoration: underline;
+  color: var(--ink);
+}
+.footerLink:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+/* ---------- canvas ---------- */
+
 /* .canvas supplies layout only — the visual centre-mask background comes from the
    global `web-canvas-mask` class (tokens.css §4.6 rule 3), applied alongside it. */
 .canvas {
@@ -38,12 +177,15 @@
   position: relative;
   padding: var(--s-6);
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .canvasTopBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex: none;
 }
 
 .focusLabel {
@@ -52,6 +194,70 @@
   color: var(--dim);
 }
 
+.canvasBody {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.cy {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* §7.1 focus node name: Display 24px, below-right of the disk, tracks the node. */
+.focusName {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  font-family: var(--font-display);
+  font-size: 28px; /* Pirata One never below 28px (hard rule); spec's 24 rounds up to it */
+  line-height: 1;
+  color: var(--ink);
+  text-shadow: 0 0 3px var(--bg), 0 0 3px var(--bg); /* the same halo the canvas labels get */
+  white-space: nowrap;
+}
+.focusName[hidden] {
+  display: none;
+}
+
+.tooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 10px));
+  pointer-events: none;
+  background: var(--panel);
+  border: var(--border);
+  padding: var(--s-2) var(--s-3);
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--ink);
+  max-width: 320px;
+  white-space: nowrap;
+  z-index: 2;
+}
+.tooltipQuote {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--dim);
+  white-space: normal;
+  margin-top: var(--s-1);
+}
+
+.controls {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+}
+.zoomButton {
+  width: var(--control-h);
+  padding: 0;
+}
+
+/* ---------- right panel ---------- */
+
 .rightPanel {
   width: var(--rail-right-web);
   flex: none;
@@ -59,13 +265,110 @@
   border-left: var(--border);
   padding: 30px 24px;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
-.placeholder {
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-height: 100%;
+}
+.kicker,
+.kickerAccent {
   font-family: var(--font-ui);
   font-size: var(--fs-13);
-  color: var(--faint);
-  border: 1px dashed var(--line);
-  padding: var(--s-4);
-  margin-top: var(--s-6);
+  color: var(--dim);
+}
+.kickerAccent {
+  color: var(--accent);
+}
+.panelTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 38px; /* spec role-size §6.3 */
+  line-height: var(--lh-heading);
+  color: var(--ink);
+}
+.panelMeta {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+.panelQuote {
+  font-size: var(--fs-21);
+}
+.panelIdentity {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-21);
+  color: var(--ink);
+}
+.hairline {
+  border: none;
+  border-top: var(--border);
+  margin: var(--s-2) 0;
+}
+.legend {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.legendRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+}
+.legendRow dt {
+  color: var(--ink);
+}
+.legendRow dd {
+  margin: 0;
+  color: var(--dim);
+  text-align: right;
+}
+.panelHint {
+  margin: var(--s-3) 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-18);
+  color: var(--dim);
+}
+.panelSection {
+  margin-top: var(--s-2);
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
+}
+.panelTies {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.panelTie {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-2) 0;
+  border-bottom: var(--border);
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+  color: var(--ink);
+}
+.panelTieMeta {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
+  white-space: nowrap;
+}
+.panelSpacer {
+  flex: 1;
+}
+.panelButton {
+  width: 100%;
+  min-height: var(--control-h-lg);
 }

@@ -291,7 +291,8 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     await confirmChapter(page, 2);
     await page.click("text=The Stemma");
     await page.waitForSelector('[data-testid="stemma-root"]');
-    await waitForBookmark(page, 2);
+    // the Stemma rail (§6.3, R5) shows the bookmark in its footer rather than the compact list
+    await expect(page.locator('[data-testid="stemma-footer"]')).toContainText("Read to Chapter II of 4");
     assertNoGraphRequestAbove(log, 2);
     await attachLog(log);
   });

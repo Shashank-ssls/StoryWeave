@@ -62,6 +62,9 @@ const RED_PERMITTED = {
   "codex/Dossier/Dossier.module.css":
     "identity kicker + the linked other name in the identity sentence (§6.2 item 5) and " +
     "the \"changed\" cast tag (§6.2 item 3) — all three named on the P2 allow-list.",
+  "codex/Stemma/Stemma.module.css":
+    "the Show checkboxes' accent-color (P2 allow-list: \"checkbox accent-color in the " +
+    "Stemma filter\") and the identity selected-link kicker (§6.3 right panel).",
   "codex/chapter/ChapterDialog.module.css":
     "the dialog's \"current bookmark\" marker (DESIGN_SPEC §6.6 item 4 spells out " +
     "--accent for it; \"bookmark marker\" is on the P2 allow-list). One rule, one use.",

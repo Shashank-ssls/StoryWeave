@@ -140,7 +140,10 @@ export async function getShots(phase) {
           async run(page, baseUrl) {
             await atChapter(page, baseUrl, 2);
             await page.goto(`${baseUrl}/#/work/${SLUG}/web`, { waitUntil: "networkidle" });
-            await page.waitForSelector('[data-testid="chapter-row-bookmark"][data-chapter="2"]');
+            // Since R5 the Stemma rail follows §6.3: the bookmark shows in the footer
+            // ("Read to Chapter II of 4 · change"), not as R3's compact list.
+            await page.waitForSelector('[data-testid="stemma-footer"]');
+            await page.waitForFunction(() => document.querySelector('[data-testid="stemma-footer"]')?.textContent?.includes("Chapter II of 4"));
           },
         },
         {
@@ -263,6 +266,48 @@ export async function getShots(phase) {
             await page.waitForTimeout(800);
           },
         },
+      ];
+    }
+    case "5": {
+      // R5 — The Stemma. Demo data unless named synthetic.
+      const SLUG = "the-hollow-crown";
+      const KEY = `storyweave:bookmark:${SLUG}`;
+      const GRAPH_RE = /\/api\/v1\/works\/[^/]+\/graph\?n=\d+/;
+      const nOf = (url) => Number(/[?&]n=(\d+)/.exec(url)?.[1]);
+      const stemmaAt = async (page, baseUrl, n, focus) => {
+        await page.goto(`${baseUrl}/#/work/${SLUG}/web${focus ? `?focus=${focus}` : ""}`, { waitUntil: "networkidle" });
+        await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, String(n)]);
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForSelector('[data-testid="stemma-cy"]');
+        await page.waitForTimeout(2200); // cola burst + fit
+      };
+      const emit = (page, id, ev) => page.evaluate(([i, e]) => window.__storyweaveCy.stemma.getElementById(i).emit(e), [id, ev]);
+      const zoomTo = (page, z) => page.evaluate((zz) => { const cy = window.__storyweaveCy.stemma; cy.zoom({ level: zz, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }); }, z);
+      const synthetic = async (page) => {
+        const fs = await import("node:fs");
+        const data = JSON.parse(fs.readFileSync(new URL("../tests/fixtures/synthetic-100.json", import.meta.url), "utf8"));
+        await page.route(GRAPH_RE, async (route) => {
+          const n = nOf(route.request().url());
+          const fenced = { slug: SLUG, n, elements: { nodes: data.elements.nodes.filter((x) => x.data.revealed_chapter <= n), edges: data.elements.edges.filter((x) => x.data.revealed_chapter <= n) } };
+          await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(fenced) });
+        });
+      };
+      return [
+        { name: "stemma-unfocused", async run(p, b) { await stemmaAt(p, b, 3); await p.click('[data-testid="clear-focus"]'); await p.waitForTimeout(600); } },
+        { name: "stemma-focus-1step", run: (p, b) => stemmaAt(p, b, 3) },
+        { name: "stemma-focus-2steps", async run(p, b) { await stemmaAt(p, b, 3); await p.click('[data-testid="steps-2"]'); await p.waitForTimeout(600); } },
+        { name: "stemma-edge-identity", async run(p, b) { await stemmaAt(p, b, 3); await emit(p, "e12", "tap"); await p.waitForTimeout(300); } },
+        { name: "stemma-edge-social", async run(p, b) { await stemmaAt(p, b, 3); await p.click('[data-testid="cast-everyone"]'); await p.waitForTimeout(1400); await emit(p, "e1", "tap"); await p.waitForTimeout(300); } },
+        { name: "stemma-node-selected", async run(p, b) { await stemmaAt(p, b, 3, "7"); } },
+        { name: "stemma-zoom-far", async run(p, b) { await stemmaAt(p, b, 4); await p.click('[data-testid="cast-everyone"]'); await p.waitForTimeout(1400); await zoomTo(p, 0.4); await p.waitForTimeout(300); } },
+        { name: "stemma-zoom-close", async run(p, b) { await stemmaAt(p, b, 3); await zoomTo(p, 1.8); await p.waitForTimeout(300); } },
+        { name: "stemma-no-match", async run(p, b) { await stemmaAt(p, b, 2); await p.fill('[data-testid="stemma-search"]', "Veris"); await p.waitForSelector('[data-testid="search-no-match"]'); } },
+        { name: "stemma-synthetic-principal", async run(p, b) { await synthetic(p); await stemmaAt(p, b, 4); await p.click('[data-testid="clear-focus"]'); await p.waitForTimeout(700); } },
+        { name: "stemma-synthetic-everyone", async run(p, b) { await synthetic(p); await stemmaAt(p, b, 4); await p.click('[data-testid="cast-everyone"]'); await p.waitForTimeout(1400); await p.click('[data-testid="clear-focus"]'); await p.waitForTimeout(700); } },
+        { name: "stemma-ch1", run: (p, b) => stemmaAt(p, b, 1) },
+        { name: "stemma-ch2", run: (p, b) => stemmaAt(p, b, 2) },
+        { name: "stemma-ch3-everyone", async run(p, b) { await stemmaAt(p, b, 3); await p.click('[data-testid="cast-everyone"]'); await p.waitForTimeout(1400); } },
+        { name: "stemma-ch4", run: (p, b) => stemmaAt(p, b, 4) },
       ];
     }
     default:

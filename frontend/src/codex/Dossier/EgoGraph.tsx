@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import cytoscape, { type Core, type ElementDefinition } from "cytoscape";
 import { codexStyle } from "../../graph/codexStyle";
 import type { ViewModel } from "../../graph/viewModel";
+import { nodeSize } from "../../graph/stemmaModel";
+import { cyRegistry } from "../../graph/cyRegistry";
 
 // Dossier right-panel ego graph (DESIGN_SPEC §6.2 right panel, §7): the entity centred
 // as the focus disk with its initial, 1-hop neighbours on a ring (`.near`), 2-hop faint
@@ -38,7 +40,7 @@ function egoElements(vm: ViewModel, focusId: string): { els: ElementDefinition[]
     if (n.kind !== "person") cls.push("italic");
     els.push({
       group: "nodes",
-      data: { id: n.id, label: n.label, kind: n.kind, degree: n.degree, initial: n.initial },
+      data: { id: n.id, label: n.label, display: n.label, kind: n.kind, degree: n.degree, initial: n.initial, size: nodeSize(n), sizeFar: nodeSize(n) * 0.8 },
       classes: cls.join(" "),
     });
   }
@@ -83,6 +85,8 @@ export default function EgoGraph({
       autoungrabify: true,
     });
     cyRef.current = cy;
+    cyRegistry.instances += 1;
+    cyRegistry.created += 1;
     // Canvas content is invisible to the DOM, so the drawn element ids are mirrored as
     // data attributes: the fence E2E tests assert the ego graph against the fixtures.
     container.current.dataset.nodes = cy.nodes().map((n) => n.id()).join(",");
@@ -102,6 +106,7 @@ export default function EgoGraph({
     return () => {
       cy.destroy();
       cyRef.current = null;
+      cyRegistry.instances -= 1;
     };
   }, [vm, focusId]);
 

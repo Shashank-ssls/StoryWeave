@@ -93,3 +93,19 @@
 - **Issues:** MEASURED — rail cast clipped instead of scrolling (fixed); "one bonds recorded" (fixed with `ledeOne`); synthetic hub ego graph zoomed labels away (capped); my first Step 0 test scenario had chapter 1 already cached by the new n−1 fetch (rewritten to start at 4); three R3 fence expectations updated for the legitimate n−1 request. Backend note: n=4 replaces e12 SECRET_IDENTITY with e14 TRANSMIGRATED_INTO (frozen, documented). Nothing BROKEN.
 - **Stopped at:** R4 green, committed and pushed.
 - **Next:** R5 The Stemma (Sonnet 5 recommended).
+
+## Session 6 — R5 The Stemma (same session, continued)
+
+- **Date:** 2026-09-21
+- **Model / effort:** Opus 5, low effort
+- **Phase(s):** R5
+- **Commits:** 5617de5 → (this commit; see `git log`)
+- **Done:**
+  - `graph/stemmaModel.ts` (principal filter + folding, focus set, tiers, label budget + declutter, fenced search; 39 unit tests total), `codexStyle` extended, `cyRegistry` (dev-only lifecycle counters + Stemma handle).
+  - `StemmaCanvas` (cola burst lifecycle, diff-apply, focus/preview/selection/kbd classes, tiers, fit-on-layoutstop, tooltip, focus-name overlay), `Stemma` screen (rail, controls, keyboard, focus/URL resolution), `SelectionPanel`.
+  - `tests/stemma.spec.ts` 10/10 (walk, F4, shared-URL leak, vanishing focus, tooltip/panel, keyboard, lifecycle, folding, legibility @1280, settle). Phase-5 shots (30) inspected vs artboard 3.
+  - Synthetic fixture regenerated with membership-only leaves; R3 shot + one fence test updated for the §6.3 rail footer.
+- **Decisions:** finite cola burst (950ms) instead of infinite; fit on layoutstop; ring seeding; spacing by cast size; 22-label budget + deterministic declutter; fit-all excludes isolates; fit zoom clamp 1.2; name overlay 28px; badge in label text. Each backed by a measurement recorded in §9.
+- **Issues:** MEASURED — infinite cola drift 105px; timer-fit → far-tier speck; centre seeding → 550×3900 strip; 40 label overlaps → 10 → 5 → 1 (size transition) → 0; clearing focus was undone by the URL-resolution effect (fixed with undefined/null states); Vite dev server died once mid-run (restarted, logged to `.local/vite-dev.log`). Nothing BROKEN.
+- **Stopped at:** R5 green, committed and pushed.
+- **Next:** R6 Reveal — resolve the §9 "Open questions for R6" (Wren→Caelum reclassified at n=4) first.

@@ -802,3 +802,149 @@ Next: **R5 — The Stemma** (port is done; build the full-graph screen: cola phy
 panel, fenced search, centre mask; the synthetic-100 default-fit label-overlap screenshot).
 The view model, style and fixture all exist now, so R5 is mostly canvas interaction work.
 Model: Sonnet 5 is fine.
+
+## Phase 5 — The Stemma — GREEN
+
+Scope delivered:
+- `graph/stemmaModel.ts` (pure, unit-tested): `visibleGraph` (Show checkboxes; Cast size
+  Principal = degree ≥ 2 OR identity endpoint OR the focus; hidden organisation members
+  fold into their org as a `+N` count), `focusSet` (1/2 steps), `neighboursOf` (arrow-key
+  order), `zoomTier` + `labelVisible` (§7.5), `minorLabelIds`/`labelRank`/`declutterLabels`
+  (label rules, below), `searchNames` (fenced labels only), `nodeSize` (§7.1 clamp).
+- `graph/codexStyle.ts` extended: `data(size)`/`data(sizeFar)` (JS-computed §7.1 sizes;
+  20% shrink at the far tier), `display` label (org badge), `.tier-close` full-ink labels
+  (+ the focus initial stays `--on-ink`), `.kbd-ring`, `.label-minor`/`.label-deferred`,
+  far-tier identity endpoints exempt from `min-zoomed-font-size`; `colaOptions(reduced,
+  nodeCount)` — see deviations.
+- `graph/cyRegistry.ts`: dev-only `window.__storyweaveCy` {instances, layouts, created,
+  stemma}. Both canvases (Stemma + R4's ego graph) register; the Stemma exposes its
+  instance so tests read drawn ids and label boxes. Never rendered in the UI.
+- `codex/Stemma/StemmaCanvas.tsx`: one Cytoscape instance per mount, one cola burst at a
+  time, both destroyed on unmount (tab switch / work switch unmount it). Diff-applies the
+  visible graph (new nodes seeded on a ring, positions kept across chapter/filter
+  changes), focus/preview/selected/kbd classes, tiers on `zoom`, camera fit on
+  `layoutstop` (never mid-flight) clamped to the default tier, fit-all frames the
+  connected web, drag-end re-burst, edge hover → tooltip position, HTML overlay for the
+  focus node's NAME (Cytoscape has one label per node; the disk shows the initial).
+- `codex/Stemma/Stemma.tsx`: rail (wordmark, title, Find a name with inline §6.7 no-match,
+  Show ×3 with accent checkboxes, Principal | Everyone + caption, footer "Read to Chapter
+  N of M · change" → R3 dialog), canvas top bar ("Focused on X · 1 step" / "The whole web,
+  as far as you have read"), controls (Clear focus, +/−, Steps 1/2 only when focused),
+  tooltip ("alias · Chapter III" + identity evidence truncated to 80 chars), keyboard
+  (`/`, arrows + Enter, Esc), focus resolution (URL `focus` → principal; absent at the new
+  chapter → principal quietly; cleared stays cleared), URL mirror via `location.replace`.
+- `codex/Stemma/SelectionPanel.tsx`: none / node / edge states per §6.3 with the legend
+  rows and "Open X's dossier"; evidence never truncated (§8.4).
+- `Input` primitive now `forwardRef` (for `/`). R3's compact chapter list removed from
+  the Stemma rail (the §6.3 rail has the footer instead — the R3 shot config and the
+  tab-switch fence test now read the footer). MIN LINKS never existed in the new UI; the
+  legacy one lives only at `#/_legacy` until R9.
+- `tests/fixtures/synthetic-100.json` regenerated (people 60–69 are membership-only
+  leaves so folding has something to fold): 101 nodes / 144 edges; R4's dossier numbers
+  unchanged (70 people, hub 21 ties).
+
+Spec sections covered: §6.3 all, §7.1–§7.6, §8.3, §8.4 (tooltip/panel), §8.5 (`/`, arrows,
+Esc), §9.1 F4 (Stemma variant), §6.7 (no-match inline).
+
+F2 reasoning for the `+N` badge: N counts hidden members that are IN the fenced payload —
+entities the reader has already met and that were hidden only by the Principal filter.
+Nothing beyond the bookmark exists client-side, so the number cannot encode the future.
+
+Visual comparison (artboard 3, MEASURED — `.shots/phase-5/*`, 15 states × 2 widths,
+inspected; fix loops: 3 on the canvas defaults (below), 1 on the controls):
+| Element | Status | Note |
+|---|---|---|
+| Rail: wordmark, title, "Find a name" input (44px, `--deep`) | matches | |
+| Show ×3 accent checkboxes | matches | `accent-color: var(--accent)` (P2-permitted) |
+| Cast size segmented Principal/Everyone + caption | matches | |
+| Footer "Read to Chapter III of 4 · change" | matches | opens the R3 dialog |
+| Top bar "Focused on Wren · 1 step" + tabs | matches | |
+| Focus disk with initial + name below-right | matches | name is an HTML overlay in Pirata One 28px (≥28 hard rule; spec says 24) |
+| 1-hop full ink, rest `--faint` (colour, not opacity); identity `.far` at 0.45 opacity | matches | |
+| Identity edge 2.6px `--accent` + glow; structural dashed; social `--dim` | matches | |
+| Controls bottom-left: Clear focus, +, − (44×44), Steps | matches | Steps only while focused |
+| Right panel edge state: kicker (red for identity), Display 38 title, quote, hairline, legend, outline button | matches | |
+| Node state: name, type + first chapter, ties, identity sentence, button | matches spec | (artboard shows the edge state) |
+| Nothing selected: legend + hint | matches spec | |
+| No-match inline under the field | matches spec | exact §6.7 copy |
+| Mural in the canvas centre | matches | none visible; mask holds |
+| Red only on identity edges + identity kicker + checkboxes | matches | |
+| Far tier (<0.5): labels off except focus + identity endpoints, nodes −20% | matches spec | |
+| Close tier (>1.5): all labels full ink | matches spec | |
+| synthetic-100 Principal at the default fit | ASSERTED-acceptable | not a hairball: 72 nodes, 17–22 labels, zero overlaps (MEASURED), badges visible. Labels render ≈9px at the 1280×720 minimum (zoom ≈0.53) — small but readable with the halo; the close tier is one wheel-notch away |
+| synthetic-100 Everyone | ASSERTED-acceptable | 98 nodes; fit lands ≈0.5–0.63; same label rules |
+
+Fence + E2E (runner summary lines, verbatim):
+- `npm run test:fence` → `27 passed (30.6s)` / `4 skipped`
+- `npm run test:dossier` → `6 passed (9.4s)`
+- `npm run test:stemma` → `10 passed (35.0s)` — walk 1→2→3→4→2 (cy ids == re-derived
+  view model of each fixture, Everyone; Principal ⊆; e13 absent before 3; no Veris/
+  Sparrow text before 3; no request above per step), F4 Stemma no-match at 2 → resolves
+  at 3, shared URL `?focus=12` at bookmark 1 → principal + no leak (hash rewritten,
+  no label, panel = Wren, title unchanged), vanishing focus on `[` → principal quietly,
+  tooltip (identity with quote / social without) + panel (full quote) + Esc, keyboard
+  (`/`, ring, Enter, Esc), lifecycle ×3 (instances == 1, layouts ≤ 1 then 0, 0/0 after
+  leaving the work), folding badge == independent count, legibility at 1280×720 (zero
+  overlaps, fit in the default tier, synthetic + demo; boxes attached), settle ≤ 1px
+  between t=1.2s and 1.5s after a filter change (attached).
+- `npm run test:unit` → `Tests  39 passed (39)`
+- `npm run test:style` → `5 passed (3.6s)`; `npm run test:geometry` → `13 passed (6.9s)`
+- `npm run lint:design` → `lint:design OK — 66 files checked. Legacy allow-list: 3 file(s). Red-permitted: 5 file(s).`
+- `npm run typecheck` → (no output, exit 0); `npm run build` → `✓ built in 5.36s`
+- `npm run shoot` phases 0–5 → `shoot: OK — 4 / 6 / 12 / 20 / 16 / 30 shots captured, zero console errors.`
+- backend `pytest` → `124 passed, 6 skipped in 13.45s`
+The dossier shared-URL case was already covered at R4 (fence.spec "F4 (dossier, R4)").
+
+Deleted old code: R3's `<ChapterListCompact/>` removed from the Stemma rail (component
+itself stays — the Dossier rail uses it). `Input.tsx` rewritten as forwardRef.
+
+Backend deps hit: none new. D4 alias search = label search over fenced nodes (R0 verdict).
+
+Deviations kept (with reason) — each MEASURED before the change:
+- **Cola runs as a finite burst (950ms), not `infinite: true`.** Infinite mode drifted
+  105px between t=1.2s and 1.5s after a filter change on synthetic-100. Burst after every
+  data/filter change and on drag-end; drag still pins the node; settle is guaranteed.
+- **Camera fits on `layoutstop`, never on a timer.** A 700ms-timer fit caught cola
+  mid-expansion and left the whole synthetic graph as a far-tier speck.
+- **New nodes seeded on a ring, not at the centre.** Centre-piling made cola stack 100
+  nodes into a 550×3900 vertical strip inside the burst.
+- **Spacing by cast size** (>40 nodes: edgeLength 100/80, nodeSpacing 28, label-inclusive
+  overlap avoidance OFF; else the reference 140/110/40 with labels included). With
+  label-inclusive boxes the large cast laid out portrait and couldn't fit the default
+  tier; with 40/140 the demo overlapped Caelum × Sparrow.
+- **Label rules:** above 40 visible nodes only a 22-label budget (identity endpoints
+  first, then degree) is drawn at the default tier (§7.5 says "principal labels", not all);
+  then a deterministic declutter defers any lower-ranked label whose box collides with a
+  kept one — re-run after each settle, after focus changes (the un-focused node's label
+  changes from initial to name) and after the 420ms size transition (which moved a label
+  8px into its neighbour: the last collision found). Deferred/minor labels return in the
+  focus set and at the close tier. This is what makes "zero overlaps" true by construction.
+- **Fit-all frames connected nodes only** (isolates drift under cola and dragged the
+  fit to the far tier); they stay drawn and reachable.
+- Fit-all padding 30 (not 60) above 40 nodes so the default fit stays in the default
+  tier at 1280×720. Fits are clamped to zoom ≤ 1.2 so a 3-node focus set isn't drawn at 70px.
+- Focus-node name overlay at 28px (Pirata One's floor) instead of §7.1's 24px.
+- Org `+N` badge is part of the label text ("the Coil +4") — Cytoscape has no native badge.
+
+BROKEN / open: none.
+
+Open questions for R6:
+- **Wren→Caelum is reclassified by the backend at n=4.** The n≤3 payloads carry `e12`
+  `SECRET_IDENTITY` (revealed 2); the n=4 payload drops `e12` and carries `e14`
+  `TRANSMIGRATED_INTO` (revealed 4) between the same two nodes — the edge id changes. The
+  R6 diff (`graph/diff`, keyed on edge id) will therefore see `e14` as a NEW identity edge
+  at chapter 4 and play a reveal for a pair the reader already saw revealed at chapter 2,
+  while `e12` silently vanishes from the dossier. Recorded only; not resolved here (backend
+  frozen; whether R6 should treat "same pair, new relation" as a re-reveal is a design call).
+
+MEASURED (regression guards): see the verbatim lines above.
+
+Commit: (see SESSION_LOG.md Session 6) pushed: yes.
+
+Next: **R6 — Reveal** (§6.5 + §8.2: diff-driven trigger from the R3 forward flow — the
+TODO(R6) hook in `ChapterChrome` — choreography with the timings table, pager ≤3, summary
+sheet for big jumps, quiet-mode preference, replay buttons in the Dossier identity
+blocks, 3s `.just-revealed` highlight on the Stemma/ego graph, aria-live; Playwright
+shots at t = 0/450/1000/1400ms + reduced motion). Resolve the open question above first.
+Model: Sonnet 5 is fine for the choreography; the open question is a design decision
+for you, not a model choice.
