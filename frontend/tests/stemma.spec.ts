@@ -5,7 +5,7 @@ import { test, expect, type Page, type Route } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { recordGraphRequests, assertNoGraphRequestAbove, GRAPH_ROUTE_RE } from "./fenceHelpers";
+import { recordGraphRequests, assertNoGraphRequestAbove, dismissRevealIfShown, GRAPH_ROUTE_RE } from "./fenceHelpers";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SLUG = "the-hollow-crown";
@@ -72,6 +72,9 @@ async function setBookmark(page: Page, n: number): Promise<void> {
   await page.click('[data-testid="set-bookmark"]');
   await expect(page.locator('[data-testid="stemma-footer"]')).toContainText(`Read to Chapter ${["", "I", "II", "III", "IV"][n]} of 4`);
   await page.waitForTimeout(700);
+  // R6: see the matching comment in dossier.spec.ts's confirmChapter — a real forward move
+  // here would otherwise leave the reveal overlay's backdrop blocking the next click.
+  await dismissRevealIfShown(page);
 }
 
 test.describe("Stemma — fenced canvas at every step", () => {

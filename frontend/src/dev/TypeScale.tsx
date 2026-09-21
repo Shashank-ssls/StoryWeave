@@ -12,9 +12,11 @@ import {
   LockIcon,
   MinusIcon,
   PlusIcon,
+  ReplayIcon,
   SearchIcon,
   type IconProps,
 } from "../icons";
+import { readRevealQuiet, writeRevealQuiet } from "../codex/reveal/revealPrefs";
 import "./TypeScale.css";
 
 // The hidden #/_type dev route (FRONTEND_OVERHAUL.md §5 Phase 1 / R1): every token and
@@ -57,6 +59,7 @@ const ICON_LIST: { name: string; Glyph: (p: IconProps) => JSX.Element }[] = [
   { name: "plus", Glyph: PlusIcon },
   { name: "minus", Glyph: MinusIcon },
   { name: "search", Glyph: SearchIcon },
+  { name: "replay", Glyph: ReplayIcon },
 ];
 
 function useTokenValue(name: string): string {
@@ -121,6 +124,7 @@ const TAB_ITEMS = [
 
 export default function TypeScale(): JSX.Element {
   const [activeTab, setActiveTab] = useState("dossier");
+  const [quiet, setQuiet] = useState(() => readRevealQuiet());
 
   return (
     <div className="type-page">
@@ -207,6 +211,24 @@ export default function TypeScale(): JSX.Element {
           Ornament rule
         </h2>
         <Ornament />
+      </section>
+
+      <section aria-labelledby="reveal-heading">
+        <h2 id="reveal-heading" className="type-section-title">
+          Reveal preference (R6)
+        </h2>
+        <label className="primitive-row">
+          <input
+            type="checkbox"
+            checked={quiet}
+            onChange={(e) => {
+              writeRevealQuiet(e.target.checked);
+              setQuiet(e.target.checked);
+            }}
+            data-testid="type-quiet-toggle"
+          />
+          Reveal quietly from now on (storyweave:revealQuiet)
+        </label>
       </section>
 
       <section aria-labelledby="icons-heading">

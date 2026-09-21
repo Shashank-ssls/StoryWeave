@@ -5,6 +5,7 @@ import Stemma from "./Stemma/Stemma";
 import Chronicle from "./Chronicle/Chronicle";
 import { ChapterProvider } from "./chapter/ChapterProvider";
 import ChapterChrome from "./chapter/ChapterChrome";
+import RevealChrome from "./reveal/RevealChrome";
 import styles from "./CodexApp.module.css";
 
 // The Codex UI's root: mural + vignette fixed background layers (DESIGN_SPEC.md §4.6
@@ -26,10 +27,12 @@ export default function CodexApp({ route }: { route: CodexRoute }): JSX.Element 
           <Landing />
         ) : (
           <ChapterProvider key={route.slug} slug={route.slug}>
-            {route.name === "work-entity" && <Dossier route={route} />}
-            {route.name === "work-web" && <Stemma route={route} />}
-            {route.name === "work-chronicle" && <Chronicle route={route} />}
-            <ChapterChrome />
+            <RevealChrome>
+              {route.name === "work-entity" && <Dossier route={route} />}
+              {route.name === "work-web" && <Stemma route={route} />}
+              {route.name === "work-chronicle" && <Chronicle route={route} />}
+              <ChapterChrome />
+            </RevealChrome>
           </ChapterProvider>
         )}
       </div>

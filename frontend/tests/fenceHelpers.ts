@@ -38,3 +38,16 @@ export function assertNoGraphRequestAbove(log: GraphRequestLog, bookmark: number
   });
   expect(offenders, `graph requests above bookmark n=${bookmark}`).toEqual([]);
 }
+
+/** R6: every forward step in the Hollow Crown demo legitimately reveals something, so a
+ *  test that drives several forward moves in a row (Dossier's/Stemma's "walk" tests) would
+ *  otherwise have its next click blocked by the reveal overlay's full-screen backdrop. The
+ *  reveal UI itself is covered by reveal.spec.ts — here we just get it out of the way, the
+ *  same way a reader would (Esc), so fence/content tests stay about fence/content. */
+export async function dismissRevealIfShown(page: Page): Promise<void> {
+  const overlay = page.locator('[data-testid="reveal-overlay"], [data-testid="reveal-summary-sheet"]');
+  if ((await overlay.count()) > 0) {
+    await page.keyboard.press("Escape");
+    await overlay.first().waitFor({ state: "hidden" }).catch(() => {});
+  }
+}

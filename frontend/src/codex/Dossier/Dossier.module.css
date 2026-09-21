@@ -213,6 +213,18 @@
   display: flex;
   gap: var(--s-5);
   align-items: flex-start;
+  padding: var(--s-2);
+  margin: calc(-1 * var(--s-2));
+}
+/* R6 §8.2: 3s highlight after a reveal closes (single glow pulse), mirroring the Stemma's
+   .just-revealed edge pulse. --accent-soft only — identity/reveal context (P2 allow-list). */
+.justRevealed {
+  animation: identityPulse 3000ms var(--ease-out);
+}
+@keyframes identityPulse {
+  0% { background: transparent; }
+  15% { background: var(--accent-soft); }
+  100% { background: transparent; }
 }
 .eye {
   flex: none;
@@ -227,10 +239,22 @@
   gap: var(--s-2);
   min-width: 0;
 }
+.kickerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
 .kicker {
   font-family: var(--font-ui);
   font-size: var(--fs-14);
   color: var(--accent);
+}
+.replayButton {
+  color: var(--dim);
+}
+.replayButton:hover {
+  color: var(--ink);
 }
 .sentence {
   margin: 0;

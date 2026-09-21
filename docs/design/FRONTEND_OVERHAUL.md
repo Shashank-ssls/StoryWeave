@@ -937,6 +937,23 @@ Open questions for R6:
   while `e12` silently vanishes from the dossier. Recorded only; not resolved here (backend
   frozen; whether R6 should treat "same pair, new relation" as a re-reveal is a design call).
 
+**RESOLVED (user decision, R6):** identity diffing is keyed by the **unordered entity
+pair**, not the edge id. For a forward move old → new:
+- pair has no identity edge at old, has one at new → **normal** reveal.
+- pair has an identity edge at both old and new, with a **different** relation →
+  **deepening** reveal: kicker uses theme string `revealKickerDeepen` = "Rubric · the truth
+  deepens"; headline/sentence use the NEW relation's §7.4 copy; evidence is the NEW edge's
+  `evidence_span`; a quiet line under the quote (UI 14, `--dim`) reads "Before: {old
+  sentence} · Chapter {old revealed_chapter}".
+- pair has an identity edge at both, same relation → no reveal.
+Jumping over the change (e.g. 1→4) compares only old vs new directly, so it surfaces as a
+plain normal reveal with no "Before" line (there is no intermediate state to remember).
+Backward moves never reveal (§8.1). `graph/diff` returns `{ newNodes, newEdges, reveals:
+[{ kind: 'normal' | 'deepen', pair, edge, previousEdge? }] }`, unit-tested for both payload
+orders and the edge-id-changes-but-pair-doesn't case (the Wren/Caelum n=4 case above is
+exactly this: e12 SECRET_IDENTITY → e14 TRANSMIGRATED_INTO, same pair → deepening, not a
+duplicate normal reveal).
+
 MEASURED (regression guards): see the verbatim lines above.
 
 Commit: (see SESSION_LOG.md Session 6) pushed: yes.
@@ -948,3 +965,185 @@ blocks, 3s `.just-revealed` highlight on the Stemma/ego graph, aria-live; Playwr
 shots at t = 0/450/1000/1400ms + reduced motion). Resolve the open question above first.
 Model: Sonnet 5 is fine for the choreography; the open question is a design decision
 for you, not a model choice.
+
+## Phase 6 — Reveal moment — GREEN
+
+Scope delivered:
+- **`graph/diff.ts` rewritten** per the RESOLVED §9 decision: pair-keyed identity diffing
+  (`classifyReveal` + `diffGraphs`) returning `{ newNodes, newEdges, reveals: [{ kind:
+  'normal'|'deepen', pair, edge, previousEdge? }] }`. Also closed a real gap found while
+  building it: P5/§8.4 "no quote, no edge" wasn't applied to reveals at all (a quote-less
+  identity edge would have driven a reveal, or counted as prior state for one) — `diff.ts`
+  now shares that citation-gate rule with `viewModel.ts`. `newIdentityEdges` is gone; the
+  two R3/R4 consumers (`ChapterChrome`'s toast branch, `useDossier`'s F8 diff) now read
+  `reveals` instead — same behaviour for F8, since every `reveals` entry is by construction
+  a subset of what `newIdentityEdges` used to include.
+- **`codex/reveal/`** (new): `RevealContext` (quiet flag, `justRevealedEdgeId`, `replay()`),
+  `RevealChrome` (orchestrator — mounted once per work in `CodexApp`, wrapping the three
+  tabs + `ChapterChrome`; routes a forward commit's `pendingReveal` to overlay / summary
+  sheet / quiet toast, owns the shared 3s highlight timer), `RevealOverlay` (§6.5 layout +
+  §8.2 choreography, pager, focus trap, Esc/click-outside, aria-live), `RevealSummarySheet`
+  (§8.1 jump-far, expandable rows), `revealPrefs.ts` (`storyweave:revealQuiet`, global not
+  per-work).
+- **`ChapterProvider`** gained `pendingReveal`/`dismissReveal` (set only in the forward-
+  commit branch of `requestChapter` when `diff.reveals.length > 0` — never on initial load,
+  reload, tab switch, work switch or a failed fetch, because none of those paths reach that
+  branch at all) and `getCachedPayload(n)` (read-only cache accessor, no fetch, for replay).
+- **Dossier**: each identity block gets a replay icon button (new `ReplayIcon`, §4.4's
+  9-icon table predates this affordance) that reclassifies its own RAW edge (looked up in
+  `m.data`, not the merged `VmEdge`) against `getCachedPayload(edge.revealed_chapter - 1)`
+  via `classifyReveal` — cache-only, asserted zero-network in `reveal.spec.ts`. The block
+  gets a 3s `.justRevealed` background pulse when `RevealContext`'s id matches.
+- **Stemma**: `StemmaCanvas` takes `justRevealedEdgeId`, plays a `cy.animate()` glow pulse
+  (rise 500ms / fall 2500ms) on that edge — deferred until the canvas's first layout has
+  settled (see BROKEN/open below for why).
+- **`#/_type`**: a checkbox toggling `storyweave:revealQuiet` directly (§8.2: "or on the
+  #/_type dev route"), plus the new `replay` icon added to the icon gallery (now 10, not 9).
+- **`Button`** made `forwardRef` (same reasoning as R5's `Input` — the overlay moves focus
+  to the primary button programmatically per §8.2).
+- Theme strings: `revealKickerDeepen` (verbatim from your resolution), `revealKickerLine`,
+  `revealTrust`, `revealBefore`, `revealOpenDossier`, `revealReturn`, `revealQuietToggle`,
+  `revealReadEvidence`, `revealShowAgain`, `revealSummaryTitle`, `revealSummaryClose`,
+  `revealPageOf`, `revealReplayLabel`, `revealNextPage`/`revealPrevPage`. Removed
+  `toastForwardIdentity` (dead: R3's own comment marked it as the thing R6 removes).
+- `tokens.css` gained the `:root[data-reveal-active] .mural { filter: brightness(1.1); }`
+  rule (§4.6 rule 5's one exception), toggled by `RevealOverlay` only outside reduced motion.
+
+Spec sections covered: §6.5 complete, §8.2 complete, §8.1 (jump-far summary sheet), §4.6
+rule 5 (mural brightening exception), §7.4 (identity copy reused for the headline/Before
+line), P5/§8.4 (citation gate extended to reveals).
+
+RESOLVED design decision (§9 above): pair-keyed reveal diffing, deepening reveals, the
+"Before" line. Implemented exactly as specified and unit-tested for every case named
+there, including the real Wren/Caelum `e12`→`e14` case and a synthetic edge-id-reissue
+with an unchanged relation (must NOT reveal).
+
+Visual comparison (artboard 5, MEASURED — `.shots/phase-6/*`, 14 shots × 2 widths,
+inspected; two fix loops: the backdrop, then the Stemma highlight timing — see below):
+| Element | Status | Note |
+|---|---|---|
+| Kicker "Chapter N · Rubric · ..." | matches | Body 21 `--accent`; deepening uses "the truth deepens" |
+| Connector (two seals, thread+glow, eye at midpoint, names below) | matches | 760×124, names in Body 23 |
+| Headline Display 70, linking word in `--accent-hi` | matches | names plain ink; verb/connective phrase accented, for all four relation templates |
+| Quote italic Body 24 `--dim`, ≤660px | matches | real `evidence_span` |
+| "Before: {sentence} · Chapter {n}" (deepening only) | matches | UI 14 `--dim`, old relation's own copy + its own `revealed_chapter` |
+| Trust caption | matches | fixed spec copy |
+| Buttons: primary "Open the joined dossier" / outline "Return to The Stemma" | matches | nowrap, fixed 240px min-width (artboard's wrap is the canvas bug named in the brief) |
+| Tertiary "Reveal quietly from now on" | matches | |
+| Pager "N of M" + chevrons, 2-3 reveals | matches | artboard doesn't show this state; built from §6.5 item 8's text description |
+| Backdrop: mural + glow + vignette | deviates (fixed) | first pass reused `--scrim` (translucent) over the LIVE screen — the Dossier's own identity block bled through behind the headline, nearly duplicating it (MEASURED, `.shots` before/after). Fixed: the backdrop renders its own mural image + vignette gradient, opaque, independent of whatever screen is behind it — matches "mural at full composition" literally instead of "screen, dimmed" |
+| Red only in kicker/headline-verb/pager-none/ties-none | matches | lint:design 8 red-permitted files (+3 new: the three reveal CSS modules) |
+| Pirata One ≥28px | matches | headline 70px only Pirata One use; test:style 5/5 |
+
+Choreography (§8.2 table), MEASURED via real elapsed time, not `page.clock`/mocked Date —
+CSS `@keyframes`/`animation-delay` run on the compositor's own timeline and are unaffected
+by mocking JS timers, so `page.clock` would freeze the visual state without advancing it;
+`reveal-choreography.spec.ts` samples `getComputedStyle` (opacity, transform matrix) at
+real t=0/450/1000/1400ms instead:
+- t=0: seals/headline still at their pre-delay authored state (opacity <0.3); thread
+  undrawn (scaleX <0.1).
+- t=450: seals settled (delay 200 + duration 200 < 450); thread ~10-80% drawn (delay 400,
+  duration 500); eye/headline not yet started.
+- t=1000: thread fully drawn (400+500=900 < 1000); eye >30% open (delay 900, duration 150);
+  quote not yet started (delay 1250).
+- t=1400: eye/headline/quote all >0.8-0.9; primary button focused.
+- Reduced motion: thread already at scaleX=1 at t=60ms (shape never animates, only
+  opacity); everything ≥0.9 opacity by t=280ms; focus lands at 200ms; `data-reveal-active`
+  never set.
+- `data-reveal-active` set only for the full-motion run, removed on close: separately
+  asserted.
+3/3 MEASURED (`reveal-choreography.spec.ts`).
+
+Fence tests: **27/27 passed, 4 fixme** MEASURED (`npm run test:fence`) — unchanged rule
+set (no new F-rule this phase; the replay's zero-network guarantee is asserted directly in
+`reveal.spec.ts`, not as a new F-rule, since it isn't one of the §9.1 fence rules). Seven
+pre-existing fetch/cache/error-mechanics tests needed a fix: every forward step in this
+4-chapter demo now legitimately reveals something, so their `confirmChapter` calls started
+opening the reveal overlay, whose full-screen backdrop then blocked their NEXT click
+(`page.click` timeout, "element intercepts pointer events") — not a fence regression, a
+test/UI interaction the fence tests never needed to think about before this phase. Fixed
+by stripping identity edges from those tests' own fenced responses (`stripReveals` route
+helper — they test fetch/cache/error mechanics, not reveal content) rather than changing
+what they assert. `dossier.spec.ts`'s and `stemma.spec.ts`'s own "walk" tests DO want the
+real reveals (that's what proves identity blocks/edges match the fixtures), so those got a
+`dismissRevealIfShown` helper instead (Esc after each forward step) — content stays real,
+the next click just isn't blocked.
+
+New suites: **`test:reveal` 11/11**, **`test:reveal-choreography` 3/3**, both MEASURED.
+Covers: 1→2 normal (Wren/Caelum), 2→3 normal (Sparrow/Veris), 3→4 deepening (Wren/Caelum,
+Before line, ch.4 evidence), 1→4 jump (both normal, no Before line, 2-page pager), 4→2
+backward (no reveal UI, "sealed again" toast), reload (nothing), failed forward fetch
+(nothing), replay ×2 (normal from cache, deepening from cache, zero network both times),
+quiet mode (persists across reload, deepen kicker in the toast, "Read the evidence" is
+also zero-network, "Show reveals" clears the preference), synthetic-100 5-reveal jump →
+summary sheet not sequential overlays. Every DOM assertion is checked against the R0
+fixtures' actual labels/quotes/relations, not hardcoded strings.
+
+Style/static checks: MEASURED. `lint:design`: 74 files, 0 failures (legacy 3 unchanged;
+red-permitted 8 — +3: the reveal CSS modules). `test:style` 5/5. `test:geometry` 13/13
+(untouched, still green — the reveal overlay/toast/sheet are all fixed-position layers,
+no rail/panel geometry changed). `typecheck`/`build` clean (one pre-existing chunk-size
+warning, unrelated). `shoot --phase=6`: 14/14 shots, zero console errors.
+
+Deleted old code: none this phase (the R3 `TODO(R6)` toast branch was replaced in place,
+not a component deletion — nothing else became dead).
+
+Backend deps hit: none new (D1 quote, already used by R4, is what makes the P5 gate above
+meaningful — a payload with no quote on an identity edge is "impossible given the citation
+gate" per spec, but the UI enforces it defensively the same way `viewModel.ts` already did).
+
+Deviations kept (with reason):
+- Backdrop shows its own mural render (see visual table) rather than dimming the live
+  screen through `--scrim` — a real legibility bug found and fixed, not a deviation from
+  intent; `--scrim`'s translucency is right for the Change-chapter dialog (small, over a
+  rail) but wrong for a full-bleed "moment."
+- A new icon (`ReplayIcon`) added to the 9-icon set from §4.4/§14 — that table predates
+  R6's own replay affordance; same stroke language (1.5px, square caps, `currentColor`),
+  added to the `#/_type` gallery too.
+- Quiet-mode toasts and the summary sheet are two different answers to "what does a big
+  batch of reveals look like when the reader has opted out of the cinematic overlay":
+  jump-far (>3 reveals) always shows the summary sheet even in quiet mode (a bare toast
+  can't reasonably summarise 7 reveals, and the sheet is already the non-cinematic form for
+  that case) — not spec'd explicitly either way, and not exercised by the given test list,
+  so flagged here rather than silently decided.
+- Choreography verified via real elapsed time instead of `page.clock` (see the Choreography
+  section above) — CSS animations run on the compositor, unaffected by mocking `Date`.
+
+BROKEN / open:
+- **Pre-existing bug, found not caused by R6, not fixed here (out of phase scope):** the
+  Stemma's camera fit lands off-screen (the focus node partly or fully outside the
+  viewport) after any in-app SPA navigation into the Stemma tab — reproduced with a PLAIN
+  tab click Dossier → Stemma, no reveal involved at all. A fresh `page.goto`/reload always
+  fits correctly. First noticed via the `stemma-just-revealed` shot (`.shots/phase-6/`,
+  MEASURED); confirmed pre-existing and unrelated to this phase via a throwaway repro
+  (plain tab-click, same misframing). The `.just-revealed` glow pulse itself is correct and
+  visible in that shot (mid-glow on the right edge) — only the CAMERA framing is wrong. One
+  fix attempt this phase (defer the pulse's own `cy.animate()` until after the canvas's
+  first `layoutstop`, in case animating an edge mid-burst was confusing cola/fit) did NOT
+  resolve it, confirming it isn't caused by the pulse — kept anyway since deferring is
+  still the more correct thing to do on its own, but the comment in `StemmaCanvas.tsx` says
+  plainly that it doesn't fix this. Per §2 rule 12 (stop after two genuinely different fix
+  attempts / don't scope-creep into unrelated code), logging this for you to decide: a
+  dedicated small fix, or leave it for whichever phase next touches Stemma navigation.
+
+Interview-defence note: the RESOLVED pair-keyed diff is the part of this phase most worth
+explaining unprompted — it's the difference between "the backend changed an edge's id" (an
+implementation detail) and "the reader already knows this" (a narrative fact). Keying on
+the unordered entity pair instead of the edge id means the UI's notion of "have I told the
+reader about this relationship" survives the backend re-issuing the edge under a new
+id/relation, which is exactly what happens in the real demo data at chapter 4.
+
+MEASURED (regression guards): backend `pytest` 124 passed / 6 skipped (unchanged).
+`test:unit` 50/50 (+16 in `diff.test.ts`, unchanged elsewhere). `test:dossier` 6/6.
+`test:stemma` 10/10 (one run showed a flaky failure in the pre-existing legibility test
+under heavy concurrent-process load from this session; re-ran in isolation, passed clean —
+not a regression, logged only in case it recurs).
+
+Commit: (see SESSION_LOG.md Session 7) pushed: yes.
+
+Next: **R7 — Chronicle** (§6.4: small-N columns first, then the proportional/large-N path
+with block fallback, presence threads, stitches, identity links, bookmark line, constant-
+width sealed band, right panel with reveal cycling and "Read on" → confirm flow). Chronicle
+highlighting explicitly deferred from R6 to here per the brief. Model: Sonnet 5 is fine —
+layout + timeline logic over an already-fenced, already-tested data layer; no design
+judgment calls left open like R6's had.

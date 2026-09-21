@@ -48,7 +48,6 @@ export const codexTheme = {
   close: "Close",
   dialogFootnote: "Moving back seals what you had seen after that point, too.",
   toastForward: "Chapter {n} · {names}, {ties}",
-  toastForwardIdentity: "Chapter {n} · {names}, {ties} · a name is revealed",
   toastBackward: "Bookmark moved back to Chapter {n}. Later reveals are sealed again.",
   bannerError: "Couldn't load Chapter {failed} — still showing Chapter {showing}",
   bannerErrorNothing: "Couldn't load Chapter {failed}.",
@@ -119,6 +118,28 @@ export const codexTheme = {
     headline: "No one by that name, as of Chapter {n}.",
     body: "We won't say whether they ever appear. Even that would be a spoiler.",
   },
+
+  // ---- R6: Reveal moment (§6.5, §8.2) ----
+  // (`revealKicker` itself is already defined above, from R2 scaffolding.)
+  // Deepening reveal — same pair, a new (different) identity relation (FRONTEND_OVERHAUL
+  // §9 "RESOLVED": Wren/Caelum's SECRET_IDENTITY -> TRANSMIGRATED_INTO at ch.4 is the real
+  // case this exists for).
+  revealKickerDeepen: "Rubric · the truth deepens",
+  revealKickerLine: "Chapter {n} · {kicker}",
+  revealTrust: "The one passage this rests on. Without a quote, no two names are ever joined.",
+  revealBefore: "Before: {sentence} · Chapter {n}",
+  revealOpenDossier: "Open the joined dossier",
+  revealReturn: "Return to The Stemma",
+  revealQuietToggle: "Reveal quietly from now on",
+  revealReadEvidence: "Read the evidence",
+  revealShowAgain: "Show reveals",
+  revealQuietSetting: "Quiet reveals",
+  revealSummaryTitle: "While you were reading: {n} identities revealed",
+  revealSummaryClose: "Continue reading",
+  revealPageOf: "{i} of {n}",
+  revealReplayLabel: "Replay this reveal",
+  revealNextPage: "Next reveal",
+  revealPrevPage: "Previous reveal",
 } as const;
 
 /** Fills `{token}` placeholders in a theme string, e.g. fence copy's `{n}`. */

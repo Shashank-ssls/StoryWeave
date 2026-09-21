@@ -21,6 +21,23 @@ function nOf(url: string): number {
   return Number(/[?&]n=(\d+)/.exec(url)?.[1]);
 }
 
+// R6: every forward step in this 4-chapter demo legitimately reveals something (Wren/
+// Caelum at 2, Sparrow/Veris at 3, Wren/Caelum again — deepening — at 4), so a forward
+// move now opens the reveal overlay/summary sheet over the rest of the UI. The tests below
+// are about fetch/cache/abort/error mechanics, not the reveal UI itself (that's
+// reveal.spec.ts) — this route handler strips identity edges from the fenced response so
+// those forward moves stay "quiet" (plain toast) and the tests keep testing what they say
+// they test. Install it FIRST; a test that also needs its own delay/failure route installs
+// that SECOND and calls `route.fallback()` for the "let it through" path (Playwright runs
+// routes most-recently-registered-first; `fallback()` passes to the one before it).
+const IDENTITY_RELATIONS = new Set(["SAME_AS", "ALIAS", "SECRET_IDENTITY", "REINCARNATION", "TRANSMIGRATED_INTO"]);
+async function stripReveals(route: Route): Promise<void> {
+  const resp = await route.fetch();
+  const body = (await resp.json()) as { elements: { edges: { data: { relation: string } }[] } };
+  body.elements.edges = body.elements.edges.filter((e) => !IDENTITY_RELATIONS.has(e.data.relation));
+  await route.fulfill({ response: resp, body: JSON.stringify(body) });
+}
+
 async function attachLog(log: GraphRequestLog, name = "graph-requests"): Promise<void> {
   await test.info().attach(name, {
     body: JSON.stringify(log.urls, null, 2),
@@ -139,11 +156,12 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
 
   test("§8.1 — confirm forward, then step back before it resolves: forward response never lands", async ({ page }) => {
     await openDossier(page);
+    await page.route(GRAPH_RE, stripReveals);
     await confirmChapter(page, 2);
     await waitForBookmark(page, 2);
     await page.route(GRAPH_RE, async (route: Route) => {
       await new Promise((r) => setTimeout(r, 1000));
-      await route.continue();
+      await route.fallback();
     });
     const log = recordGraphRequests(page);
     await confirmChapter(page, 4);
@@ -160,12 +178,13 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
 
   test("§8.1 — a slow older response arriving after a newer one is dropped (interception with delays)", async ({ page }) => {
     await openDossier(page);
+    await page.route(GRAPH_RE, stripReveals);
     await confirmChapter(page, 2);
     await waitForBookmark(page, 2);
     await page.route(GRAPH_RE, async (route: Route) => {
       const n = nOf(route.request().url());
       await new Promise((r) => setTimeout(r, n === 4 ? 1500 : 100));
-      await route.continue();
+      await route.fallback();
     });
     const log = recordGraphRequests(page);
     await confirmChapter(page, 4); // slow, in flight
@@ -182,11 +201,12 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
 
   test("§6.7 — failed fetch keeps the old data, shows the banner, bookmark unchanged", async ({ page }) => {
     await openDossier(page);
+    await page.route(GRAPH_RE, stripReveals);
     await confirmChapter(page, 3);
     await waitForBookmark(page, 3);
     await page.route(GRAPH_RE, async (route: Route) => {
       if (nOf(route.request().url()) === 4) await route.fulfill({ status: 500, body: "boom" });
-      else await route.continue();
+      else await route.fallback();
     });
     const log = recordGraphRequests(page);
     await confirmChapter(page, 4);
@@ -202,6 +222,7 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
 
   test("F2 / F3 — at most 5 rows, one sealed row of constant size, no future numbers beyond 'of N'", async ({ page }) => {
     await openDossier(page);
+    await page.route(GRAPH_RE, stripReveals);
     for (const n of [1, 2, 4]) {
       if (n > 1) {
         await confirmChapter(page, n);
@@ -228,6 +249,7 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
 
   test("F5 — moving back purges cached chapters > new bookmark (re-forward refetches)", async ({ page }) => {
     await openDossier(page);
+    await page.route(GRAPH_RE, stripReveals);
     await confirmChapter(page, 3);
     await waitForBookmark(page, 3);
     const log = recordGraphRequests(page);
@@ -299,6 +321,7 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
 
   test("keys never fire inside inputs", async ({ page }) => {
     await openDossier(page);
+    await page.route(GRAPH_RE, stripReveals);
     await confirmChapter(page, 2);
     await waitForBookmark(page, 2);
     const log = recordGraphRequests(page);
@@ -316,6 +339,7 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
 
   test("dialog: clicking a past row fills the input; Esc cancels without fetching", async ({ page }) => {
     await openDossier(page);
+    await page.route(GRAPH_RE, stripReveals);
     await confirmChapter(page, 3);
     await waitForBookmark(page, 3);
     const log = recordGraphRequests(page);
@@ -341,12 +365,13 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
 
   test("§6.7 — banner 'Try again' re-requests exactly the failed chapter; any move clears the banner", async ({ page }) => {
     await openDossier(page);
+    await page.route(GRAPH_RE, stripReveals);
     await confirmChapter(page, 2);
     await waitForBookmark(page, 2);
     let fail = true;
     await page.route(GRAPH_RE, async (route: Route) => {
       if (fail && nOf(route.request().url()) === 3) await route.fulfill({ status: 500, body: "boom" });
-      else await route.continue();
+      else await route.fallback();
     });
     await confirmChapter(page, 3);
     await expect(page.locator('[data-testid="error-banner"]')).toBeVisible();

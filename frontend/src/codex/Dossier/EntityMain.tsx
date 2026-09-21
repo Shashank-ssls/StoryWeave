@@ -1,14 +1,23 @@
 import { useState } from "react";
 import Ornament from "../../components/Ornament/Ornament";
-import { EyeIcon } from "../../icons";
+import Button from "../../components/Button/Button";
+import { EyeIcon, ReplayIcon } from "../../icons";
 import { codexTheme, fillTemplate } from "../theme";
 import { roman } from "../chapter/roman";
+import { useChapter } from "../chapter/ChapterProvider";
+import { useReveal } from "../reveal/RevealContext";
+import { classifyReveal } from "../../graph/diff";
 import { countWords, IDENTITY_COPY, tieLabel, tiesOf, type ViewModel, type VmNode } from "../../graph/viewModel";
 import styles from "./Dossier.module.css";
 
 // Dossier main column content (DESIGN_SPEC §6.2 Main items 2-6, §8.4 evidence):
 // H1, lede, one ornament, identity blocks (newest reveal first), ties grid, "Also
 // mentioned". The fence line (item 8) is rendered by the parent so it pins to the bottom.
+// R6: each identity block gets a "replay" button (§8.2) that reclassifies its own edge
+// against whatever earlier chapter is already in the chapter model's cache — never a
+// fetch — and opens the reveal overlay directly (a deepening edge replays as deepening
+// only if that earlier payload happens to be cached; otherwise it replays as normal, per
+// spec). The 3s `.justRevealed` highlight mirrors the Stemma's `.just-revealed` pulse.
 
 const TIES_TOP = 12;
 
@@ -22,6 +31,8 @@ export default function EntityMain({
   onOpen(id: string): void;
 }): JSX.Element {
   const [allTies, setAllTies] = useState(false);
+  const m = useChapter();
+  const reveal = useReveal();
   const ties = tiesOf(vm, entity.id);
 
   const identity = ties
@@ -57,12 +68,35 @@ export default function EntityMain({
         const aIsEntity = edge.source === entity.id;
         const [a, b] = aIsEntity ? [entity, other] : [other, entity];
         const parts = copy.sentence.split(/(\{a\}|\{b\})/);
+        const onReplay = (): void => {
+          const raw = m.data?.edges.find((e) => e.data.id === edge.id)?.data;
+          if (!raw) return; // the edge this block renders is always in the current fenced payload
+          const classified = classifyReveal(m.getCachedPayload(raw.revealed_chapter - 1), raw);
+          if (classified) reveal.replay(classified, vm.byId);
+        };
         return (
-          <section key={edge.id} className={styles.identity} data-testid="identity-block" data-edge={edge.id} data-relation={edge.relation}>
+          <section
+            key={edge.id}
+            className={`${styles.identity} ${reveal.justRevealedEdgeId === edge.id ? styles.justRevealed : ""}`}
+            data-testid="identity-block"
+            data-edge={edge.id}
+            data-relation={edge.relation}
+          >
             <EyeIcon size={24} className={styles.eye} />
             <div className={styles.identityBody}>
-              <div className={styles.kicker}>
-                {fillTemplate(codexTheme.revealedIn, { kicker: copy.kicker, n: roman(edge.revealed_chapter) })}
+              <div className={styles.kickerRow}>
+                <div className={styles.kicker}>
+                  {fillTemplate(codexTheme.revealedIn, { kicker: copy.kicker, n: roman(edge.revealed_chapter) })}
+                </div>
+                <Button
+                  variant="icon"
+                  className={styles.replayButton}
+                  aria-label={codexTheme.revealReplayLabel}
+                  onClick={onReplay}
+                  data-testid="identity-replay"
+                >
+                  <ReplayIcon size={16} />
+                </Button>
               </div>
               <p className={styles.sentence}>
                 {parts.map((p, i) => {

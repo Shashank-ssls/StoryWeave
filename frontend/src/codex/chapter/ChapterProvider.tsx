@@ -10,7 +10,7 @@ import {
 } from "react";
 import { fetchWorks } from "../../api";
 import type { GraphElements, GraphResponse, WorkModel } from "../../types";
-import { diffGraphs, type GraphDiff } from "../../graph/diff";
+import { diffGraphs, type GraphDiff, type Reveal } from "../../graph/diff";
 import { readBookmark, writeBookmark } from "./bookmarkStore";
 
 // The chapter model (FRONTEND_OVERHAUL.md §5 Phase 3; DESIGN_SPEC §5, §8.1, §9.1).
@@ -33,6 +33,16 @@ import { readBookmark, writeBookmark } from "./bookmarkStore";
 export type ChapterToast =
   | { kind: "forward"; id: number; n: number; diff: GraphDiff }
   | { kind: "backward"; id: number; n: number };
+
+// R6 (DESIGN_SPEC §8.2): a forward commit whose diff carries >=1 reveal hands the whole
+// batch to the reveal UI (RevealChrome) instead of the plain forward toast — see
+// `requestChapter`'s forward branch below. Never set on the initial load, a reload, a
+// backward move or a failed fetch (those paths never reach this branch at all).
+export interface PendingReveal {
+  id: number;
+  n: number;
+  reveals: Reveal[];
+}
 
 export interface ChapterBanner {
   /** Chapter that failed to load. */
@@ -60,12 +70,21 @@ export interface ChapterModel {
   banner: ChapterBanner | null;
   toast: ChapterToast | null;
   dialog: { open: boolean; prefill: number };
+  /** R6: set only by a forward commit whose diff has >=1 reveal (§8.2). Consumed once by
+   *  RevealChrome via `dismissReveal`. */
+  pendingReveal: PendingReveal | null;
   /** The only way the bookmark moves. Validates, then runs §8.1's forward/backward flow. */
   requestChapter(n: number): void;
   openDialog(prefill?: number): void;
   closeDialog(): void;
   dismissToast(): void;
   dismissBanner(): void;
+  dismissReveal(): void;
+  /** Read-only cache access for the Dossier's "replay this reveal" (R6 §8.2): whatever
+   *  chapter payload is already in memory, never a fetch. Returns null if that chapter was
+   *  never visited/prefetched this session (replay then falls back to a normal reveal —
+   *  see `graph/diff.ts`'s `classifyReveal`). */
+  getCachedPayload(n: number): GraphElements | null;
 }
 
 const ChapterContext = createContext<ChapterModel | null>(null);
@@ -97,6 +116,7 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
   const [loading, setLoading] = useState<number | null>(null);
   const [banner, setBanner] = useState<ChapterBanner | null>(null);
   const [toast, setToast] = useState<ChapterToast | null>(null);
+  const [pendingReveal, setPendingReveal] = useState<PendingReveal | null>(null);
   const [dialog, setDialog] = useState({ open: false, prefill: 1 });
 
   // Mutable plumbing, deliberately outside React state so the fence checks are
@@ -205,7 +225,13 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
         .then((payload) => {
           if (!payload) return;
           commit(n, payload);
-          if (n > old) showToast({ kind: "forward", id: Date.now(), n, diff: diffGraphs(prev, payload) });
+          if (n > old) {
+            const diff = diffGraphs(prev, payload);
+            // R6 §8.2: a diff with >=1 reveal goes to the reveal UI instead of the plain
+            // toast — RevealChrome decides overlay vs. summary sheet vs. quiet toast.
+            if (diff.reveals.length > 0) setPendingReveal({ id: Date.now(), n, reveals: diff.reveals });
+            else showToast({ kind: "forward", id: Date.now(), n, diff });
+          }
         })
         .catch(() => setBanner({ failed: n, showing: dataRef.current ? bookmarkRef.current : null }));
     },
@@ -304,6 +330,8 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
   const closeDialog = useCallback((): void => setDialog((d) => ({ ...d, open: false })), []);
   const dismissToast = useCallback((): void => setToast(null), []);
   const dismissBanner = useCallback((): void => setBanner(null), []);
+  const dismissReveal = useCallback((): void => setPendingReveal(null), []);
+  const getCachedPayload = useCallback((n: number): GraphElements | null => cache.current.get(n) ?? null, []);
 
   const value = useMemo<ChapterModel>(
     () => ({
@@ -318,14 +346,18 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       banner,
       toast,
       dialog,
+      pendingReveal,
       requestChapter,
       openDialog,
       closeDialog,
       dismissToast,
       dismissBanner,
+      dismissReveal,
+      getCachedPayload,
     }),
     [slug, work, workError, chapterCount, bookmark, data, prevData, loading, banner, toast, dialog,
-      requestChapter, openDialog, closeDialog, dismissToast, dismissBanner],
+      pendingReveal, requestChapter, openDialog, closeDialog, dismissToast, dismissBanner,
+      dismissReveal, getCachedPayload],
   );
 
   return <ChapterContext.Provider value={value}>{children}</ChapterContext.Provider>;

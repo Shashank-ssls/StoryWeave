@@ -1,0 +1,107 @@
+/* DESIGN_SPEC.md §8.1 jump-far summary sheet. Tokens only; red-permitted (identity rows). */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-6);
+  box-sizing: border-box;
+  background: var(--scrim);
+}
+
+.sheet {
+  width: 640px;
+  max-width: 100%;
+  max-height: calc(100vh - 2 * var(--s-6));
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  padding: var(--s-8) var(--s-10);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+.closeButton {
+  color: var(--dim);
+  flex: none;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 36px;
+  line-height: var(--lh-heading);
+  color: var(--ink);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.row + .row {
+  border-top: var(--border);
+}
+
+.rowButton {
+  all: unset;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--s-3) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+.rowButton:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.rowLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.rowKicker {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--accent);
+}
+.rowSentence {
+  font-family: var(--font-body);
+  font-size: var(--fs-21);
+  color: var(--ink);
+}
+.rowChapter {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.rowQuote {
+  margin: 0;
+  font-size: var(--fs-16);
+  max-width: 100%;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--s-2);
+}

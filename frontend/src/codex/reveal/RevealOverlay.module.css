@@ -1,0 +1,288 @@
+/* DESIGN_SPEC.md §6.5 Reveal moment + §8.2 choreography. Tokens only.
+   --accent appears here throughout — the reveal UI is explicitly on the P2 red-discipline
+   allow-list ("identity edges, reveal moments, the bookmark marker, changed tags"). This
+   file (and RevealSummarySheet.module.css) are red-permitted in lint-design.mjs.
+   The scrim is one of the two places a "shadow"/glow is allowed (§2 rule 5). */
+
+/* §6.5 item 8: "mural at full composition + radial glow + dark vignette" — the reveal is
+   its own full-bleed backdrop, not a translucent scrim over the live screen behind it
+   (measured: a plain --scrim let the Dossier's own near-identical identity-block text
+   bleed through underneath the overlay's headline, doubling it illegibly). `.brightened`
+   mirrors the same <=10% cap as the global `data-reveal-active` mural rule (§4.6 rule 5) —
+   kept local rather than reusing the `.mural` class, which carries positioning/pointer-
+   events rules this backdrop can't share (it needs to be clickable, for close-on-outside). */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-8);
+  box-sizing: border-box;
+  background: var(--bg) url("../../assets/mural-codex.svg") center / cover no-repeat;
+  animation: overlayFade 200ms var(--ease-out) forwards;
+}
+.brightened {
+  filter: brightness(1.1);
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 55%, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0.8) 100%);
+}
+
+.glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 640px 420px at 50% 42%, var(--accent-soft) 0%, transparent 70%);
+}
+
+.content {
+  position: relative;
+  width: 960px;
+  max-width: 100%;
+  max-height: calc(100vh - 2 * var(--s-8));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-5);
+}
+
+.pager {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+.pagerButton {
+  color: var(--dim);
+}
+.pagerButton:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+.kicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-21);
+  color: var(--accent);
+}
+
+/* ---- connector (760x124): two seals, the red thread with glow, the eye at the midpoint ---- */
+.connector {
+  display: flex;
+  align-items: flex-start;
+  width: 760px;
+  max-width: 100%;
+  height: 124px;
+}
+
+.sealCol {
+  flex: none;
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  opacity: 0;
+  transform: scale(0.9);
+  animation: sealIn 200ms var(--ease-out) forwards;
+  animation-delay: 200ms;
+}
+.seal {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--ink);
+  box-shadow: 0 0 0 1px var(--bg) inset;
+}
+.sealName {
+  font-family: var(--font-body);
+  font-size: 23px; /* spec role-size, §6.5 item 2 */
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.threadWrap {
+  flex: 1;
+  position: relative;
+  height: 64px;
+  margin: 0 var(--s-2);
+}
+.thread {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 32px;
+  height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 14px 2px var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: threadDraw 500ms var(--ease-ink) forwards;
+  animation-delay: 400ms;
+}
+.eyeWrap {
+  position: absolute;
+  left: 50%;
+  top: 32px;
+  color: var(--accent);
+  transform: translate(-50%, -50%) scaleY(0);
+  animation: eyeOpen 150ms var(--ease-out) forwards;
+  animation-delay: 900ms;
+}
+
+/* ---- headline, quote, caption, before-line, actions ---- */
+.headline {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 70px; /* spec role-size, §6.5 item 3 */
+  line-height: var(--lh-display);
+  color: var(--ink);
+  opacity: 0;
+  transform: translateY(6px);
+  animation: riseIn 250ms var(--ease-out) forwards;
+  animation-delay: 1000ms;
+}
+.link {
+  color: var(--accent-hi);
+}
+
+.quote {
+  margin: 0;
+  max-width: 660px;
+  font-size: var(--fs-24);
+  opacity: 0;
+  animation: fadeIn 150ms var(--ease-out) forwards;
+  animation-delay: 1250ms;
+}
+
+.before {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+  opacity: 0;
+  animation: fadeIn 150ms var(--ease-out) forwards;
+  animation-delay: 1250ms;
+}
+
+.caption {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+  opacity: 0;
+  animation: fadeIn 150ms var(--ease-out) forwards;
+  animation-delay: 1250ms;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  margin-top: var(--s-2);
+  opacity: 0;
+  animation: fadeIn 150ms var(--ease-out) forwards;
+  animation-delay: 1250ms;
+}
+.actions.notReady {
+  pointer-events: none;
+}
+.button {
+  white-space: nowrap;
+  min-width: 240px;
+  min-height: var(--control-h-lg);
+}
+
+.quietToggle {
+  color: var(--dim);
+  opacity: 0;
+  animation: fadeIn 150ms var(--ease-out) forwards;
+  animation-delay: 1250ms;
+}
+.quietToggle:hover {
+  color: var(--ink);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sealIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes threadDraw {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes eyeOpen {
+  from { transform: translate(-50%, -50%) scaleY(0); }
+  to { transform: translate(-50%, -50%) scaleY(1); }
+}
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* §4.5 / §8.2: reduced motion collapses everything to one 200ms fade, no thread drawing,
+   no staggered delays. The thread and eye drop their shape animation entirely (they sit
+   in their final, fully-drawn/open state and only fade). */
+.reduced .sealCol,
+.reduced .headline,
+.reduced .quote,
+.reduced .before,
+.reduced .caption,
+.reduced .actions,
+.reduced .quietToggle {
+  animation-name: fadeIn;
+  animation-duration: 200ms;
+  animation-delay: 0ms;
+  transform: none;
+}
+.reduced .thread {
+  animation: none;
+  transform: scaleX(1);
+  opacity: 0;
+  animation: fadeIn 200ms var(--ease-out) forwards;
+}
+.reduced .eyeWrap {
+  animation: none;
+  transform: translate(-50%, -50%) scaleY(1);
+  opacity: 0;
+  animation: fadeIn 200ms var(--ease-out) forwards;
+}

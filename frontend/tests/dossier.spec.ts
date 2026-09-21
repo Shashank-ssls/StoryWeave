@@ -10,7 +10,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-import { recordGraphRequests, assertNoGraphRequestAbove, GRAPH_ROUTE_RE, type GraphRequestLog } from "./fenceHelpers";
+import { recordGraphRequests, assertNoGraphRequestAbove, dismissRevealIfShown, GRAPH_ROUTE_RE, type GraphRequestLog } from "./fenceHelpers";
 
 const SLUG = "the-hollow-crown";
 const KEY = `storyweave:bookmark:${SLUG}`;
@@ -78,6 +78,11 @@ async function confirmChapter(page: Page, n: number): Promise<void> {
   await page.fill('[data-testid="chapter-input"]', String(n));
   await page.click('[data-testid="set-bookmark"]');
   await expect(page.locator('[data-testid="chapter-row-bookmark"]')).toHaveAttribute("data-chapter", String(n));
+  // R6: a forward move here is content the fence/dossier assertions below need to read —
+  // unlike fence.spec.ts's fetch/cache tests, this file WANTS the real reveal to have fired
+  // (that's what "changed" tags/identity blocks prove); it just can't be left open, or the
+  // next confirmChapter's click on this same rail would be blocked by its backdrop.
+  await dismissRevealIfShown(page);
 }
 async function domState(page: Page) {
   await page.waitForSelector('[data-testid="entity-main"], [data-testid="state-not-present"]');

@@ -310,6 +310,112 @@ export async function getShots(phase) {
         { name: "stemma-ch4", run: (p, b) => stemmaAt(p, b, 4) },
       ];
     }
+    case "6": {
+      // R6 — Reveal moment. Normal / deepening / pager page 2 / summary sheet / quiet
+      // toast on real Hollow Crown demo data; the Dossier replay button + the Stemma's
+      // .just-revealed mid-glow.
+      const SLUG = "the-hollow-crown";
+      const KEY = `storyweave:bookmark:${SLUG}`;
+      const GRAPH_RE = /\/api\/v1\/works\/[^/]+\/graph\?n=\d+/;
+      const nOf = (url) => Number(/[?&]n=(\d+)/.exec(url)?.[1]);
+      const atChapter = async (page, baseUrl, n, entity = "1") => {
+        await page.goto(`${baseUrl}/#/work/${SLUG}/entity/${entity}`, { waitUntil: "networkidle" });
+        await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, String(n)]);
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForSelector(`[data-testid="chapter-row-bookmark"][data-chapter="${n}"]`);
+      };
+      const confirm = async (page, n) => {
+        await page.click('[data-testid="change-chapter"]');
+        await page.fill('[data-testid="chapter-input"]', String(n));
+        await page.click('[data-testid="set-bookmark"]');
+      };
+      return [
+        {
+          name: "reveal-normal",
+          async run(page, baseUrl) {
+            await atChapter(page, baseUrl, 1);
+            await confirm(page, 2);
+            await page.waitForSelector('[data-testid="reveal-overlay"]');
+            await page.waitForTimeout(1500); // let the choreography finish
+          },
+        },
+        {
+          name: "reveal-deepening",
+          async run(page, baseUrl) {
+            await atChapter(page, baseUrl, 3);
+            await confirm(page, 4);
+            await page.waitForSelector('[data-testid="reveal-overlay"]');
+            await page.waitForTimeout(1500);
+          },
+        },
+        {
+          name: "reveal-pager-page2",
+          async run(page, baseUrl) {
+            await atChapter(page, baseUrl, 1);
+            await confirm(page, 4);
+            await page.waitForSelector('[data-testid="reveal-pager"]');
+            await page.waitForTimeout(1500);
+            await page.click('[data-testid="reveal-pager-next"]');
+            await page.waitForTimeout(1500);
+          },
+        },
+        {
+          name: "reveal-summary-sheet",
+          async run(page, baseUrl) {
+            const fs = await import("node:fs");
+            const synthetic = JSON.parse(fs.readFileSync(new URL("../tests/fixtures/synthetic-100.json", import.meta.url), "utf8"));
+            await page.route(GRAPH_RE, async (route) => {
+              const n = nOf(route.request().url());
+              const fenced = {
+                slug: SLUG, n,
+                elements: {
+                  nodes: synthetic.elements.nodes.filter((x) => x.data.revealed_chapter <= n),
+                  edges: synthetic.elements.edges.filter((x) => x.data.revealed_chapter <= n),
+                },
+              };
+              await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(fenced) });
+            });
+            await atChapter(page, baseUrl, 1);
+            await confirm(page, 4);
+            await page.waitForSelector('[data-testid="reveal-summary-sheet"]');
+          },
+        },
+        {
+          name: "reveal-quiet-toast",
+          async run(page, baseUrl) {
+            await page.goto(`${baseUrl}/#/work/${SLUG}/entity/1`, { waitUntil: "networkidle" });
+            await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "1"]);
+            await page.evaluate(() => localStorage.setItem("storyweave:revealQuiet", "1"));
+            await page.reload({ waitUntil: "networkidle" });
+            await page.waitForSelector('[data-testid="chapter-row-bookmark"][data-chapter="1"]');
+            await confirm(page, 2);
+            await page.waitForSelector('[data-testid="reveal-quiet-toast"]');
+          },
+        },
+        {
+          name: "dossier-identity-replay",
+          async run(page, baseUrl) {
+            await atChapter(page, baseUrl, 2);
+            await page.waitForSelector('[data-testid="identity-block"]');
+            await page.waitForTimeout(400);
+          },
+        },
+        {
+          name: "stemma-just-revealed",
+          async run(page, baseUrl) {
+            await atChapter(page, baseUrl, 1);
+            await confirm(page, 2);
+            await page.waitForSelector('[data-testid="reveal-overlay"]');
+            await page.waitForTimeout(1500);
+            // "Return to The Stemma" closes the overlay AND navigates there, triggering
+            // the .just-revealed pulse on the same edge the overlay was showing.
+            await page.click('[data-testid="reveal-return"]');
+            await page.waitForSelector('[data-testid="stemma-cy"]');
+            await page.waitForTimeout(2200); // cola burst + camera fit settle (R5 convention)
+          },
+        },
+      ];
+    }
     default:
       throw new Error(`No shots defined for phase "${phase}" yet — add one to shots.config.mjs.`);
   }

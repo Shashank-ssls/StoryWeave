@@ -68,6 +68,15 @@ const RED_PERMITTED = {
   "codex/chapter/ChapterDialog.module.css":
     "the dialog's \"current bookmark\" marker (DESIGN_SPEC §6.6 item 4 spells out " +
     "--accent for it; \"bookmark marker\" is on the P2 allow-list). One rule, one use.",
+  "codex/reveal/RevealOverlay.module.css":
+    "the reveal moment itself (§6.5): kicker, connector thread/glow, the linking word in " +
+    "the headline — squarely \"reveal moments\" on the P2 allow-list.",
+  "codex/reveal/RevealSummarySheet.module.css":
+    "the jump-far summary sheet's per-row identity kicker (§8.1) — same reveal-moment " +
+    "allowance as RevealOverlay, just listed instead of staged.",
+  "codex/reveal/RevealChrome.module.css":
+    "the quiet-mode toast's identity/deepen kicker (§8.2 \"Reveal quietly\" preference) " +
+    "— the same reveal content, just delivered as a toast instead of an overlay.",
 };
 
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/g;

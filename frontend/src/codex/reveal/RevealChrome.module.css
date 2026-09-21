@@ -1,0 +1,49 @@
+/* R6 quiet-mode toast (DESIGN_SPEC.md §8.2 "Reveal quietly" preference). Tokens only. */
+
+.toast {
+  position: fixed;
+  bottom: var(--s-8);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  padding: var(--s-3) var(--s-5);
+  max-width: min(640px, calc(100vw - 2 * var(--s-6)));
+  background: var(--ink);
+  color: var(--on-ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+}
+
+.toastBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* The kicker inside the (--ink-backed) toast reads as identity-red-on-dark still — kept
+   here rather than --on-ink so a deepening toast is still visually distinct from a plain
+   forward toast (P2 allow-list: "identity edges, reveal moments"). */
+.toastKicker {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.toastActions {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  flex: none;
+  white-space: nowrap;
+}
+.toastLink {
+  all: unset;
+  cursor: pointer;
+  color: var(--on-ink);
+  text-decoration: underline;
+  font: inherit;
+}
+.toastLink:focus-visible {
+  box-shadow: var(--focus-ring);
+}

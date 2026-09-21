@@ -96,3 +96,10 @@ blockquote { font-style: italic; color: var(--dim); margin: 0; }
 .web-canvas-mask {  /* Stemma canvas: no mural lines under the graph */
   background: radial-gradient(ellipse at 50% 50%, var(--bg) 0%, var(--bg) 55%, transparent 100%);
 }
+
+/* §4.6 rule 5 exception: the ONE place the mural may animate/change — brightened <=10%
+   for the duration of a reveal only (RevealOverlay toggles this attribute on <html>;
+   never set at all under reduced motion, per §4.5/§8.2). */
+:root[data-reveal-active] .mural {
+  filter: brightness(1.1);
+}

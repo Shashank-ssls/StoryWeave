@@ -109,3 +109,52 @@
 - **Issues:** MEASURED — infinite cola drift 105px; timer-fit → far-tier speck; centre seeding → 550×3900 strip; 40 label overlaps → 10 → 5 → 1 (size transition) → 0; clearing focus was undone by the URL-resolution effect (fixed with undefined/null states); Vite dev server died once mid-run (restarted, logged to `.local/vite-dev.log`). Nothing BROKEN.
 - **Stopped at:** R5 green, committed and pushed.
 - **Next:** R6 Reveal — resolve the §9 "Open questions for R6" (Wren→Caelum reclassified at n=4) first.
+
+## Session 7 — R6 Reveal moment
+
+- **Date:** 2026-09-22
+- **Model / effort:** Sonnet 5, high effort
+- **Phase(s):** R6
+- **Commits:** 0192720 → (this commit; see `git log`)
+- **Done:**
+  - Recorded your RESOLVED decision for the §9 open question (pair-keyed identity diff;
+    normal / deepening / no-reveal rules) in FRONTEND_OVERHAUL.md §9 before building.
+  - `graph/diff.ts` rewritten: pair-keyed `classifyReveal`/`diffGraphs` returning
+    `reveals: Reveal[]`; also closed a real gap (P5/§8.4 "no quote, no edge" wasn't applied
+    to reveals) found while building it. `newIdentityEdges` removed; `ChapterChrome`/
+    `useDossier` updated to read `reveals` instead (same F8 behaviour).
+  - `codex/reveal/`: `RevealContext`, `RevealChrome` (orchestrator: overlay vs. summary
+    sheet vs. quiet toast, shared 3s highlight timer, quiet-mode preference), `RevealOverlay`
+    (§6.5 layout, §8.2 choreography via CSS keyframes, pager, focus trap, Esc/click-outside,
+    aria-live), `RevealSummarySheet`, `revealPrefs.ts`.
+  - `ChapterProvider`: `pendingReveal`/`dismissReveal` (forward-commit-only) + read-only
+    `getCachedPayload` for the Dossier's cache-only replay.
+  - Dossier: replay icon button per identity block (new `ReplayIcon`) + 3s `.justRevealed`
+    highlight. Stemma: `.just-revealed` glow pulse via `cy.animate()`, deferred to after the
+    canvas's first settle.
+  - `Button` made `forwardRef` (overlay moves focus to it programmatically).
+  - New suites: `tests/reveal.spec.ts` (11/11), `tests/reveal-choreography.spec.ts` (3/3,
+    real-elapsed-time sampling — CSS animations aren't affected by `page.clock`). 7
+    pre-existing fence tests fixed (every forward step in the demo now reveals something,
+    so their next click was blocked by the overlay's backdrop) via a `stripReveals` route
+    helper; `dossier.spec.ts`/`stemma.spec.ts`'s walk tests got `dismissRevealIfShown`
+    instead (they want the real reveals). Phase-6 shots (14, both widths) vs artboard 5.
+- **Decisions:** backdrop renders its own mural+vignette (opaque) instead of dimming the
+  live screen through `--scrim` — a real legibility bug (identity-block text bled through
+  behind the headline), fixed same-session, documented in FRONTEND_OVERHAUL §9. Jump-far
+  (>3 reveals) always shows the summary sheet even in quiet mode. New `ReplayIcon` added to
+  the icon set (not in the original §4.4/§14 table, which predates R6).
+- **Issues:** MEASURED — the backdrop bleed-through (found via the first `reveal-deepening`
+  shot, fixed); a real focus-trap/Esc bug found via reasoning before it ever shipped (the
+  content div's `onKeyDown` only sees events bubbling from a focused DESCENDANT, but focus
+  doesn't land inside the overlay until the 1250ms choreography delay — Esc would have been
+  a no-op for up to 1.25s; moved to a window-level listener, same pattern as `[`/`]`).
+  **BROKEN, not fixed (pre-existing, out of R6 scope):** the Stemma's camera fit lands
+  off-screen after ANY in-app SPA navigation into the tab (reproduces with a plain Dossier→
+  Stemma tab click, no reveal involved) — found via the `stemma-just-revealed` shot; one fix
+  attempt (defer the highlight pulse until after first settle) did not resolve it, confirming
+  it isn't caused by this phase. Logged in FRONTEND_OVERHAUL §9 for a decision. One
+  `test:stemma` run showed a flaky failure (pre-existing legibility test) under heavy
+  concurrent-process load from this session; re-ran in isolation, passed clean.
+- **Stopped at:** R6 green, committed and pushed.
+- **Next:** R7 Chronicle (Sonnet 5 recommended).

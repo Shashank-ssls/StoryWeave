@@ -73,20 +73,19 @@ export default function ChapterChrome(): JSX.Element {
         </div>
       )}
 
+      {/* R6: a forward commit whose diff has >=1 reveal never reaches this toast — it goes
+          to ChapterProvider's `pendingReveal` instead (see requestChapter), consumed by
+          RevealChrome (overlay / summary sheet / quiet toast). This is the plain "nothing
+          revealed" quiet update (§8.1 step 4) and the backward toast (§8.1). */}
       {m.toast && (
         <div className={styles.toast} role="status" aria-live="polite" data-testid="toast" data-kind={m.toast.kind}>
           {m.toast.kind === "backward"
             ? fillTemplate(codexTheme.toastBackward, { n: roman(m.toast.n) })
-            : fillTemplate(
-                // TODO(R6): when the diff has identity edges the reveal overlay (§8.2)
-                // replaces this toast. Until then the same quiet toast is shown, marked.
-                m.toast.diff.newIdentityEdges.length > 0 ? codexTheme.toastForwardIdentity : codexTheme.toastForward,
-                {
-                  n: roman(m.toast.n),
-                  names: codexTheme.newNames(m.toast.diff.newNodes.length),
-                  ties: codexTheme.newTies(m.toast.diff.newEdges.length),
-                },
-              )}
+            : fillTemplate(codexTheme.toastForward, {
+                n: roman(m.toast.n),
+                names: codexTheme.newNames(m.toast.diff.newNodes.length),
+                ties: codexTheme.newTies(m.toast.diff.newEdges.length),
+              })}
         </div>
       )}
 

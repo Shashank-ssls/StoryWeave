@@ -45,6 +45,10 @@ interface Props {
   previewId: string | null;
   selected: Selection | null;
   kbdId: string | null;
+  /** R6 §8.2: the identity edge id mid-3s-highlight after a reveal closes, or null. Owned
+   *  by RevealChrome (shared with the Dossier's equivalent highlight) — this canvas only
+   *  plays the pulse while the id is set. */
+  justRevealedEdgeId: string | null;
   reducedMotion: boolean;
   onNodeTap(id: string): void;
   onEdgeTap(id: string): void;
@@ -96,6 +100,7 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
   const propsRef = useRef(props);
   propsRef.current = props;
   const refitOnStop = useRef(false); // data-driven bursts refit; drag-end bursts don't
+  const settledRef = useRef(false); // true once this instance's first layout has stopped
 
   // ---- lifecycle: one instance per mount, destroyed on unmount ----
   useEffect(() => {
@@ -112,10 +117,12 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     cyRegistry.instances += 1;
     cyRegistry.created += 1;
     cyRegistry.stemma = cy;
+    settledRef.current = false;
 
     cy.on("layoutstart", () => { cyRegistry.layouts += 1; });
     cy.on("layoutstop", () => {
       cyRegistry.layouts -= 1;
+      settledRef.current = true;
       declutter();
       if (refitOnStop.current) { refitOnStop.current = false; fitFocusNow(); }
     });
@@ -221,6 +228,35 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     declutter(); // label set changed with the focus (focus initial / near labels) → re-resolve collisions
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.focusId, props.previewId, props.steps, props.selected, props.kbdId, props.graph]);
+
+  // ---- R6 §8.2: 3s glow pulse on the just-revealed edge, once, on close ----
+  useEffect(() => {
+    const cy = cyRef.current;
+    const id = props.justRevealedEdgeId;
+    if (!cy || !id) return;
+    const play = (): void => {
+      const ele = cy.getElementById(id);
+      if (ele.length === 0) return;
+      ele.addClass("just-revealed");
+      ele
+        .animate({ style: { "underlay-opacity": 0.55, "underlay-padding": 12 } }, { duration: 500, easing: "ease-out" })
+        .animate({ style: { "underlay-opacity": 0.15, "underlay-padding": 5 } }, { duration: 2500, easing: "ease-out" });
+    };
+    // Defer until the canvas's first layout has settled, so the pulse never animates a
+    // style mid-burst. (Measured, R6: this does NOT fix the off-screen focus framing seen
+    // right after "Return to The Stemma" — that reproduces identically from a PLAIN tab
+    // click Dossier -> Stemma with no reveal involved at all, so it's a pre-existing R5
+    // SPA-navigation camera-fit bug, not something this effect causes or fixes. Logged in
+    // FRONTEND_OVERHAUL.md §9 as a BROKEN/open item, out of scope for R6.) Kept anyway
+    // because animating mid-burst is still the wrong thing to do on its own merits.
+    if (settledRef.current) play();
+    else cy.one("layoutstop", play);
+    return () => {
+      cy.off("layoutstop", play);
+      cy.getElementById(id).removeClass("just-revealed").stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.justRevealedEdgeId]);
 
   // ---- camera follows the REAL focus (never the hover preview) ----
   const lastFit = useRef<string>("");

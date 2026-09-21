@@ -25,10 +25,10 @@ export function useDossier(): DossierData {
     if (!data || !prevData || bookmark <= 1) return out;
     const d = diffGraphs(prevData, data);
     for (const n of d.newNodes) out.add(n.id);
-    for (const e of d.newIdentityEdges) {
-      if (e.revealed_chapter === bookmark) {
-        out.add(e.source);
-        out.add(e.target);
+    for (const r of d.reveals) {
+      if (r.edge.revealed_chapter === bookmark) {
+        out.add(r.edge.source);
+        out.add(r.edge.target);
       }
     }
     return out;

@@ -9,6 +9,7 @@ import { codexTheme, fillTemplate } from "../theme";
 import { tabItems, navigateToTab } from "../tabs";
 import { roman } from "../chapter/roman";
 import { useChapter } from "../chapter/ChapterProvider";
+import { useReveal } from "../reveal/RevealContext";
 import StateCard from "../states/StateCard";
 import { buildViewModel, principalOf, tieLabel } from "../../graph/viewModel";
 import {
@@ -39,6 +40,7 @@ function isTypingTarget(t: EventTarget | null): boolean {
 export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
   const title = useWorkTitle();
   const m = useChapter();
+  const { justRevealedEdgeId } = useReveal();
   const vm = useMemo(() => (m.data ? buildViewModel(m.data) : null), [m.data]);
   const principal = vm ? principalOf(vm) : null;
   const urlFocus = route.name === "work-web" ? route.focus : null;
@@ -279,6 +281,7 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
               previewId={previewId}
               selected={selected}
               kbdId={kbdId}
+              justRevealedEdgeId={justRevealedEdgeId}
               reducedMotion={reducedMotion}
               onNodeTap={onNodeTap}
               onEdgeTap={(id) => setSelected({ kind: "edge", id })}

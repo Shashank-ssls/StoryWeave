@@ -112,6 +112,18 @@ export function SearchIcon(props: IconProps): JSX.Element {
   );
 }
 
+// R6 addition (DESIGN_SPEC §8.2 replay button): not in the original §4.4/§14 icon
+// checklist, which predates the reveal moment's own replay affordance. Same stroke
+// language as the rest of the set (1.5px, square caps, currentColor).
+export function ReplayIcon(props: IconProps): JSX.Element {
+  return (
+    <Svg {...props}>
+      <path d="M4 12a8 8 0 1 1 2.6 5.9" />
+      <polyline points="4 17 4 12 9 12" />
+    </Svg>
+  );
+}
+
 export const ICONS = {
   "chevron-left": ChevronLeftIcon,
   "chevron-right": ChevronRightIcon,
@@ -122,4 +134,5 @@ export const ICONS = {
   plus: PlusIcon,
   minus: MinusIcon,
   search: SearchIcon,
+  replay: ReplayIcon,
 } as const;
