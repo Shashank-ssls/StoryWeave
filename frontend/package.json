@@ -13,7 +13,8 @@
     "test:style": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/style.spec.ts",
     "test:geometry": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/geometry.spec.ts",
     "lint:design": "node scripts/lint-design.mjs",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "test:dossier": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/dossier.spec.ts"
   },
   "dependencies": {
     "@fontsource/alegreya-sans": "^5.3.0",

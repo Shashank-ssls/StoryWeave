@@ -20,6 +20,7 @@ export const codexTheme = {
   thingsGroup: "Relics",
   loading: "Unclasping the codex…",
   lede: "first named in Chapter {c} · {k} bonds recorded",
+  ledeOne: "first named in Chapter {c} · one bond recorded",
   landingKicker: "A spoiler-sealed companion for long serials",
   landingH1: "Remember everyone. Spoil nothing.",
 
@@ -55,6 +56,35 @@ export const codexTheme = {
   loadingUpTo: "Gathering everyone you've met up to Chapter {n}.",
   newNames: (k: number): string => (k === 1 ? "1 new name" : `${k} new names`),
   newTies: (k: number): string => (k === 1 ? "1 new tie" : `${k} new ties`),
+
+  // ---- R4: Dossier (§6.2) + states (§6.7) ----
+  dramatisPersonae: "Dramatis Personae",
+  ordersGroup: "Orders & Houses",
+  placesGroup: "Places & Relics",
+  alsoMentioned: "Also mentioned",
+  changed: "changed",
+  allPeople: "All {n} people →",
+  allTies: "All {n} ties →",
+  findName: "name or alias",
+  revealedIn: "{kicker} · revealed in Chapter {n}",
+  tie: "{rel} · ch. {n}",
+  stemmaOf: "The Stemma of {name}",
+  openFull: "open full →",
+  legend: "Circle a person, square a place, diamond a thing. The accent light marks only a revealed identity.",
+  fenceTooltip: "StoryWeave's server only sends chapters up to your bookmark.",
+  goToPrincipal: "Go to the principal character",
+  // state cards: [label, headline, body]
+  stateLoading: { label: "Loading", headline: "Unclasping the codex…", body: "Gathering everyone you've met up to Chapter {n}." },
+  stateError: {
+    label: "Error",
+    headline: "The archive didn't answer.",
+    body: "StoryWeave couldn't reach its server. Nothing was shown, and nothing past your bookmark was loaded.",
+  },
+  stateNoMatch: {
+    label: "No match",
+    headline: "No one by that name, as of Chapter {n}.",
+    body: "We won't say whether they ever appear. Even that would be a spoiler.",
+  },
 } as const;
 
 /** Fills `{token}` placeholders in a theme string, e.g. fence copy's `{n}`. */

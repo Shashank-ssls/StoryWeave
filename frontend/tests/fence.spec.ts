@@ -73,7 +73,9 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     const log = recordGraphRequests(page);
     await confirmChapter(page, 3);
     await waitForBookmark(page, 3);
-    expect(log.urls.map(nOf)).toEqual([3]);
+    await page.waitForTimeout(400);
+    // The confirm itself, then (R4, F8) n−1 for the "changed" tags — nothing else, nothing above.
+    expect(log.urls.map(nOf)).toEqual([3, 2]);
     assertNoGraphRequestAbove(log, 3);
     await attachLog(log);
   });
@@ -127,8 +129,10 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     await waitForBookmark(page, 3);
     await page.waitForTimeout(1500); // let the slow n=2 response land (it must be dropped)
     expect(await bookmarkOnScreen(page)).toBe(3);
-    // Both requests were legitimately ≤ their own confirmed value; nothing above 3.
-    expect(log.urls.map(nOf).sort()).toEqual([2, 3]);
+    // Both confirms were legitimately ≤ their own confirmed value; the dropped n=2
+    // response was never cached, so F8's n−1 fetch for the tags requests 2 again.
+    // Nothing above 3, and the first request of each confirm is the confirmed chapter.
+    expect(log.urls.map(nOf).sort()).toEqual([2, 2, 3]);
     assertNoGraphRequestAbove(log, 3);
     await attachLog(log);
   });
@@ -251,7 +255,7 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     await attachLog(log);
   });
 
-  test("persistence — reload keeps the bookmark and requests only that chapter", async ({ page }) => {
+  test("persistence — reload keeps the bookmark and requests only that chapter (+ n−1 for F8 tags)", async ({ page }) => {
     await openDossier(page);
     await confirmChapter(page, 3);
     await waitForBookmark(page, 3);
@@ -259,7 +263,9 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     await page.reload();
     await waitForBookmark(page, 3);
     await page.waitForTimeout(500);
-    expect(log.urls, log.urls.join("\n")).toEqual([expect.stringMatching(/graph\?n=3$/)]);
+    // Since R4 the model also fetches n−1 (here 2) for the "changed" tags — still ≤ bookmark.
+    expect(log.urls.map(nOf).sort(), log.urls.join("\n")).toEqual([2, 3]);
+    assertNoGraphRequestAbove(log, 3);
     await attachLog(log);
   });
 
@@ -389,9 +395,33 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     await attachLog(log);
   });
 
-  test.fixme("F4 (R4/R8) — search / not-yet-met copy never confirms a name exists later", async () => {});
+  test("F4 (dossier, R4) — an entity not yet met shows neutral copy that never confirms a later appearance", async ({ page }) => {
+    // Lady Veris (id 12) is first revealed in chapter 3; visit her dossier at chapter 2.
+    await page.goto(`/#/work/${SLUG}/entity/12`);
+    await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "2"] as const);
+    await page.reload();
+    const card = page.locator('[data-testid="state-not-present"]');
+    await expect(card).toBeVisible();
+    const text = (await card.innerText()).toLowerCase();
+    expect(text).toContain("no one by that name, as of chapter ii.");
+    expect(text).not.toContain("veris");
+    expect(text).not.toMatch(/appears? later|later chapter|not yet|will appear/);
+    expect(await page.locator('[data-testid="entity-main"]').count()).toBe(0);
+  });
+  test.fixme("F4 (search, R8) — Stemma/landing search no-match copy never confirms a name exists later", async () => {});
   test.fixme("F6 (R3 arcs — inactive: D6 arc config absent, blocks-of-100 fallback carries no names) — arc names hidden until start <= bookmark", async () => {});
   test.fixme("F7 (R7) — chapter titles, if added, follow F6", async () => {});
-  test.fixme("F8 (R4) — \"changed\" tag diffing uses only graph(n) and graph(n-1), both fenced", async () => {});
+  test("F8 (R4) — \"changed\" tags come from graph(n) and graph(n−1) only: exactly those two requests, both fenced", async ({ page }) => {
+    const log = recordGraphRequests(page);
+    await openDossier(page, "3");
+    await expect(page.locator('[data-testid="changed-tag"]').first()).toBeVisible();
+    await page.waitForTimeout(400);
+    expect(log.urls.map(nOf).sort()).toEqual([2, 3]);
+    assertNoGraphRequestAbove(log, 3);
+    // the tags name exactly the chapter-3 arrivals (Sparrow + Veris), nobody else
+    const tagged = await page.locator('[data-testid="cast-row"]:has([data-testid="changed-tag"])').evaluateAll((els) => els.map((e) => e.getAttribute("data-entity")).sort());
+    expect(tagged).toEqual(["11", "12"]);
+    await attachLog(log);
+  });
   test.fixme("F9 (R8) — demo/landing mini-graph obeys F1-F3, no hint of the upcoming reveal edge", async () => {});
 });

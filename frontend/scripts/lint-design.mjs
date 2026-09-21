@@ -33,14 +33,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcRoot = path.resolve(__dirname, "..", "src");
 
 // The ACTIVE Cytoscape style module: hex/font-family literals are allowed here by hard
-// rule (§2 rule 6 — Cytoscape can't read CSS vars). Currently GraphView.tsx (old, but
-// still the only Cytoscape stylesheet that exists) plays this role. R5 ports
-// graph/codexStyle.ts for the new Stemma, which becomes the new exempt file in its
-// place — at that point GraphView.tsx moves out of this exemption and into LEGACY_FILES
-// (still exempt, but as legacy-pending-R9, not "the" Cytoscape module).
-const CYTOSCAPE_STYLE_FILE = "GraphView.tsx";
+// rule (§2 rule 6 — Cytoscape can't read CSS vars). Ported at R4 (pulled forward from
+// R5 for the Dossier's ego graph); GraphView.tsx, the old stylesheet, moved to
+// LEGACY_FILES at the same time.
+const CYTOSCAPE_STYLE_FILE = "codexStyle.ts";
 
 const LEGACY_FILES = {
+  "GraphView.tsx":
+    "R9 — the old Cytoscape view (its own inline hex stylesheet), reachable only via " +
+    "#/_legacy; deleted whole with the legacy route.",
   "ontology.ts":
     "R9 — TYPE_COLOR/REVEAL/GROUND/INK/INK_DIM/EDGE_QUIET only serve the old " +
     "GraphView.tsx Cytoscape stylesheet, reachable only via #/_legacy as of R2; removed " +
@@ -58,6 +59,9 @@ const RED_PERMITTED = {
     "the landing kicker — explicitly on DESIGN_SPEC §2's red-discipline allow-list " +
     "(\"the landing kicker\" is named alongside identity edges/reveal UI/bookmark " +
     "marker/changed tags/next-stepper/Stemma filter as a permitted --accent use).",
+  "codex/Dossier/Dossier.module.css":
+    "identity kicker + the linked other name in the identity sentence (§6.2 item 5) and " +
+    "the \"changed\" cast tag (§6.2 item 3) — all three named on the P2 allow-list.",
   "codex/chapter/ChapterDialog.module.css":
     "the dialog's \"current bookmark\" marker (DESIGN_SPEC §6.6 item 4 spells out " +
     "--accent for it; \"bookmark marker\" is on the P2 allow-list). One rule, one use.",

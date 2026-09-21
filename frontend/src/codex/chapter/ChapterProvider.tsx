@@ -52,6 +52,9 @@ export interface ChapterModel {
   bookmark: number;
   /** Fenced payload for `bookmark`, or null while the first load is pending. */
   data: GraphElements | null;
+  /** Fenced payload for `bookmark - 1` (F8: "changed" tags diff n against n−1), null at
+   *  chapter 1 or while it loads. Always ≤ bookmark, always via the same cache. */
+  prevData: GraphElements | null;
   /** Chapter currently being fetched, or null when idle. */
   loading: number | null;
   banner: ChapterBanner | null;
@@ -90,6 +93,7 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
   const [workError, setWorkError] = useState(false);
   const [bookmark, setBookmark] = useState(1);
   const [data, setData] = useState<GraphElements | null>(null);
+  const [prevData, setPrevData] = useState<GraphElements | null>(null);
   const [loading, setLoading] = useState<number | null>(null);
   const [banner, setBanner] = useState<ChapterBanner | null>(null);
   const [toast, setToast] = useState<ChapterToast | null>(null);
@@ -248,6 +252,37 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       .catch(() => setBanner({ failed: start, showing: null }));
   }, [work, slug, load, commit]);
 
+  // The n−1 payload for F8 diffing (R4). Requested only once `data` for the bookmark is
+  // committed, always for bookmark−1 (≤ bookmark, so F1 holds), through the same cache
+  // — a backward purge can never leave it stale because n−1 < any new bookmark that
+  // still has a previous chapter. Its own controller: it must never abort, or be
+  // aborted by, the main request (`load`), and a result is ignored if the bookmark has
+  // moved on meanwhile.
+  useEffect(() => {
+    if (data === null || bookmark <= 1) {
+      setPrevData(null);
+      return;
+    }
+    const n = bookmark - 1;
+    const cached = cache.current.get(n);
+    if (cached) {
+      setPrevData(cached);
+      return;
+    }
+    setPrevData(null);
+    const controller = new AbortController();
+    fetchFencedGraph(slug, n, controller.signal)
+      .then((payload) => {
+        if (controller.signal.aborted || bookmarkRef.current !== bookmark) return;
+        cache.current.set(n, payload);
+        setPrevData(payload);
+      })
+      .catch(() => {
+        /* no "changed" tags this chapter; the dossier itself is unaffected */
+      });
+    return () => controller.abort();
+  }, [slug, bookmark, data]);
+
   // Unmount (work change / leaving the work): nothing in flight may outlive the model.
   useEffect(
     () => () => {
@@ -278,6 +313,7 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       chapterCount,
       bookmark,
       data,
+      prevData,
       loading,
       banner,
       toast,
@@ -288,7 +324,7 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       dismissToast,
       dismissBanner,
     }),
-    [slug, work, workError, chapterCount, bookmark, data, loading, banner, toast, dialog,
+    [slug, work, workError, chapterCount, bookmark, data, prevData, loading, banner, toast, dialog,
       requestChapter, openDialog, closeDialog, dismissToast, dismissBanner],
   );
 

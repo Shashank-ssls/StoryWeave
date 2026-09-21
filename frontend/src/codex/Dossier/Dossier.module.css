@@ -1,9 +1,13 @@
-/* DESIGN_SPEC.md §6.2 Dossier. Tokens only. */
+/* DESIGN_SPEC.md §6.2 Dossier. Tokens only.
+   --accent appears here ONLY for: identity kicker + the other name in the identity
+   sentence, and the "changed" tag (P2 allow-list). Nothing else. */
 
 .dossier {
   display: flex;
   min-height: 100vh;
 }
+
+/* ---------- left rail ---------- */
 
 .rail {
   width: var(--rail-left);
@@ -15,12 +19,20 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-6);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
 }
 
 .wordmark {
   font-family: var(--font-body);
   font-size: var(--fs-16);
   color: var(--dim);
+  text-decoration: none;
+}
+.wordmark:hover {
+  color: var(--ink);
 }
 
 .novelTitle {
@@ -30,12 +42,126 @@
   color: var(--ink);
 }
 
+.cast {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto; /* scrolls independently when long (§6.2) */
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.castHeader {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 17px; /* spec role-size */
+  color: var(--dim);
+  border-bottom: var(--border);
+  padding-bottom: var(--s-2);
+}
+
+.castSearch {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.castList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.castRow {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 10px;
+  border-left: 2px solid transparent;
+  font-family: var(--font-body);
+  font-size: 19px; /* spec role-size */
+  color: var(--ink);
+}
+.castRow:hover {
+  background: var(--raise);
+}
+.castRow:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+.castSelected {
+  background: var(--raise);
+  border-left-color: var(--ink);
+  font-weight: 600;
+}
+
+.changedTag {
+  font-style: italic;
+  font-size: var(--fs-14);
+  color: var(--accent);
+}
+
+.moreLink {
+  all: unset;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  color: var(--dim);
+  padding: var(--s-1) 10px;
+}
+.moreLink:hover {
+  color: var(--ink);
+}
+.moreLink:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.groupHeader {
+  margin: var(--s-3) 0 0;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--fs-14);
+  color: var(--faint);
+}
+
+.groupLine {
+  margin: 0;
+  padding: 0 10px;
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+  color: var(--dim);
+  line-height: var(--lh-body);
+}
+.groupLink {
+  all: unset;
+  cursor: pointer;
+  color: var(--dim);
+}
+.groupLink:hover {
+  color: var(--ink);
+}
+.groupLink:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+.sep {
+  color: var(--faint);
+}
+
+/* ---------- main ---------- */
+
 .main {
   flex: 1;
   min-width: 0;
   background: var(--bg); /* solid — no mural under body text (§4.6 P6) */
   padding: 40px 56px 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .topRow {
@@ -50,6 +176,184 @@
   color: var(--dim);
 }
 
+.entity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  margin-top: var(--s-6);
+}
+
+.h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--fs-96);
+  line-height: var(--lh-display);
+  color: var(--ink);
+}
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .h1 {
+    font-size: 80px; /* §6.2: 96 at 1440, 80 at the 1280–1439 breakpoint */
+  }
+}
+
+.lede {
+  margin: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 22px; /* spec role-size */
+  color: var(--dim);
+}
+
+.ornament {
+  margin: var(--s-1) 0;
+}
+
+.identity {
+  display: flex;
+  gap: var(--s-5);
+  align-items: flex-start;
+}
+.eye {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  color: var(--accent);
+  margin-top: var(--s-2);
+}
+.identityBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+.kicker {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--accent);
+}
+.sentence {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 34px; /* spec role-size */
+  line-height: var(--lh-heading);
+  color: var(--ink);
+}
+.otherName {
+  all: unset;
+  cursor: pointer;
+  font-style: italic;
+  color: var(--accent-hi);
+}
+.otherName:hover {
+  text-decoration: underline;
+}
+.otherName:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+.quote {
+  max-width: 540px;
+  font-size: var(--fs-21);
+}
+.quoteSource {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}
+
+.ties {
+  list-style: none;
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--s-10);
+}
+.tie {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) 0;
+  border-bottom: var(--border);
+}
+.tieName {
+  all: unset;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: var(--fs-21);
+  color: var(--ink);
+}
+.tieName:hover {
+  text-decoration: underline;
+}
+.tieName:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+.tieMeta {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.alsoMentioned {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  color: var(--faint);
+}
+
+.spacer {
+  flex: 1;
+  min-height: var(--s-8);
+}
+
+/* §9.2 fence line, pinned at the bottom of Main. */
+.fenceLine {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-4) 0 var(--s-6);
+}
+.fenceRule {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.fenceGlyph {
+  display: inline-flex;
+  color: var(--dim);
+  cursor: help;
+}
+.fenceCopy {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 17px; /* spec role-size */
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+/* skeleton: H1 bar + 3 list bars */
+.skeleton {
+  margin-top: var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.skelH1 {
+  width: 40%;
+  height: 80px;
+  background: var(--raise);
+}
+.skelBar {
+  width: 60%;
+  height: 20px;
+  background: var(--raise);
+}
+
+/* ---------- right panel ---------- */
+
 .rightPanel {
   width: var(--rail-right-dossier);
   flex: none;
@@ -57,13 +361,46 @@
   border-left: var(--border);
   padding: 30px 24px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  height: 100vh;
+  position: sticky;
+  top: 0;
 }
 
-.placeholder {
+.panelHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.panelTitle {
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  color: var(--dim);
+}
+.panelLink {
   font-family: var(--font-ui);
   font-size: var(--fs-13);
-  color: var(--faint);
-  border: 1px dashed var(--line);
-  padding: var(--s-4);
-  margin-top: var(--s-6);
+  color: var(--dim);
+}
+.panelLink:hover {
+  color: var(--ink);
+}
+
+.legend {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
+  border-top: var(--border);
+  padding-top: var(--s-3);
+}
+
+/* Cytoscape container: sized by the panel (≈352×430 per §6.2), never by the canvas. */
+.ego {
+  width: 100%;
+  height: 430px;
+  flex: none;
 }

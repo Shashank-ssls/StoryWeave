@@ -1,0 +1,3427 @@
+{
+ "slug": "the-hollow-crown",
+ "n": 4,
+ "elements": {
+  "nodes": [
+   {
+    "data": {
+     "id": "s1",
+     "label": "Ael of the Marsh",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Ael of the Marsh (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s2",
+     "label": "Bran Halloway",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Bran Halloway (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s3",
+     "label": "Cael Pell",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Cael Pell (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s4",
+     "label": "Dara Greylock",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Dara Greylock (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s5",
+     "label": "Edric Ostrey",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Edric Ostrey (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s6",
+     "label": "Fen Ferrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Fen Ferrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s7",
+     "label": "Gwyn Nightingale",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Gwyn Nightingale (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s8",
+     "label": "Hale Dunmere",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Hale Dunmere (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s9",
+     "label": "Isolde Morrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Isolde Morrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s10",
+     "label": "Jory the Younger",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Jory the Younger (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s11",
+     "label": "Kestrel Lyre",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Kestrel Lyre (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s12",
+     "label": "Lior Corvane",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Lior Corvane (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s13",
+     "label": "Maren Kell",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Maren Kell (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s14",
+     "label": "Nym Ashvale",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Nym Ashvale (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s15",
+     "label": "Orla of Isk",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Orla of Isk (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s16",
+     "label": "Perrin of the Marsh",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Perrin of the Marsh (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s17",
+     "label": "Quill Halloway",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Quill Halloway (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s18",
+     "label": "Rhoswen Pell",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Rhoswen Pell (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s19",
+     "label": "Sable Greylock",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Sable Greylock (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s20",
+     "label": "Tamsin Ostrey",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Tamsin Ostrey (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s21",
+     "label": "Ulric Ferrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Ulric Ferrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s22",
+     "label": "Vesper Nightingale",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Vesper Nightingale (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s23",
+     "label": "Wyn Dunmere",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Wyn Dunmere (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s24",
+     "label": "Yara Morrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Yara Morrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s25",
+     "label": "Zev the Younger",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Zev the Younger (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s26",
+     "label": "Ael Lyre",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Ael Lyre (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s27",
+     "label": "Bran Corvane",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Bran Corvane (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s28",
+     "label": "Cael Kell",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Cael Kell (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s29",
+     "label": "Dara Ashvale",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Dara Ashvale (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s30",
+     "label": "Edric of Isk",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Edric of Isk (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s31",
+     "label": "Fen of the Marsh",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Fen of the Marsh (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s32",
+     "label": "Gwyn Halloway",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Gwyn Halloway (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s33",
+     "label": "Hale Pell",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Hale Pell (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s34",
+     "label": "Isolde Greylock",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Isolde Greylock (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s35",
+     "label": "Jory Ostrey",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Jory Ostrey (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s36",
+     "label": "Kestrel Ferrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Kestrel Ferrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s37",
+     "label": "Lior Nightingale",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Lior Nightingale (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s38",
+     "label": "Maren Dunmere",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Maren Dunmere (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s39",
+     "label": "Nym Morrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Nym Morrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s40",
+     "label": "Orla the Younger",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Orla the Younger (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s41",
+     "label": "Perrin Lyre",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Perrin Lyre (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s42",
+     "label": "Quill Corvane",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Quill Corvane (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s43",
+     "label": "Rhoswen Kell",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Rhoswen Kell (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s44",
+     "label": "Sable Ashvale",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Sable Ashvale (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s45",
+     "label": "Tamsin of Isk",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Tamsin of Isk (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s46",
+     "label": "Ulric of the Marsh",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Ulric of the Marsh (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s47",
+     "label": "Vesper Halloway",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Vesper Halloway (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s48",
+     "label": "Wyn Pell",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Wyn Pell (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s49",
+     "label": "Yara Greylock",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Yara Greylock (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s50",
+     "label": "Zev Ostrey",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Zev Ostrey (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s51",
+     "label": "Ael Ferrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Ael Ferrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s52",
+     "label": "Bran Nightingale",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Bran Nightingale (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s53",
+     "label": "Cael Dunmere",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Cael Dunmere (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s54",
+     "label": "Dara Morrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Dara Morrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s55",
+     "label": "Edric the Younger",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Edric the Younger (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s56",
+     "label": "Fen Lyre",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Fen Lyre (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s57",
+     "label": "Gwyn Corvane",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Gwyn Corvane (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s58",
+     "label": "Hale Kell",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Hale Kell (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s59",
+     "label": "Isolde Ashvale",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Isolde Ashvale (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s60",
+     "label": "Jory of Isk",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Jory of Isk (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s61",
+     "label": "Kestrel of the Marsh",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Kestrel of the Marsh (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s62",
+     "label": "Lior Halloway",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Lior Halloway (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s63",
+     "label": "Maren Pell",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Maren Pell (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s64",
+     "label": "Nym Greylock",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Nym Greylock (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s65",
+     "label": "Orla Ostrey",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Orla Ostrey (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s66",
+     "label": "Perrin Ferrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Perrin Ferrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s67",
+     "label": "Quill Nightingale",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Quill Nightingale (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s68",
+     "label": "Rhoswen Dunmere",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Rhoswen Dunmere (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s69",
+     "label": "Sable Morrow",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Sable Morrow (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s70",
+     "label": "Tamsin the Younger",
+     "type": "Character",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Tamsin the Younger (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s71",
+     "label": "the Order of of Isk 1",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of of Isk 1 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s72",
+     "label": "the Order of Ostrey 2",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of Ostrey 2 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s73",
+     "label": "the Order of Morrow 3",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of Morrow 3 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s74",
+     "label": "the Order of of Isk 4",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of of Isk 4 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s75",
+     "label": "the Order of Ashvale 5",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of Ashvale 5 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s76",
+     "label": "the Order of Ostrey 6",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of Ostrey 6 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s77",
+     "label": "the Order of Ostrey 7",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of Ostrey 7 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s78",
+     "label": "the Order of Morrow 8",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of Morrow 8 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s79",
+     "label": "the Order of Ashvale 9",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of Ashvale 9 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s80",
+     "label": "the Order of Kell 10",
+     "type": "Organization",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "the Order of Kell 10 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s81",
+     "label": "Marenholm 1",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Marenholm 1 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s82",
+     "label": "Vesperholm 2",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Vesperholm 2 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s83",
+     "label": "Sableholm 3",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Sableholm 3 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s84",
+     "label": "Nymholm 4",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Nymholm 4 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s85",
+     "label": "Vesperholm 5",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Vesperholm 5 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s86",
+     "label": "Marenholm 6",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Marenholm 6 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s87",
+     "label": "Daraholm 7",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "Daraholm 7 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s88",
+     "label": "Edricholm 8",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "Edricholm 8 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s89",
+     "label": "Rhoswenholm 9",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "Rhoswenholm 9 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s90",
+     "label": "Joryholm 10",
+     "type": "Place",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Joryholm 10 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s91",
+     "label": "the Morrow blade 1",
+     "type": "Item",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "the Morrow blade 1 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s92",
+     "label": "the of Isk blade 2",
+     "type": "Item",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "the of Isk blade 2 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s93",
+     "label": "the Nightingale blade 3",
+     "type": "Item",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "the Nightingale blade 3 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s94",
+     "label": "the Ferrow blade 4",
+     "type": "Item",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "the Ferrow blade 4 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s95",
+     "label": "the of Isk blade 5",
+     "type": "Item",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "the of Isk blade 5 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s96",
+     "label": "the the Younger blade 6",
+     "type": "Item",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "the the Younger blade 6 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s97",
+     "label": "the Ashvale blade 7",
+     "type": "Item",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "the Ashvale blade 7 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s98",
+     "label": "the Ferrow blade 8",
+     "type": "Item",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "the Ferrow blade 8 (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s99",
+     "label": "the Old Tongue",
+     "type": "Concept",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "the Old Tongue (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s100",
+     "label": "Glassweaving",
+     "type": "Concept",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "Glassweaving (synthetic)",
+     "properties": {}
+    }
+   },
+   {
+    "data": {
+     "id": "s101",
+     "label": "the Sundering",
+     "type": "Event",
+     "subtype": null,
+     "importance": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "the Sundering (synthetic)",
+     "properties": {}
+    }
+   }
+  ],
+  "edges": [
+   {
+    "data": {
+     "id": "se1",
+     "source": "s1",
+     "target": "s2",
+     "relation": "RelatedTo",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 1"
+    }
+   },
+   {
+    "data": {
+     "id": "se2",
+     "source": "s1",
+     "target": "s3",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 2"
+    }
+   },
+   {
+    "data": {
+     "id": "se3",
+     "source": "s1",
+     "target": "s4",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 3"
+    }
+   },
+   {
+    "data": {
+     "id": "se4",
+     "source": "s1",
+     "target": "s5",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 4"
+    }
+   },
+   {
+    "data": {
+     "id": "se5",
+     "source": "s1",
+     "target": "s6",
+     "relation": "Ally",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 5"
+    }
+   },
+   {
+    "data": {
+     "id": "se6",
+     "source": "s1",
+     "target": "s7",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 6"
+    }
+   },
+   {
+    "data": {
+     "id": "se7",
+     "source": "s1",
+     "target": "s8",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 7"
+    }
+   },
+   {
+    "data": {
+     "id": "se8",
+     "source": "s1",
+     "target": "s9",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 8"
+    }
+   },
+   {
+    "data": {
+     "id": "se9",
+     "source": "s1",
+     "target": "s10",
+     "relation": "RelatedTo",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 9"
+    }
+   },
+   {
+    "data": {
+     "id": "se10",
+     "source": "s1",
+     "target": "s11",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 10"
+    }
+   },
+   {
+    "data": {
+     "id": "se11",
+     "source": "s1",
+     "target": "s12",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 11"
+    }
+   },
+   {
+    "data": {
+     "id": "se12",
+     "source": "s1",
+     "target": "s13",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 12"
+    }
+   },
+   {
+    "data": {
+     "id": "se13",
+     "source": "s1",
+     "target": "s14",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 13"
+    }
+   },
+   {
+    "data": {
+     "id": "se14",
+     "source": "s1",
+     "target": "s15",
+     "relation": "Ally",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 14"
+    }
+   },
+   {
+    "data": {
+     "id": "se15",
+     "source": "s1",
+     "target": "s16",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 15"
+    }
+   },
+   {
+    "data": {
+     "id": "se16",
+     "source": "s1",
+     "target": "s17",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 16"
+    }
+   },
+   {
+    "data": {
+     "id": "se17",
+     "source": "s1",
+     "target": "s18",
+     "relation": "RelatedTo",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 17"
+    }
+   },
+   {
+    "data": {
+     "id": "se18",
+     "source": "s1",
+     "target": "s19",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 18"
+    }
+   },
+   {
+    "data": {
+     "id": "se19",
+     "source": "s1",
+     "target": "s20",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 19"
+    }
+   },
+   {
+    "data": {
+     "id": "se20",
+     "source": "s1",
+     "target": "s21",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 20"
+    }
+   },
+   {
+    "data": {
+     "id": "se21",
+     "source": "s2",
+     "target": "s62",
+     "relation": "Ally",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 21"
+    }
+   },
+   {
+    "data": {
+     "id": "se22",
+     "source": "s3",
+     "target": "s58",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 22"
+    }
+   },
+   {
+    "data": {
+     "id": "se23",
+     "source": "s5",
+     "target": "s25",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 23"
+    }
+   },
+   {
+    "data": {
+     "id": "se24",
+     "source": "s6",
+     "target": "s42",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 24"
+    }
+   },
+   {
+    "data": {
+     "id": "se25",
+     "source": "s7",
+     "target": "s61",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 25"
+    }
+   },
+   {
+    "data": {
+     "id": "se26",
+     "source": "s8",
+     "target": "s53",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 26"
+    }
+   },
+   {
+    "data": {
+     "id": "se27",
+     "source": "s9",
+     "target": "s48",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 27"
+    }
+   },
+   {
+    "data": {
+     "id": "se28",
+     "source": "s10",
+     "target": "s24",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 28"
+    }
+   },
+   {
+    "data": {
+     "id": "se29",
+     "source": "s11",
+     "target": "s16",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 29"
+    }
+   },
+   {
+    "data": {
+     "id": "se30",
+     "source": "s12",
+     "target": "s70",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 30"
+    }
+   },
+   {
+    "data": {
+     "id": "se31",
+     "source": "s13",
+     "target": "s68",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 31"
+    }
+   },
+   {
+    "data": {
+     "id": "se32",
+     "source": "s14",
+     "target": "s20",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 32"
+    }
+   },
+   {
+    "data": {
+     "id": "se33",
+     "source": "s15",
+     "target": "s50",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 33"
+    }
+   },
+   {
+    "data": {
+     "id": "se34",
+     "source": "s16",
+     "target": "s21",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 34"
+    }
+   },
+   {
+    "data": {
+     "id": "se35",
+     "source": "s17",
+     "target": "s55",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 35"
+    }
+   },
+   {
+    "data": {
+     "id": "se36",
+     "source": "s18",
+     "target": "s6",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 36"
+    }
+   },
+   {
+    "data": {
+     "id": "se37",
+     "source": "s19",
+     "target": "s36",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 37"
+    }
+   },
+   {
+    "data": {
+     "id": "se38",
+     "source": "s20",
+     "target": "s63",
+     "relation": "Ally",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 38"
+    }
+   },
+   {
+    "data": {
+     "id": "se39",
+     "source": "s21",
+     "target": "s59",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 39"
+    }
+   },
+   {
+    "data": {
+     "id": "se40",
+     "source": "s22",
+     "target": "s26",
+     "relation": "RelatedTo",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 40"
+    }
+   },
+   {
+    "data": {
+     "id": "se41",
+     "source": "s23",
+     "target": "s2",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 41"
+    }
+   },
+   {
+    "data": {
+     "id": "se42",
+     "source": "s24",
+     "target": "s3",
+     "relation": "Ally",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 42"
+    }
+   },
+   {
+    "data": {
+     "id": "se43",
+     "source": "s25",
+     "target": "s67",
+     "relation": "RelatedTo",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 43"
+    }
+   },
+   {
+    "data": {
+     "id": "se44",
+     "source": "s26",
+     "target": "s37",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 44"
+    }
+   },
+   {
+    "data": {
+     "id": "se45",
+     "source": "s27",
+     "target": "s10",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 45"
+    }
+   },
+   {
+    "data": {
+     "id": "se46",
+     "source": "s28",
+     "target": "s65",
+     "relation": "Ally",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 46"
+    }
+   },
+   {
+    "data": {
+     "id": "se47",
+     "source": "s29",
+     "target": "s59",
+     "relation": "Ally",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 47"
+    }
+   },
+   {
+    "data": {
+     "id": "se48",
+     "source": "s30",
+     "target": "s35",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 48"
+    }
+   },
+   {
+    "data": {
+     "id": "se49",
+     "source": "s31",
+     "target": "s67",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 49"
+    }
+   },
+   {
+    "data": {
+     "id": "se50",
+     "source": "s32",
+     "target": "s10",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 50"
+    }
+   },
+   {
+    "data": {
+     "id": "se51",
+     "source": "s33",
+     "target": "s51",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 51"
+    }
+   },
+   {
+    "data": {
+     "id": "se52",
+     "source": "s34",
+     "target": "s5",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 52"
+    }
+   },
+   {
+    "data": {
+     "id": "se53",
+     "source": "s35",
+     "target": "s60",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 53"
+    }
+   },
+   {
+    "data": {
+     "id": "se54",
+     "source": "s36",
+     "target": "s6",
+     "relation": "Ally",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 54"
+    }
+   },
+   {
+    "data": {
+     "id": "se55",
+     "source": "s37",
+     "target": "s5",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 55"
+    }
+   },
+   {
+    "data": {
+     "id": "se56",
+     "source": "s38",
+     "target": "s48",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 56"
+    }
+   },
+   {
+    "data": {
+     "id": "se57",
+     "source": "s39",
+     "target": "s9",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 57"
+    }
+   },
+   {
+    "data": {
+     "id": "se58",
+     "source": "s40",
+     "target": "s37",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 58"
+    }
+   },
+   {
+    "data": {
+     "id": "se59",
+     "source": "s41",
+     "target": "s18",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 59"
+    }
+   },
+   {
+    "data": {
+     "id": "se60",
+     "source": "s42",
+     "target": "s56",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 60"
+    }
+   },
+   {
+    "data": {
+     "id": "se61",
+     "source": "s43",
+     "target": "s56",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 61"
+    }
+   },
+   {
+    "data": {
+     "id": "se62",
+     "source": "s44",
+     "target": "s42",
+     "relation": "RelatedTo",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 62"
+    }
+   },
+   {
+    "data": {
+     "id": "se63",
+     "source": "s45",
+     "target": "s42",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 63"
+    }
+   },
+   {
+    "data": {
+     "id": "se64",
+     "source": "s46",
+     "target": "s27",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 64"
+    }
+   },
+   {
+    "data": {
+     "id": "se65",
+     "source": "s47",
+     "target": "s52",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 65"
+    }
+   },
+   {
+    "data": {
+     "id": "se66",
+     "source": "s48",
+     "target": "s54",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 66"
+    }
+   },
+   {
+    "data": {
+     "id": "se67",
+     "source": "s49",
+     "target": "s9",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 67"
+    }
+   },
+   {
+    "data": {
+     "id": "se68",
+     "source": "s50",
+     "target": "s49",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 68"
+    }
+   },
+   {
+    "data": {
+     "id": "se69",
+     "source": "s51",
+     "target": "s21",
+     "relation": "RelatedTo",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 69"
+    }
+   },
+   {
+    "data": {
+     "id": "se70",
+     "source": "s52",
+     "target": "s11",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 70"
+    }
+   },
+   {
+    "data": {
+     "id": "se71",
+     "source": "s53",
+     "target": "s44",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 71"
+    }
+   },
+   {
+    "data": {
+     "id": "se72",
+     "source": "s54",
+     "target": "s44",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 72"
+    }
+   },
+   {
+    "data": {
+     "id": "se73",
+     "source": "s55",
+     "target": "s36",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 73"
+    }
+   },
+   {
+    "data": {
+     "id": "se74",
+     "source": "s56",
+     "target": "s31",
+     "relation": "RelatedTo",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 74"
+    }
+   },
+   {
+    "data": {
+     "id": "se75",
+     "source": "s57",
+     "target": "s38",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 75"
+    }
+   },
+   {
+    "data": {
+     "id": "se76",
+     "source": "s58",
+     "target": "s35",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 76"
+    }
+   },
+   {
+    "data": {
+     "id": "se77",
+     "source": "s59",
+     "target": "s32",
+     "relation": "Mentor",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 77"
+    }
+   },
+   {
+    "data": {
+     "id": "se78",
+     "source": "s60",
+     "target": "s34",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 78"
+    }
+   },
+   {
+    "data": {
+     "id": "se79",
+     "source": "s61",
+     "target": "s20",
+     "relation": "Ally",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 79"
+    }
+   },
+   {
+    "data": {
+     "id": "se80",
+     "source": "s62",
+     "target": "s49",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 80"
+    }
+   },
+   {
+    "data": {
+     "id": "se81",
+     "source": "s63",
+     "target": "s32",
+     "relation": "Enemy",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 81"
+    }
+   },
+   {
+    "data": {
+     "id": "se82",
+     "source": "s64",
+     "target": "s28",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 82"
+    }
+   },
+   {
+    "data": {
+     "id": "se83",
+     "source": "s65",
+     "target": "s27",
+     "relation": "Serves",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 83"
+    }
+   },
+   {
+    "data": {
+     "id": "se84",
+     "source": "s66",
+     "target": "s63",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 84"
+    }
+   },
+   {
+    "data": {
+     "id": "se85",
+     "source": "s67",
+     "target": "s64",
+     "relation": "Family",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 85"
+    }
+   },
+   {
+    "data": {
+     "id": "se86",
+     "source": "s68",
+     "target": "s12",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 86"
+    }
+   },
+   {
+    "data": {
+     "id": "se87",
+     "source": "s69",
+     "target": "s10",
+     "relation": "RelatedTo",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 87"
+    }
+   },
+   {
+    "data": {
+     "id": "se88",
+     "source": "s70",
+     "target": "s41",
+     "relation": "Rival",
+     "tier": 2,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 88"
+    }
+   },
+   {
+    "data": {
+     "id": "se89",
+     "source": "s1",
+     "target": "s71",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 89"
+    }
+   },
+   {
+    "data": {
+     "id": "se90",
+     "source": "s2",
+     "target": "s82",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 90"
+    }
+   },
+   {
+    "data": {
+     "id": "se91",
+     "source": "s3",
+     "target": "s93",
+     "relation": "OwnsItem",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 91"
+    }
+   },
+   {
+    "data": {
+     "id": "se92",
+     "source": "s4",
+     "target": "s74",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 92"
+    }
+   },
+   {
+    "data": {
+     "id": "se93",
+     "source": "s6",
+     "target": "s86",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 93"
+    }
+   },
+   {
+    "data": {
+     "id": "se94",
+     "source": "s7",
+     "target": "s77",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 94"
+    }
+   },
+   {
+    "data": {
+     "id": "se95",
+     "source": "s10",
+     "target": "s80",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 95"
+    }
+   },
+   {
+    "data": {
+     "id": "se96",
+     "source": "s10",
+     "target": "s90",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 96"
+    }
+   },
+   {
+    "data": {
+     "id": "se97",
+     "source": "s12",
+     "target": "s94",
+     "relation": "OwnsItem",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 97"
+    }
+   },
+   {
+    "data": {
+     "id": "se98",
+     "source": "s13",
+     "target": "s73",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 98"
+    }
+   },
+   {
+    "data": {
+     "id": "se99",
+     "source": "s14",
+     "target": "s84",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 99"
+    }
+   },
+   {
+    "data": {
+     "id": "se100",
+     "source": "s16",
+     "target": "s76",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 100"
+    }
+   },
+   {
+    "data": {
+     "id": "se101",
+     "source": "s18",
+     "target": "s88",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 101"
+    }
+   },
+   {
+    "data": {
+     "id": "se102",
+     "source": "s19",
+     "target": "s79",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 102"
+    }
+   },
+   {
+    "data": {
+     "id": "se103",
+     "source": "s21",
+     "target": "s95",
+     "relation": "OwnsItem",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 103"
+    }
+   },
+   {
+    "data": {
+     "id": "se104",
+     "source": "s22",
+     "target": "s72",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 104"
+    }
+   },
+   {
+    "data": {
+     "id": "se105",
+     "source": "s22",
+     "target": "s82",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 105"
+    }
+   },
+   {
+    "data": {
+     "id": "se106",
+     "source": "s25",
+     "target": "s75",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 106"
+    }
+   },
+   {
+    "data": {
+     "id": "se107",
+     "source": "s26",
+     "target": "s86",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 107"
+    }
+   },
+   {
+    "data": {
+     "id": "se108",
+     "source": "s28",
+     "target": "s78",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 108"
+    }
+   },
+   {
+    "data": {
+     "id": "se109",
+     "source": "s30",
+     "target": "s90",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 109"
+    }
+   },
+   {
+    "data": {
+     "id": "se110",
+     "source": "s30",
+     "target": "s96",
+     "relation": "OwnsItem",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 110"
+    }
+   },
+   {
+    "data": {
+     "id": "se111",
+     "source": "s31",
+     "target": "s71",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 111"
+    }
+   },
+   {
+    "data": {
+     "id": "se112",
+     "source": "s34",
+     "target": "s74",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 112"
+    }
+   },
+   {
+    "data": {
+     "id": "se113",
+     "source": "s34",
+     "target": "s84",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 113"
+    }
+   },
+   {
+    "data": {
+     "id": "se114",
+     "source": "s37",
+     "target": "s77",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 114"
+    }
+   },
+   {
+    "data": {
+     "id": "se115",
+     "source": "s38",
+     "target": "s88",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 115"
+    }
+   },
+   {
+    "data": {
+     "id": "se116",
+     "source": "s39",
+     "target": "s97",
+     "relation": "OwnsItem",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 116"
+    }
+   },
+   {
+    "data": {
+     "id": "se117",
+     "source": "s40",
+     "target": "s80",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 117"
+    }
+   },
+   {
+    "data": {
+     "id": "se118",
+     "source": "s42",
+     "target": "s82",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 118"
+    }
+   },
+   {
+    "data": {
+     "id": "se119",
+     "source": "s43",
+     "target": "s73",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 119"
+    }
+   },
+   {
+    "data": {
+     "id": "se120",
+     "source": "s46",
+     "target": "s76",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 120"
+    }
+   },
+   {
+    "data": {
+     "id": "se121",
+     "source": "s46",
+     "target": "s86",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 121"
+    }
+   },
+   {
+    "data": {
+     "id": "se122",
+     "source": "s48",
+     "target": "s98",
+     "relation": "OwnsItem",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 122"
+    }
+   },
+   {
+    "data": {
+     "id": "se123",
+     "source": "s49",
+     "target": "s79",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 123"
+    }
+   },
+   {
+    "data": {
+     "id": "se124",
+     "source": "s50",
+     "target": "s90",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 124"
+    }
+   },
+   {
+    "data": {
+     "id": "se125",
+     "source": "s52",
+     "target": "s72",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 125"
+    }
+   },
+   {
+    "data": {
+     "id": "se126",
+     "source": "s54",
+     "target": "s84",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 126"
+    }
+   },
+   {
+    "data": {
+     "id": "se127",
+     "source": "s55",
+     "target": "s75",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 127"
+    }
+   },
+   {
+    "data": {
+     "id": "se128",
+     "source": "s57",
+     "target": "s91",
+     "relation": "OwnsItem",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 128"
+    }
+   },
+   {
+    "data": {
+     "id": "se129",
+     "source": "s58",
+     "target": "s78",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 129"
+    }
+   },
+   {
+    "data": {
+     "id": "se130",
+     "source": "s58",
+     "target": "s88",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 130"
+    }
+   },
+   {
+    "data": {
+     "id": "se131",
+     "source": "s61",
+     "target": "s71",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 131"
+    }
+   },
+   {
+    "data": {
+     "id": "se132",
+     "source": "s62",
+     "target": "s82",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 132"
+    }
+   },
+   {
+    "data": {
+     "id": "se133",
+     "source": "s64",
+     "target": "s74",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 133"
+    }
+   },
+   {
+    "data": {
+     "id": "se134",
+     "source": "s66",
+     "target": "s86",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 134"
+    }
+   },
+   {
+    "data": {
+     "id": "se135",
+     "source": "s66",
+     "target": "s92",
+     "relation": "OwnsItem",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 135"
+    }
+   },
+   {
+    "data": {
+     "id": "se136",
+     "source": "s67",
+     "target": "s77",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 136"
+    }
+   },
+   {
+    "data": {
+     "id": "se137",
+     "source": "s70",
+     "target": "s80",
+     "relation": "MemberOf",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 137"
+    }
+   },
+   {
+    "data": {
+     "id": "se138",
+     "source": "s70",
+     "target": "s90",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 138"
+    }
+   },
+   {
+    "data": {
+     "id": "se139",
+     "source": "s71",
+     "target": "s81",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 139"
+    }
+   },
+   {
+    "data": {
+     "id": "se140",
+     "source": "s72",
+     "target": "s82",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 140"
+    }
+   },
+   {
+    "data": {
+     "id": "se141",
+     "source": "s73",
+     "target": "s83",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 141"
+    }
+   },
+   {
+    "data": {
+     "id": "se142",
+     "source": "s74",
+     "target": "s84",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 142"
+    }
+   },
+   {
+    "data": {
+     "id": "se143",
+     "source": "s75",
+     "target": "s85",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 143"
+    }
+   },
+   {
+    "data": {
+     "id": "se144",
+     "source": "s76",
+     "target": "s86",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 144"
+    }
+   },
+   {
+    "data": {
+     "id": "se145",
+     "source": "s77",
+     "target": "s87",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 145"
+    }
+   },
+   {
+    "data": {
+     "id": "se146",
+     "source": "s78",
+     "target": "s88",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 146"
+    }
+   },
+   {
+    "data": {
+     "id": "se147",
+     "source": "s79",
+     "target": "s89",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 1,
+     "revealed_chapter": 1,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 147"
+    }
+   },
+   {
+    "data": {
+     "id": "se148",
+     "source": "s80",
+     "target": "s90",
+     "relation": "LocatedIn",
+     "tier": 1,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "gliner",
+     "evidence_span": "synthetic evidence 148"
+    }
+   },
+   {
+    "data": {
+     "id": "se149",
+     "source": "s4",
+     "target": "s41",
+     "relation": "SECRET_IDENTITY",
+     "tier": 3,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "llm",
+     "evidence_span": "the hooded rider was Dara Halloway all along"
+    }
+   },
+   {
+    "data": {
+     "id": "se150",
+     "source": "s1",
+     "target": "s46",
+     "relation": "ALIAS",
+     "tier": 3,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "llm",
+     "evidence_span": "Ael and the Marsh Warden were one"
+    }
+   },
+   {
+    "data": {
+     "id": "se151",
+     "source": "s11",
+     "target": "s51",
+     "relation": "REINCARNATION",
+     "tier": 3,
+     "first_seen_chapter": 3,
+     "revealed_chapter": 3,
+     "extraction_method": "llm",
+     "evidence_span": "the child bore the old king's mark"
+    }
+   },
+   {
+    "data": {
+     "id": "se152",
+     "source": "s21",
+     "target": "s61",
+     "relation": "TRANSMIGRATED_INTO",
+     "tier": 3,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "llm",
+     "evidence_span": "she woke in the smith's body"
+    }
+   },
+   {
+    "data": {
+     "id": "se153",
+     "source": "s6",
+     "target": "s66",
+     "relation": "SAME_AS",
+     "tier": 3,
+     "first_seen_chapter": 4,
+     "revealed_chapter": 4,
+     "extraction_method": "llm",
+     "evidence_span": "two names, one hand on the ledger"
+    }
+   },
+   {
+    "data": {
+     "id": "se154",
+     "source": "s8",
+     "target": "s9",
+     "relation": "ALIAS",
+     "tier": 3,
+     "first_seen_chapter": 2,
+     "revealed_chapter": 2,
+     "extraction_method": "llm",
+     "evidence_span": null
+    }
+   }
+  ]
+ },
+ "_synthetic": "TEST FIXTURE ONLY — generated by make-synthetic.mjs, never demo data"
+}

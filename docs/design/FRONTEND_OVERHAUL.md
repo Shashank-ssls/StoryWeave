@@ -669,3 +669,136 @@ Next: **R4 — Dossier** (rail cast list with degree sort + "changed" tags via
 line, concentric ego graph, entity-not-present state, default entity = highest-degree
 person). Model: Sonnet 5 is fine — it's layout + view-model work over a fence that is
 now tested; the F8 diff is already a unit-tested pure function.
+
+## Phase 4 — Dossier — GREEN
+
+Scope delivered:
+- **Step 0 (R3 follow-up).** Backward-fetch failure now shows the §6.7 error CARD ("The
+  archive didn't answer." + Try again) in the main column instead of a banner; the
+  bookmark commits to the lower chapter, cache is purged, DOM holds no higher-chapter
+  data, Try again re-requests exactly that chapter. Behaviour was already the safe one
+  (R3 report); the card + test are new. Banner is now only for "still showing Chapter N".
+- **Step 1 (shared graph foundation).** `graph/viewModel.ts` — pure `(payload, options)
+  → {nodes, edges, alsoMentioned, byId}`: §7.1 kind mapping (Title never a node; Concept/
+  Event → "also mentioned"), degree from merged fenced edges, §7.3 parallel merge
+  (identity absorbs social in either payload order; other parallels → one edge with a
+  relation list, earliest chapter kept), §8.4 quote-less identity edge dropped with an
+  injectable `warn` (console.warn by default), §7.4 copy table `IDENTITY_COPY` checked
+  against `ontology.ts`'s five identity enums — **no enum was missing, nothing added**
+  (SAME_AS shares ALIAS's pattern per the spec table). Helpers: `tiesOf`, `sortCast`,
+  `principalOf`, `countWords`, `initialOf`, `tieLabel`. `graph/codexStyle.ts` ported from
+  `docs/design/cytoscape-style.js` (TS, typed loosely once at the export because
+  Cytoscape's typings reject `mapData` strings/underlay-*), with the tokens.css mirror
+  header; now the single lint-exempt Cytoscape file (GraphView.tsx moved to LEGACY_FILES).
+- **Step 2 (Dossier, §6.2 complete).** Rail: wordmark → landing, title, R3 chapter block,
+  `CastList` (degree → first appearance → name; selected row `--raise` + 2px `--ink` rule +
+  600; "changed" tags; Orders & Houses / Places & Relics inline clickable; top 12 + "All N
+  people →" → searchable full list; scrolls independently). Main: `EntityMain` — H1
+  Display 96 (80 at 1280–1439 via media query), lede from the theme template with words to
+  twenty (+ a `ledeOne` singular, "one bond recorded"), one ornament, identity blocks
+  newest-first (kicker, sentence with the other name as an italic `--accent-hi` link, curly
+  evidence quote, plain "Chapter N" since D5 is absent), ties grid 2-col sorted by revealed
+  chapter then name with 12 + "All N ties →", "Also mentioned" line, fence line pinned at
+  the bottom (arch-door glyph with the §9.2 tooltip as `title`). Right panel: "The Stemma
+  of X" + "open full →" (routes to `#/work/:slug/web?focus=:id`), `EgoGraph` (Cytoscape
+  `concentric`, codexStyle, focus disk with initial, 1-hop `.near`, 2-hop `.far`; click →
+  dossier; drawn ids mirrored to `data-nodes`/`data-edges` for the DOM tests), legend.
+  States: skeleton (H1 bar + 3 bars), not-present card with "Go to the principal
+  character", error card. Routing: `#/work/:slug` → principal via `location.replace` (no
+  history entry, hashchange still fires). `codex/states/StateCard` is the shared §6.7 card.
+- **Chapter model:** `prevData` (n−1) added to `ChapterProvider` — fetched only after the
+  bookmark's own payload commits, through the same cache, with its own AbortController
+  (never touches the main request or the bookmark). F8 is therefore satisfied by
+  construction: the tags diff `data` against `prevData`, both fenced.
+- `tests/fixtures/synthetic-100.json` (+ `make-synthetic.mjs`, seeded, reproducible):
+  101 entities / 154 edges / 5 quoted identity edges + 1 deliberately quote-less one;
+  served only via route interception with a fake server fence. R5 reuses it.
+
+Spec sections covered: §2 P1/P3/P5/P7/P8, §6.2 all items, §6.7 (loading / not-present /
+error cards), §7.1–§7.4, §8.4, §9.1 F4 (dossier) + F8, §9.2, §12.
+
+Backend data note (frozen, not changed): at n=4 the Hollow Crown payload REPLACES Wren→
+Caelum's `SECRET_IDENTITY` (e12, revealed 2) with `TRANSMIGRATED_INTO` (e14, revealed 4)
+— e12 is absent from the n=4 response. So Wren's chapter-4 dossier shows one
+transmigration block, not two blocks, and the chapter-4 "changed" tags mark Wren + Caelum.
+The DOM tests assert exactly that, from the fixtures.
+
+Visual comparison (artboard 2, MEASURED — `.shots/phase-4/*` at 1440×900 and 1280×720,
+14 real-data shots + 2 synthetic, inspected; one fix loop for the rail scroll clip, one for
+the ego cap, one for the lede singular):
+| Element | Status | Note |
+|---|---|---|
+| Rail: wordmark, title, chapter block | matches | unchanged from R3 |
+| Dramatis Personae header + hairline | matches | Body 17 `--dim` |
+| People rows, Body 19, degree sort | matches | Wren first (degree 4) |
+| Selected row (`--raise`, 2px `--ink` rule, 600) | matches | |
+| "changed" tag, italic `--accent` | matches | ch2: Wren (identity) + 3 new; ch3: Sparrow, Veris; ch4: Wren, Caelum; ch1: none |
+| Orders & Houses / Places & Relics inline | matches | `·`-separated, `--dim`, clickable |
+| Rail scrolls when long | matches (after fix) | first render clipped the groups; `.cast{flex:1 1 auto}` |
+| Section label + tabs row | matches | |
+| H1 Display 96 / 80 @1280 | matches | measured via the two shots |
+| Lede italic Body 22 | matches | "first named in Chapter I · four bonds recorded" |
+| Ornament 480px, once | matches | |
+| Identity block: eye 44px `--accent`, kicker, sentence 34px, quote 21px ≤540px | matches | quote is the real `evidence_span` ("Wren was Caelum.") |
+| "Show it in the chapter →" | deviates (spec fallback) | D5 absent → plain "Chapter II" text, per §6.2 item 5 |
+| Ties grid 2-col, name 21 / meta 13, hairline | matches | labels are the real relations ("in", "owns", "has ability"; artboard's "carries" is illustrative) |
+| Fence line: rule — glyph — copy — rule | matches | tooltip on hover (native `title`) |
+| Right panel title + "open full →" | matches | |
+| Ego graph: focus disk with initial, ring, 2-hop faint, red identity edge | matches | 2-hop ring dropped when the ego set would exceed 40 nodes (synthetic hub) — labels stayed legible |
+| Legend line UI 13 | matches | |
+| Red only in: kicker, other-name, changed tag, ego identity edge | matches | Dunmore's dossier (no identity) shows red only on the faint 2-hop Wren–Caelum edge |
+| Pirata One ≥ 28px | matches | H1 96/80, state headline 36, novel title 32; test:style 5/5 |
+| No mural under body text | matches | main is solid `--bg` |
+| Not-present card (Veris @2) | matches spec | neutral copy; never names her |
+| Skeleton | matches spec | H1 bar + 3 bars, no spinner |
+
+Fence tests: **27/27 passed, 4 fixme** MEASURED (`npm run test:fence`, logs attached).
+Newly active: F4 (dossier variant) and F8. Remaining fixme, named by phase: F4 search
+(R8), F6 (inactive while D6 absent), F7 (R7), F9 (R8). Three R3 expectations updated
+because the model now legitimately fetches n−1 after a commit (`[3,2]` instead of `[3]`,
+etc.) — each still asserts nothing above the bookmark.
+Dossier E2E: **6/6** MEASURED (`npm run test:dossier`): the 1→2→3→4→2 walk asserts,
+against an independent re-derivation from the R0 fixtures, that identity blocks, ties,
+cast, ego nodes AND ego edges, and "changed" tags equal the fenced payload at every step
+and that requests are only n / n−1; Veris–Sparrow block present at 3 / card at 2 with
+F4 copy and zero old data in the DOM; principal redirect; Step 0 backward failure;
+skeleton; synthetic-100 cast overflow (12 → "All 70 people →" → search), ties overflow
+(12 → "All 21 ties →"), exactly one distinct `console.warn` for the quote-less edge.
+Unit: **25/25** (`viewModel` every rule incl. Title exclusion and identity-absorbs-social
+in both orders, degree, cast sort, ties, copy table vs ontology, count words, initials).
+
+Style/static checks: MEASURED — lint:design 61 files clean (red-permitted 4: +
+`Dossier.module.css`; legacy 3: + `GraphView.tsx`); test:style 5/5; test:geometry 13/13;
+typecheck + build clean; shoot phases 0–4 all pass (4+6+12+20+16 shots), zero console
+errors (the synthetic `console.warn` is a warning, not an error, and is asserted only in
+the test that provokes it).
+
+Deleted old code: none this phase (R2's Dossier placeholder boxes replaced in place).
+
+Backend deps hit: D1 quote (present, used), D3 chapter_count (used), D4 alias search →
+label search over the fenced payload (equivalent per R0), D5 chapter link → absent, plain
+text. D6 still absent.
+
+Deviations kept (with reason):
+- Identity sentence is always in source→target order with the *other* endpoint linked
+  (§7.4 direction lives in the copy): on Prince Caelum's dossier it reads "Wren now lives
+  on as *Prince Caelum*." with Wren as the link — correct direction, entity not first.
+- "changed" tags are empty at chapter 1 (no n−1 exists; tagging the whole cast would
+  say nothing). At every later chapter they are exactly F8's diff.
+- Ego graph caps the 2-hop ring at 40 total nodes (see table). ASSERTED-acceptable:
+  even 1-hop labels fade for a 21-neighbour hub at panel size (`min-zoomed-font-size`),
+  which is §7.2's intended behaviour, not a bug.
+- Fence-glyph tooltip is the native `title` attribute rather than a custom popover —
+  the copy is the spec's; R9 polish can restyle it if wanted.
+
+BROKEN / open: none.
+
+MEASURED (regression guards): pytest 124 passed / 6 skipped (unchanged).
+
+Commit: (see SESSION_LOG.md Session 5) pushed: yes.
+
+Next: **R5 — The Stemma** (port is done; build the full-graph screen: cola physics
+§7.6, focus mode §8.3, principal filter + org folding badge, zoom tiers §7.5, selection
+panel, fenced search, centre mask; the synthetic-100 default-fit label-overlap screenshot).
+The view model, style and fixture all exist now, so R5 is mostly canvas interaction work.
+Model: Sonnet 5 is fine.

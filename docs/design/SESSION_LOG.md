@@ -76,3 +76,20 @@
 - **Issues:** MEASURED — `recordGraphRequests` matched Vite's `src/graph/diff.ts` URL (helper bug, fixed); my first "slow older response" test was a no-op (`[` at chapter 1) and rewritten; `]` opened an inert dialog for an unknown slug (fixed: gated on chapter_count). Nothing BROKEN. All suites green: pytest 124/6, typecheck, build, lint:design 52 files, style 5/5, geometry 13/13, fence 25/25 (+5 fixme), unit 11/11, shoot 0/1/2/3 zero console errors.
 - **Stopped at:** R3 green, committed and pushed.
 - **Next:** R4 Dossier (Sonnet 5 recommended).
+
+## Session 5 — R4 Dossier (same session as R3, continued)
+
+- **Date:** 2026-09-21
+- **Model / effort:** Opus 5, low effort (user asked for Sonnet 5; the model can't be switched mid-session, user said "go" on Opus)
+- **Phase(s):** R4 (+ Step 0 R3 follow-up, Step 1 graph foundation pulled forward from R5)
+- **Commits:** 46809ea → (this commit; see `git log`)
+- **Done:**
+  - `graph/viewModel.ts` (pure, 25 unit tests) + `graph/codexStyle.ts` port; GraphView.tsx → legacy allow-list.
+  - `ChapterProvider.prevData` (n−1 through the same cache, own controller) for F8.
+  - Dossier complete: `CastList`, `EntityMain`, `EgoGraph` (concentric), `StateCard` (§6.7), skeleton, not-present, error card, principal redirect, fence line.
+  - `tests/dossier.spec.ts` (6 E2E incl. the 1→2→3→4→2 DOM-vs-fixture walk), F4 dossier + F8 activated in fence.spec (27 pass / 4 fixme), `synthetic-100.json` + generator.
+  - Phase-4 shots (16) inspected vs artboard 2; comparison table in §9.
+- **Decisions:** error card replaces the banner whenever nothing is on screen; identity sentence keeps source→target order; changed tags empty at ch 1; ego 2-hop ring capped at 40 nodes; fence tooltip = native `title`.
+- **Issues:** MEASURED — rail cast clipped instead of scrolling (fixed); "one bonds recorded" (fixed with `ledeOne`); synthetic hub ego graph zoomed labels away (capped); my first Step 0 test scenario had chapter 1 already cached by the new n−1 fetch (rewritten to start at 4); three R3 fence expectations updated for the legitimate n−1 request. Backend note: n=4 replaces e12 SECRET_IDENTITY with e14 TRANSMIGRATED_INTO (frozen, documented). Nothing BROKEN.
+- **Stopped at:** R4 green, committed and pushed.
+- **Next:** R5 The Stemma (Sonnet 5 recommended).

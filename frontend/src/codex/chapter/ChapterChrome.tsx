@@ -53,15 +53,16 @@ export default function ChapterChrome(): JSX.Element {
         </div>
       )}
 
-      {m.banner && (
+      {/* The banner is for a failure with older data still on screen (§6.7). When
+          nothing is on screen (initial load failed, or a backward move's fetch failed
+          after its purge) the screen itself shows the §6.7 error CARD instead. */}
+      {m.banner && m.banner.showing !== null && (
         <div className={styles.banner} role="alert" data-testid="error-banner">
           <span>
-            {m.banner.showing !== null
-              ? fillTemplate(codexTheme.bannerError, {
-                  failed: roman(m.banner.failed),
-                  showing: roman(m.banner.showing),
-                })
-              : fillTemplate(codexTheme.bannerErrorNothing, { failed: roman(m.banner.failed) })}
+            {fillTemplate(codexTheme.bannerError, {
+              failed: roman(m.banner.failed),
+              showing: roman(m.banner.showing),
+            })}
           </span>
           <Button variant="quiet" onClick={() => m.requestChapter(m.banner?.failed ?? m.bookmark)} data-testid="banner-retry">
             {codexTheme.tryAgain}

@@ -207,6 +207,64 @@ export async function getShots(phase) {
         },
       ];
     }
+    case "4": {
+      // R4 — Dossier. Real demo data except the clearly-named synthetic fixture shot.
+      const SLUG = "the-hollow-crown";
+      const KEY = `storyweave:bookmark:${SLUG}`;
+      const GRAPH_RE = /\/api\/v1\/works\/[^/]+\/graph\?n=\d+/;
+      const nOf = (url) => Number(/[?&]n=(\d+)/.exec(url)?.[1]);
+      const dossierAt = async (page, baseUrl, n, entity = "1") => {
+        await page.goto(`${baseUrl}/#/work/${SLUG}/entity/${entity}`, { waitUntil: "networkidle" });
+        await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, String(n)]);
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForSelector('[data-testid="entity-main"], [data-testid="state-not-present"]');
+        await page.waitForTimeout(600); // ego layout + n−1 tags
+      };
+      return [
+        { name: "dossier-wren-ch1", run: (p, b) => dossierAt(p, b, 1) },
+        { name: "dossier-wren-ch2", run: (p, b) => dossierAt(p, b, 2) },
+        { name: "dossier-wren-ch3", run: (p, b) => dossierAt(p, b, 3) },
+        { name: "dossier-wren-ch4", run: (p, b) => dossierAt(p, b, 4) },
+        // Ser Dunmore (9): a person with no identity edge — no identity block, no red.
+        { name: "dossier-dunmore-ch4", run: (p, b) => dossierAt(p, b, 4, "9") },
+        // Lady Veris (12) at chapter 2: not met yet → §6.7 card.
+        { name: "dossier-not-present", run: (p, b) => dossierAt(p, b, 2, "12") },
+        {
+          name: "dossier-skeleton",
+          async run(page, baseUrl) {
+            await page.route(GRAPH_RE, async (route) => {
+              await new Promise((r) => setTimeout(r, 5000));
+              await route.continue();
+            });
+            await page.goto(`${baseUrl}/#/work/${SLUG}/entity/1`);
+            await page.waitForSelector('[data-testid="skeleton"]');
+          },
+        },
+        {
+          name: "dossier-synthetic-100",
+          async run(page, baseUrl) {
+            const fs = await import("node:fs");
+            const synthetic = JSON.parse(fs.readFileSync(new URL("../tests/fixtures/synthetic-100.json", import.meta.url), "utf8"));
+            await page.route(GRAPH_RE, async (route) => {
+              const n = nOf(route.request().url());
+              const fenced = {
+                slug: SLUG, n,
+                elements: {
+                  nodes: synthetic.elements.nodes.filter((x) => x.data.revealed_chapter <= n),
+                  edges: synthetic.elements.edges.filter((x) => x.data.revealed_chapter <= n),
+                },
+              };
+              await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(fenced) });
+            });
+            await page.goto(`${baseUrl}/#/work/${SLUG}`, { waitUntil: "networkidle" });
+            await page.evaluate((k) => localStorage.setItem(k, "4"), KEY);
+            await page.reload({ waitUntil: "networkidle" });
+            await page.waitForSelector('[data-testid="entity-main"]');
+            await page.waitForTimeout(800);
+          },
+        },
+      ];
+    }
     default:
       throw new Error(`No shots defined for phase "${phase}" yet — add one to shots.config.mjs.`);
   }
