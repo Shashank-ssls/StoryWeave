@@ -165,7 +165,7 @@
 - **Model / effort:** Sonnet 5, high effort
 - **Phase(s):** R7, R8 (of R7→R8→R9 planned for this session; stopped before R9 on
   explicit user instruction mid-session — see below)
-- **Commits:** 782998b → b475ded (R7) → (R8 commit; see `git log`)
+- **Commits:** 782998b → b475ded (R7) → 056fac7 (R8)
 - **Done:**
   - `graph/chronicleModel.ts` (new, pure, 13 unit tests): `chronicleRows` (reuses
     `stemmaModel.visibleGraph`'s principal/everyone filter), `columnLayout` (small ≤12 /
