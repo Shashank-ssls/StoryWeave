@@ -1,0 +1,73 @@
+/* DESIGN_SPEC.md §10 Button. Tokens only — see docs/design/tokens.css. */
+
+.btn {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  min-height: var(--control-h);
+  padding: 0 var(--s-6);
+  border-radius: var(--radius);
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  color: var(--faint);
+}
+
+/* primary — filled --ink, text --on-ink, 700 weight */
+.btn-primary {
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 700;
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.btn-primary:disabled {
+  background: var(--faint);
+  color: var(--on-ink);
+}
+
+/* outline — 1px --ink border */
+.btn-outline {
+  border: var(--border-strong);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--raise);
+}
+.btn-outline:disabled {
+  border-color: var(--faint);
+}
+
+/* quiet — text only, --dim */
+.btn-quiet {
+  color: var(--dim);
+  padding: 0 var(--s-2);
+}
+.btn-quiet:hover:not(:disabled) {
+  background: var(--raise);
+  color: var(--ink);
+}
+
+/* icon — 44x44 square, borderless, glyph only */
+.btn-icon {
+  width: var(--control-h);
+  height: var(--control-h);
+  min-height: var(--control-h);
+  padding: 0;
+}
+.btn-icon:hover:not(:disabled) {
+  background: var(--raise);
+}

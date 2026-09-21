@@ -1,0 +1,21 @@
+/* Text input primitive. Tokens only. */
+
+.input {
+  font-family: var(--font-ui);
+  font-size: var(--fs-16);
+  min-height: var(--control-h);
+  padding: 0 var(--s-4);
+  background: var(--deep);
+  color: var(--ink);
+  border: var(--border);
+  border-radius: var(--radius);
+}
+
+.input::placeholder {
+  color: var(--dim);
+}
+
+.input:disabled {
+  color: var(--faint);
+  cursor: not-allowed;
+}

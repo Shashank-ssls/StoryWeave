@@ -1,0 +1,129 @@
+/* #/_type — the design-token reference page. Tokens only, no raw hex, no literal
+   font-family (every family reference here is var(--font-display|body|ui)). */
+
+.type-page {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  padding: var(--s-10) var(--s-12) var(--s-20);
+  font-family: var(--font-body);
+}
+
+.type-header {
+  margin-bottom: var(--s-12);
+}
+
+.type-page-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-44);
+  line-height: var(--lh-display);
+  margin: 0 0 var(--s-3);
+}
+
+.type-page-note {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+  margin: 0;
+  max-width: 640px;
+}
+
+.type-section-title {
+  font-family: var(--font-ui);
+  font-size: var(--fs-16);
+  font-weight: 700;
+  color: var(--dim);
+  border-bottom: var(--border);
+  padding-bottom: var(--s-2);
+  margin: var(--s-14) 0 var(--s-6);
+}
+
+.type-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-6);
+  padding: var(--s-3) 0;
+  border-bottom: var(--border);
+  flex-wrap: wrap;
+}
+
+.type-row-size {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--faint);
+  width: 56px;
+  flex: none;
+}
+
+.type-samples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.type-sample {
+  color: var(--ink);
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.tok-swatch-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-6);
+}
+
+.tok-swatch {
+  width: 200px;
+  font-family: var(--font-ui);
+}
+
+.tok-swatch-box {
+  height: 56px;
+  border: var(--border);
+}
+
+.tok-swatch-name {
+  font-size: var(--fs-14);
+  color: var(--ink);
+  margin-top: var(--s-2);
+}
+
+.tok-swatch-value {
+  font-size: var(--fs-13);
+  color: var(--dim);
+}
+
+.tok-swatch-role {
+  font-size: var(--fs-13);
+  color: var(--faint);
+}
+
+.primitive-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.icon-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-8);
+}
+
+.icon-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  width: 96px;
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.icon-name {
+  font-size: var(--fs-13);
+  color: var(--dim);
+}

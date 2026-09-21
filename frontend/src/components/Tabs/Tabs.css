@@ -1,0 +1,28 @@
+/* DESIGN_SPEC.md §10 Tabs. Tokens only. */
+
+.tabs {
+  display: flex;
+  gap: var(--s-6);
+}
+
+.tab {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 0;
+  min-height: var(--control-h);
+  display: inline-flex;
+  align-items: center;
+  color: var(--dim);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}

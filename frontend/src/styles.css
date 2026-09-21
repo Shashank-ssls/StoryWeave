@@ -1,15 +1,10 @@
-:root {
-  --ground: #0b0d14;
-  --surface: #141828;
-  --surface-2: #1b2032;
-  --line: #272c40;
-  --ink: #e9e4d6;
-  --ink-dim: #8b91a8;
-  --reveal: #ffd073;
-  --display: "Spectral", Georgia, serif;
-  --body: "IBM Plex Sans", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, monospace;
-}
+/* The old "constellation" palette/font :root block lived here (--ground, --surface,
+   --line, --ink, --ink-dim, --reveal, --display, --body, --mono). Removed for R1 (Codex
+   tokens/typography) — see docs/design/FRONTEND_OVERHAUL.md §9. Everything below that
+   referenced those names now falls through to tokens.css's own --ink/--line (shared
+   names) or goes invalid/inherits (--ground/--surface/--reveal/--display/--body/--mono
+   have no Codex equivalent by design) — this file is old UI, not yet replaced, and is
+   EXPECTED to look wrong until the phase that replaces each screen deletes it. */
 
 * {
   box-sizing: border-box;

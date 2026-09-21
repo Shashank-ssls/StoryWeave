@@ -314,3 +314,122 @@ MEASURED: pytest 124 passed / 6 skipped (matches SETUP_NOTES.md's baseline, zero
 regression). `npm run build` (`tsc -b && vite build`) clean, one pre-existing chunk-size
 warning (unrelated, already known). `npm run shoot -- --phase=0`: 4/4 shots OK, zero
 non-benign console errors. `npm run test:fence`: 9/9 fixme, exit 0.
+
+## Phase 1 — Tokens & typography — GREEN
+
+Scope delivered: `@fontsource/pirata-one`, `@fontsource/eb-garamond` (400/500/600/
+400-italic), `@fontsource/alegreya-sans` (400/500/700) installed; old `@fontsource/
+spectral`/`ibm-plex-sans`/`ibm-plex-mono` uninstalled. `tokens.css` copied to
+`frontend/src/styles/tokens.css` (mural `url()` path fixed to `../assets/
+mural-codex.svg`; `mural-codex.svg` copied to `frontend/src/assets/`) and imported once,
+globally, in `main.tsx`, ahead of the old `styles.css` — the `.mural`/`.vignette` classes
+exist in the stylesheet but nothing mounts them yet (R2). Old global fonts + the old
+palette `:root` block removed from `styles.css` (old screens now degrade — see comparison
+below). Five primitives built, tokens-only, each in its own folder per §6: `Button`
+(primary/outline/quiet/icon × hover/focus/disabled), `Tabs`, `Input`, `Ornament` (§4.4
+rule), and the 9 required icons (`chevron-left`, `chevron-right`, `close`, `lock`,
+`arch-door`, `eye`, `plus`, `minus`, `search`) as inline stroke SVGs (1.5px, square caps,
+`currentColor`). Hidden dev route `#/_type` (`frontend/src/dev/TypeScale.tsx`) renders the
+full type scale (Display only ≥28px, per the hard rule), every color token as a swatch
+(value read live via `getComputedStyle`, never hardcoded — so the page can't drift out of
+sync with tokens.css), every primitive in its default/disabled states, and all 9 icons at
+16px and 24px — wired into `main.tsx` behind the smallest possible hash check
+(`window.location.hash === "#/_type"`, no listener, no re-render on hash change — R2
+replaces this with the real router). `npm run lint:design` added (raw-hex, `var(--accent`,
+literal-font-family checks per §4.3) with two separate, commented allow-lists (legacy
+files pending removal by phase; red-permitted files). `npm run test:style` added — the
+five §4.2 computed-style assertions, run against `#/_type`.
+
+Spec sections covered: §2 (P2 red discipline, P6/P7/P8), §3 (keep/discard list — old
+fonts/palette/gold now gone), §4.1–§4.4 (tokens, typography, spacing/radius/borders,
+ornament/icons), §10 (Button, Tabs).
+
+Visual comparison (`#/_type`, MEASURED — screenshots at 1440×900 and 1280×720, inspected;
+artboards 1–2 used as type/colour reference since there's no `#/_type` artboard):
+| Element | Status | Note |
+|---|---|---|
+| Display (Pirata One) blackletter, H1-scale | matches | Renders correctly at 30/36/44/60/72/96; correctly absent below 28px |
+| Body (EB Garamond) | matches | Serif, italic-capable family loads; roman used in scale samples |
+| UI (Alegreya Sans) | matches | Sans, used for buttons/tabs/labels/captions |
+| Color tokens (14, incl. `--scrim`) | matches | All render with correct hue/opacity vs. tokens.css; `--accent` reads as rubric red, `--accent-hi`/`--accent-soft` as lighter/softer variants |
+| Button primary/outline/quiet/icon | matches | Fill+on-ink+700 / 1px ink border / text-only / 44×44 glyph-only; radius 0 confirmed (style test) |
+| Button disabled | matches | `--faint` per spec |
+| Tabs | matches | 1px underline on active, `--dim` inactive |
+| Ornament rule | matches | Thin `--line` hairline + centred rotated-square lozenge |
+| Icons (9/9 required glyphs) | matches | Square caps, `currentColor`, no fill packs, 16/24px both shown |
+| Red discipline | matches | `--accent` used only inside the token-swatch demo (allow-listed, documented reason); no primitive defaults to accent |
+
+Old-screen "expected-degraded" record (`.shots/phase-1/library-expected-degraded@*`,
+`graph-expected-degraded@*` — MEASURED, not something fixed): degradation is real but
+**subtler than "broken"**, for two structural reasons, both ASSERTED from reading the
+cascade rather than guessed: (1) `styles.css` and the new `tokens.css` happen to share
+the custom-property names `--ink` and `--line`, so old rules using those two names
+silently pick up the new (visually close) Codex values instead of going invalid; (2) the
+old Cytoscape canvas (`GraphView.tsx`) never used CSS variables at all — its colors are
+hardcoded JS hex constants in `ontology.ts` — so the graph canvas itself is untouched by
+this phase and looks identical to before. What DID visibly change: the old gold
+"*Weave*" wordmark accent and the focus-ring color (`--reveal`, fully removed, no Codex
+equivalent) fall back to inherited/initial instead of gold. This is compliant with the
+phase's own instruction ("old screens will look wrong ... do not restyle") — it doesn't
+mandate a specific degree of wrongness, and I did not patch it.
+
+Fence tests: 0/9 run, 9/9 still `test.fixme` — MEASURED (`npm run test:fence`, exit 0,
+unchanged from R0 — this phase touches no chapter/bookmark logic).
+
+Style/static checks: MEASURED — `npm run lint:design`: 23 files checked, 0 failures
+(2 legacy-allow-listed, 1 red-permitted). `npm run test:style`: 5/5 passed (Pirata One
+never <28px; no uppercase+letter-spacing; radius 0 except `[data-round]`; all three fonts
+`document.fonts.check()` true; no horizontal scroll at 1280×720).
+
+Deleted old code: none outright — the old `:root` palette/font block in `styles.css` was
+removed (not deleted-as-a-file; the file itself still serves the not-yet-replaced old
+screens, per R4 the file itself is deleted only when the screens it styles are replaced).
+
+Backend deps hit: none (no backend interaction this phase).
+
+Deviations kept (with reason):
+- A real bug found and fixed during this phase (not a deviation, noting for the record):
+  `#/_type`'s color-token swatch container was originally named `.swatch`, colliding with
+  an unrelated pre-existing `.swatch` class in old `styles.css` (a 9px legend dot,
+  `border-radius: 50%`) — both stylesheets load globally with no CSS Modules scoping, so
+  the old rule was silently clobbering the new page. Caught by the `test:style`
+  border-radius assertion (14 unexpected `50%` radii), fixed by renaming to a `tok-`
+  prefixed namespace. Left as a cautionary note for later phases: watch for collisions
+  with the old app's class names until `styles.css` is fully retired (R8).
+- `shoot.mjs`/`shots.config.mjs` refactored mid-phase: the harness originally did one
+  shared `page.goto(BASE_URL)` before every shot; adding the `#/_type` hash-route shot
+  exposed that a same-origin URL differing only in the fragment does NOT trigger a full
+  page reload, so a shared pre-navigation left a later hash-route shot on a stale,
+  never-re-rendered page. Fixed by making every shot own its full navigation
+  (`run(page, baseUrl)`); verified R0's shots (`--phase=0`) still pass unchanged after the
+  refactor.
+
+BROKEN / open: none.
+
+Commit: (pending — see below) pushed: pending.
+
+MEASURED (regression guards): pytest 124 passed / 6 skipped (unchanged). `npm run build`
+clean (one pre-existing chunk-size warning). `npm run typecheck` clean.
+
+MEASURED (old fonts/palette gone — grep evidence):
+```
+$ grep -rn "Spectral\|IBM Plex" frontend/src/
+src/GraphView.tsx:60:      "font-family": "IBM Plex Sans, system-ui, sans-serif",
+src/GraphView.tsx:86:      "font-family": "IBM Plex Sans, system-ui, sans-serif",
+```
+The only surviving matches are the two hardcoded Cytoscape-stylesheet literals in
+`GraphView.tsx` (the exempt "Cytoscape style module," §2 rule 6 — Phase 5 replaces this
+file wholesale). The font is no longer loaded (its `@fontsource` import is gone from
+`main.tsx`), so these two lines are now dead references that silently fall through to
+`system-ui, sans-serif` — not a live font-loading path.
+```
+$ grep -rn -- "--ground:\|--surface:\|--reveal:" frontend/src/
+(no matches)
+```
+Old palette variable *definitions* are fully gone (some old rules still *reference*
+`var(--ink)`/`var(--line)` by name, but those now resolve against the NEW tokens.css
+definitions of the same names — see the degradation note above).
+
+Next: **R2 — Shell** (router, mural + vignette mount, three-column layouts, theme
+strings). Same model recommendation as before (Sonnet 5) — R2 is layout/structural work
+with a clear screenshot-verifiable done-when, not a phase needing extra design judgment.

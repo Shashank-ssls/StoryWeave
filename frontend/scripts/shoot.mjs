@@ -82,8 +82,12 @@ for (const shot of shots) {
 
     const shotName = `${shot.name}@${vp.w}`;
     try {
-      await page.goto(BASE_URL, { waitUntil: "networkidle" });
-      await shot.run(page);
+      // Each shot navigates itself (rather than the harness doing one shared goto up
+      // front) so a hash route gets a real full navigation: same-origin URLs that differ
+      // only in the fragment do NOT reload the page, so a shared pre-navigation to
+      // BASE_URL would leave a later `#/_type` goto as a same-document hash change that
+      // never re-runs main.tsx's one-time route check.
+      await shot.run(page, BASE_URL);
 
       const pngPath = path.join(outDir, `${shotName}.png`);
       await page.screenshot({ path: pngPath });

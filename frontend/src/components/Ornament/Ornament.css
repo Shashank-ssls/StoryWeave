@@ -1,0 +1,20 @@
+/* DESIGN_SPEC.md §4.4 ornament rule. Tokens only. */
+
+.ornament {
+  position: relative;
+  height: 1px;
+  background: var(--line);
+  margin: var(--s-8) 0;
+}
+
+.ornament::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--s-2);
+  height: var(--s-2);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  transform: translate(-50%, -50%) rotate(45deg);
+}

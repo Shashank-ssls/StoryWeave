@@ -9,12 +9,14 @@
     "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
     "shoot": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright node scripts/shoot.mjs",
-    "test:fence": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/fence.spec.ts"
+    "test:fence": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/fence.spec.ts",
+    "test:style": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/style.spec.ts",
+    "lint:design": "node scripts/lint-design.mjs"
   },
   "dependencies": {
-    "@fontsource/ibm-plex-mono": "^5.2.7",
-    "@fontsource/ibm-plex-sans": "^5.2.8",
-    "@fontsource/spectral": "^5.2.8",
+    "@fontsource/alegreya-sans": "^5.3.0",
+    "@fontsource/eb-garamond": "^5.3.0",
+    "@fontsource/pirata-one": "^5.3.0",
     "cytoscape": "^3.30.2",
     "cytoscape-cola": "^2.5.1",
     "react": "^18.3.1",
