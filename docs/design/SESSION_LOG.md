@@ -246,3 +246,68 @@
   audit, favicon/OG, delete `#/_legacy` + all legacy code, run the §16 checklist). A fresh
   session should read this entry, confirm clean on `redesign/codex`, and start R9 from
   scratch — nothing here is mid-phase.
+
+## Session 9 — R9 Polish & acceptance, steps 1-4 (mid-phase stop)
+
+- **Date:** 2026-09-22
+- **Model / effort:** Sonnet 5, high effort
+- **Phase(s):** R9 (steps 1-4 of the 10-step R9 scope; steps 5-10 not started)
+- **Commits:** 9772dd3 → 8255430 (steps 1-2) → 562832c (steps 3-4)
+- **Done:**
+  - **Step 1 — Stemma camera-fit bug (logged at R6/R7, `FRONTEND_OVERHAUL.md` §9).**
+    Root-caused via a throwaway `window.__dbg` event log (mount/dataEffect/runPhysics/
+    layoutstop/fitFocusNow, each timestamped) rather than guessed: cytoscape-cola fires
+    `'layoutstop'` TWICE per burst on graphs small enough to hit its own
+    `convergenceThreshold` early (measured: 11ms into a 950ms `maxSimulationTime` burst) —
+    once on that premature "convergence" stop (near-seed positions), again at the real
+    duration. `StemmaCanvas.tsx`'s `refitOnStop`/`settledRef` treated the first stop as
+    final, so the real settle's refit never ran. Fixed with an elapsed-time gate
+    (`layoutStartedAt`/`layoutSettleMs`, ignore any stop before the burst's own declared
+    duration) plus a `suppressNextStop` guard for the separate case of `runPhysics()`
+    manually `.stop()`-ing a still-running layout to supersede it (also fires
+    `'layoutstop'`, also was consuming the same flag). Three regression tests added to
+    `stemma.spec.ts` (Dossier→Stemma, Chronicle→Stemma, landing→Explore→Stemma tab
+    clicks) — MEASURED to fail against the pre-fix code (reverted via `git stash`, re-ran,
+    confirmed failing, restored), so they're proven non-vacuous.
+  - **Step 2 — label legibility (§16).** New `stemma.spec.ts` test measuring
+    font-size×zoom on the default (focused-on-principal) view at 1280×720: demo passed
+    immediately (20.4px); synthetic-100 measured 8.7-8.9px (below the 13px floor) because
+    a hub principal's focus fit was framing all 22 of its near-nodes. Tried ranking by
+    graph importance (identity/degree, same as the label budget) first — measured almost
+    no zoom change, because a high-degree neighbour's OTHER ties pull cola to place it far
+    from the focus regardless of rank. Fixed instead with `FIT_FOCUS_BUDGET` (12): the
+    camera fits the focus node plus its 12 spatially NEAREST ties in the settled layout;
+    every tie still draws, labels and positions normally regardless of budget (only the
+    CAMERA framing is capped). MEASURED after: demo 20.4px, synthetic-100 19.4px.
+  - **Step 3 (§8.5).** `codex/shortcuts/useGlobalShortcuts.ts` + `ShortcutSheet.tsx`: `g d`/
+    `g w`/`g c` chords (900ms window) and `?`'s shortcut sheet (real focus trap, same
+    scrim/dialog pattern as the Change-chapter dialog). Guarded by the existing
+    typing-target pattern plus a new `[role="dialog"][aria-modal="true"]` check so it never
+    fights the chapter dialog or reveal overlay. `tests/shortcuts.spec.ts` (5/5).
+  - **Step 4 (§11).** Off-screen `aria-live="polite"` mirror of the focused neighbourhood
+    in `Stemma.tsx` ("Wren — ties: Prince Caelum (transmigration, Chapter IV), …"), built
+    only from the same fenced view model the canvas draws from. New `stemma.spec.ts` test
+    confirms it updates on focus change and never leaks a later-chapter tie at an earlier
+    bookmark.
+- **Decisions:** WIP-committed after steps 1-2 and again after 3-4 (session rules: commit
+  after 1-2 and 8, final commit after 10) rather than pushing at each — pushed once, now,
+  at the mid-phase stop. Distance-based (not importance-based) ranking for the fit budget
+  — measured, not assumed, to be the one that actually moves the zoom.
+- **Issues:** MEASURED, both root-caused with instrumentation, not guessed — the double
+  `'layoutstop'` fire (step 1) and the importance-ranking-doesn't-shrink-the-frame result
+  (step 2, kept as a documented dead end in the code comment so a future session doesn't
+  retry it). Nothing left BROKEN in steps 1-4.
+- **Stopped at:** step 4 of 10 green, committed (562832c) and pushed. Steps 5-10 (responsive
+  breakpoints, reduced-motion audit + full shoot, favicon/OG, `#/_legacy` + legacy-code
+  deletion with grep proof, the §16 acceptance checklist line by line, and the final full
+  suite + full 1440×900/1280×720 shoot) are **not started** — stopped here on token-budget
+  grounds (explicit session rule), not a failure. All suites confirmed green at this commit:
+  backend `pytest` 124/6 (unchanged all session), `typecheck` clean, `lint:design` 83 files
+  clean, `test:unit` 63/63, `test:stemma` 15/15, `test:shortcuts` 5/5, `test:reveal` 11/11,
+  `test:dossier` 6/6, `test:chronicle` 8/8, `test:landing` 9/9, `test:fence` 29/29 (+2
+  fixme, F6/F7 still config-absent), `test:style` 5/5, `test:geometry` 13/13.
+- **Next:** R9 steps 5-10, in the order FRONTEND_OVERHAUL.md §9's task brief gives them.
+  Step 5 (responsive) and step 6 (reduced motion) are the two most likely to need real
+  visual judgment calls (drawer/bottom-sheet behaviour, physics-finite verification) — a
+  fresh session should re-read this entry, confirm clean on `redesign/codex` at 562832c,
+  restart the dev stack, and continue straight into step 5 without re-deriving steps 1-4.
