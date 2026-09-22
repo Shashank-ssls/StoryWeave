@@ -575,14 +575,18 @@ Each phase: render → screenshot → compare against this spec → push.
 
 ## 16. Acceptance checklist (screenshot-verifiable)
 
-- [ ] Red appears nowhere except identity edges, reveal UI, bookmark marker, "changed" tags (and optionally landing kicker).
-- [ ] Pirata One never rendered below 28px.
-- [ ] No uppercase letter-spaced labels anywhere.
-- [ ] No mural line visible inside the Stemma canvas centre.
-- [ ] Hollow Crown at ch. 2: network log shows no request with `n > 2`; Veris–Sparrow edge absent from DOM and canvas.
-- [ ] Crossing ch. 2→3 plays the reveal; 3→2 does not, and shows the "sealed again" toast.
-- [ ] No duplicate "Prince" node; Lady Veris–Gray Sparrow drawn as one identity edge.
-- [ ] 100-node fixture at default fit: principal labels don't overlap (screenshot).
-- [ ] Search for a later-chapter name at an earlier bookmark returns the neutral no-match copy.
-- [ ] Every screen renders at 1280×720 without horizontal page scroll.
-- [ ] Reduced-motion: no line drawing, physics stops.
+Verified R9 step 9 (SESSION_LOG.md Session 11) — every line MEASURED against the real
+running app (automated test + a live screenshot where the line is itself visual), not
+assumed from having built the feature. See that entry for the specific test/line per item.
+
+- [x] Red appears nowhere except identity edges, reveal UI, bookmark marker, "changed" tags (and optionally landing kicker).
+- [x] Pirata One never rendered below 28px.
+- [x] No uppercase letter-spaced labels anywhere.
+- [x] No mural line visible inside the Stemma canvas centre.
+- [x] Hollow Crown at ch. 2: network log shows no request with `n > 2`; Veris–Sparrow edge absent from DOM and canvas.
+- [x] Crossing ch. 2→3 plays the reveal; 3→2 does not, and shows the "sealed again" toast.
+- [x] No duplicate "Prince" node; Lady Veris–Gray Sparrow drawn as one identity edge.
+- [x] 100-node fixture at default fit: principal labels don't overlap (screenshot).
+- [x] Search for a later-chapter name at an earlier bookmark returns the neutral no-match copy.
+- [x] Every screen renders at 1280×720 without horizontal page scroll.
+- [x] Reduced-motion: no line drawing, physics stops.

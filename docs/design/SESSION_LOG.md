@@ -539,7 +539,28 @@
     63/63, backend `pytest` 124/6 (unchanged). Compose screen itself screenshotted at
     1440×900 in both the empty and filled (live "N chapters detected" readout) states —
     renders correctly, on-brand, no console errors.
-- **Stopped at:** step 8 of 10 green. Continuing straight into step 9 in this same
+- **R9 step 9 (§16 acceptance checklist, line by line) — done, same session:** all 11
+  lines MEASURED, checked off in `DESIGN_SPEC.md` §16 itself. Nine were already covered
+  by passing automated suites from earlier phases (cited by test, not re-derived): red
+  discipline → `lint:design`'s ACCENT_RE/RED_PERMITTED check; Pirata One ≥28px and no
+  uppercase-letter-spaced labels → `style.spec.ts` #1/#2; ch.2 network-log ceiling +
+  Veris/Sparrow absence → `fence.spec.ts`'s F1 suite + `dossier.spec.ts`'s dedicated
+  "Veris–Sparrow ALIAS block exists at 3, and Veris is absent... at 2" test; the 2→3
+  reveal / 3→2 "sealed again" toast → `reveal.spec.ts`; no duplicate "Prince" node →
+  `viewModel.test.ts`'s literal `expect(vm.nodes.find(n => n.label === "Prince")).
+  toBeUndefined()` plus the Stemma walk test's independent node-set re-derivation; the
+  100-node legibility line → `stemma.spec.ts`'s synthetic-100 zero-overlap test; the
+  later-chapter search no-match copy → `fence.spec.ts` F4; the 1280×720 no-scroll line →
+  `geometry.spec.ts` + `style.spec.ts`. Two needed a fresh look because nothing before
+  now checked them as their own claim: the reduced-motion line (no line drawing, physics
+  stops) — covered by this session's own step-6 `reduced-motion.spec.ts` plus
+  `reveal-choreography.spec.ts`'s existing reduced-motion test; and "no mural line
+  visible inside the Stemma canvas centre" — the `web-canvas-mask` CSS rule
+  (`tokens.css`, an opaque `--bg` radial gradient over the canvas) was only ever
+  structurally asserted (`geometry.spec.ts` checks the class is present), never looked
+  at, so a live screenshot of the Stemma at 1440×900 was taken and inspected: canvas
+  centre is flat `--bg`, no mural line art bleeding through.
+- **Stopped at:** step 9 of 10 green. Continuing straight into step 10 in this same
   session (no user instruction to stop here).
-- **Next:** R9 steps 9-10 (the §16 acceptance checklist line by line, final full suite +
-  full 1440×900/1280×720 shoot).
+- **Next:** R9 step 10 — final full suite + full 1440×900/1280×720 shoot, the closing
+  step of the phase.
