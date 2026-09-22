@@ -90,11 +90,21 @@ ALL_RELATIONS: tuple[str, ...] = TIER1_RELATIONS + TIER2_RELATIONS + TIER3_RELAT
 
 
 class ExtractionMethod(StrEnum):
-    """Provenance: how an element entered the graph."""
+    """Provenance: how an element entered the graph.
+
+    ``CURATED`` (integration phase, I3): a Tier-2/Tier-3 record hand-written from a
+    story bible in place of a real LLM run (the LLM stays off per rule #5/I3). Distinct
+    from ``LLM`` on purpose — labeling a hand-authored record ``llm`` would claim a
+    model produced it when none ever ran. (The seeded Hollow Crown demo predates this
+    distinction and still labels its own hand-built identity edges ``llm``; it is
+    unchanged per the integration phase's I2 rule — the two demos use different,
+    documented conventions rather than retrofitting Hollow Crown's history.)
+    """
 
     GLINER = "gliner"
     RULE = "rule"
     LLM = "llm"
+    CURATED = "curated"
 
 
 # --------------------------------------------------------------------------- #
@@ -108,6 +118,23 @@ class Work(BaseModel):
     id: int | None = None
     slug: str
     title: str
+
+
+class Arc(BaseModel):
+    """A named chapter range (D6, integration phase). Structural, not extracted —
+    no provenance/reveal stamps of its own. Fencing (F6) is on the NAME only: an
+    arc's chapter range is never spoiler-bearing by itself (it's just numbers), but
+    its title can be, so `query/fence.py` redacts the name until the arc has started
+    (``start_chapter <= the reader's bookmark``); the range still shows as
+    "Arc N · chapters a-b" so the chapter picker can lay out the whole book.
+    """
+
+    id: int | None = None
+    work_id: int
+    ordinal: int
+    name: str
+    start_chapter: int
+    end_chapter: int
 
 
 # --------------------------------------------------------------------------- #
@@ -216,6 +243,7 @@ __all__ = [
     "TIER1_RELATIONS",
     "TIER2_RELATIONS",
     "TIER3_RELATIONS",
+    "Arc",
     "Chapter",
     "Chunk",
     "Edge",

@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from storyweave.db.models import Edge, Node, NodeProperty
+from storyweave.db.models import Arc, Edge, Node, NodeProperty
 from storyweave.db.repository import Repository
 
 if TYPE_CHECKING:  # pragma: no cover - typing only (avoids a runtime import cycle)
@@ -52,6 +52,13 @@ def visible_node_properties(
 ) -> list[NodeProperty]:
     """Node properties the reader may see at chapter N (property + node revealed)."""
     return repo.list_node_properties_revealed(work_id, chapter)
+
+
+def visible_arcs(repo: Repository, work_id: int, chapter: int) -> list[Arc]:
+    """Arcs at chapter N (D6/F6): every arc's chapter RANGE, but the NAME redacted
+    (empty string) for any arc whose ``start_chapter > chapter`` — an arc name can
+    be spoiler-bearing (it's a title), the range alone is not."""
+    return repo.list_arcs_fenced(work_id, chapter)
 
 
 def visible_chunk_hits(

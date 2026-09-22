@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from storyweave.db.models import Edge, Node, NodeProperty
+from storyweave.db.models import Arc, Edge, Node, NodeProperty
 from storyweave.search.store import SearchHit
 
 
@@ -165,6 +165,31 @@ class EntityDetailResponse(BaseModel):
     entity: EntityModel
     edges: list[EdgeModel]
     properties: list[PropertyModel]
+
+
+# --- arcs (D6, integration phase) ------------------------------------------ #
+
+
+class ArcModel(BaseModel):
+    ordinal: int
+    name: str | None  # null when this arc hasn't started yet (F6 — name redacted)
+    start_chapter: int
+    end_chapter: int
+
+    @classmethod
+    def from_arc(cls, a: Arc) -> ArcModel:
+        return cls(
+            ordinal=a.ordinal,
+            name=a.name or None,  # repo.list_arcs_fenced sends "" for a redacted name
+            start_chapter=a.start_chapter,
+            end_chapter=a.end_chapter,
+        )
+
+
+class ArcsResponse(BaseModel):
+    slug: str
+    n: int
+    arcs: list[ArcModel]
 
 
 # --- graph (Cytoscape, but fully typed) ------------------------------------ #

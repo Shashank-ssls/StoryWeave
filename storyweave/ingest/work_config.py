@@ -102,6 +102,19 @@ class CorefConfig(BaseModel):
     )
 
 
+class ArcConfig(BaseModel):
+    """One named chapter range (D6, integration phase). `[[arcs]]` in
+    storyweave.toml, e.g. `name = "The Mourning Bell"`, `start_chapter = 1`,
+    `end_chapter = 8`. Arc names are the one thing fenced (F6) about arcs — see
+    `query.fence.visible_arcs` — so an arc's name should read as a chapter-range
+    label, not a plot summary, since the range itself is always visible even before
+    the name is."""
+
+    name: str
+    start_chapter: int
+    end_chapter: int
+
+
 class WorkConfig(BaseModel):
     title: str | None = None
     slug: str | None = None
@@ -112,6 +125,10 @@ class WorkConfig(BaseModel):
     relations: RelationConfig = Field(default_factory=RelationConfig)
     identity: IdentityConfig = Field(default_factory=IdentityConfig)
     coref: CorefConfig = Field(default_factory=CorefConfig)
+    # Ordered by definition order in the TOML (not re-sorted) — a work with none
+    # configured (e.g. Hollow Crown, or any plain-text ingest) gets an empty list,
+    # and the frontend falls back to blocks-of-100 (DESIGN_SPEC D6 fallback).
+    arcs: list[ArcConfig] = Field(default_factory=list)
 
 
 def load_work_config(path: Path | str | None) -> WorkConfig:

@@ -18,6 +18,7 @@ from types import TracebackType
 
 from storyweave.db.models import (
     ALL_RELATIONS,
+    Arc,
     Chapter,
     Chunk,
     Edge,
@@ -129,6 +130,19 @@ CREATE TABLE IF NOT EXISTS mentions (
     node_id           INTEGER REFERENCES nodes(id) ON DELETE SET NULL
 );
 
+-- Arcs (D6, integration phase): named chapter ranges, structural not extracted.
+-- Fencing redacts only the name (F6); the range itself is never spoiler-bearing.
+CREATE TABLE IF NOT EXISTS arcs (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    work_id       INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+    ordinal       INTEGER NOT NULL,
+    name          TEXT NOT NULL,
+    start_chapter INTEGER NOT NULL,
+    end_chapter   INTEGER NOT NULL,
+    UNIQUE (work_id, ordinal)
+);
+
+CREATE INDEX IF NOT EXISTS idx_arcs_work         ON arcs(work_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_work        ON nodes(work_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_revealed    ON nodes(revealed_chapter);
 CREATE INDEX IF NOT EXISTS idx_edges_work        ON edges(work_id);
@@ -216,6 +230,46 @@ class Repository:
         separately by the caller (store.reset)."""
         self.conn.execute("DELETE FROM works WHERE id = ?", (work_id,))
         self.conn.commit()
+
+    # --- arcs (D6, integration phase) ------------------------------------- #
+
+    def set_arcs(self, work_id: int, arcs: list[Arc]) -> None:
+        """Replace a work's arcs wholesale (idempotent — arcs are config-derived,
+        like everything else knobs-are-data, not incrementally extracted)."""
+        self.conn.execute("DELETE FROM arcs WHERE work_id = ?", (work_id,))
+        self.conn.executemany(
+            """INSERT INTO arcs (work_id, ordinal, name, start_chapter, end_chapter)
+               VALUES (?, ?, ?, ?, ?)""",
+            [
+                (work_id, a.ordinal, a.name, a.start_chapter, a.end_chapter)
+                for a in arcs
+            ],
+        )
+        self.conn.commit()
+
+    def list_arcs(self, work_id: int) -> list[Arc]:
+        """All arcs, UNFENCED (names included) — for the ingest/seed side, not clients."""
+        rows = self.conn.execute(
+            "SELECT * FROM arcs WHERE work_id = ? ORDER BY ordinal", (work_id,)
+        ).fetchall()
+        return [Arc(**dict(r)) for r in rows]
+
+    def list_arcs_fenced(self, work_id: int, chapter: int) -> list[Arc]:
+        """Arcs with the name REDACTED (empty string) for any arc not yet started
+        (F6, enforced here at the SQL level, not post-filtered by a caller). The
+        range itself always shows — it carries no spoiler weight by itself, and the
+        chapter picker/Chronicle need the full book's block boundaries to lay out.
+        """
+        rows = self.conn.execute(
+            """SELECT id, work_id, ordinal,
+                      CASE WHEN start_chapter <= ? THEN name ELSE '' END AS name,
+                      start_chapter, end_chapter
+                 FROM arcs
+                WHERE work_id = ?
+                ORDER BY ordinal""",
+            (chapter, work_id),
+        ).fetchall()
+        return [Arc(**dict(r)) for r in rows]
 
     # --- chapters (Phase 1) ---------------------------------------------- #
 

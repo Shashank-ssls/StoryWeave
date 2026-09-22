@@ -17,6 +17,7 @@ from storyweave.api.app import create_app
 from storyweave.api.deps import get_embedder, get_repository, get_vector_store
 from storyweave.config import get_settings
 from storyweave.db.models import (
+    Arc,
     Chapter,
     Chunk,
     Edge,
@@ -86,6 +87,10 @@ def client() -> tuple[TestClient, dict[str, int]]:
     _add_chapter_chunk(repo, wid, 1, "Wren stole a ring in the market.")
     _add_chapter_chunk(repo, wid, 2, "Wren was Prince Caelum the heir.")
     _add_chapter_chunk(repo, wid, 5, "The secretword reveals the Seer rank.")
+    repo.set_arcs(wid, [
+        Arc(work_id=wid, ordinal=1, name="Arc One", start_chapter=1, end_chapter=2),
+        Arc(work_id=wid, ordinal=2, name="Arc Two", start_chapter=3, end_chapter=5),
+    ])
 
     store = InMemoryVectorStore()
     index_work(wid, repo, store, FakeEmbedder())
@@ -107,6 +112,7 @@ def client() -> tuple[TestClient, dict[str, int]]:
         "/api/v1/works/demo/graph",
         "/api/v1/works/demo/entity/1",
         "/api/v1/works/demo/search?q=hi",
+        "/api/v1/works/demo/arcs",
     ],
 )
 def test_missing_n_returns_422(client: tuple[TestClient, dict[str, int]], path: str) -> None:
@@ -343,6 +349,33 @@ def test_graph_is_fenced(client: tuple[TestClient, dict[str, int]]) -> None:
     at2 = c.get("/api/v1/works/demo/graph?n=2").json()
     assert len(at2["elements"]["nodes"]) == 2
     assert at2["elements"]["edges"][0]["data"]["relation"] == "SECRET_IDENTITY"
+
+
+def test_arcs_are_fenced(client: tuple[TestClient, dict[str, int]]) -> None:
+    """D6/F6 over HTTP: arc 2's name is null until n reaches its start_chapter (3);
+    its range is sent regardless."""
+    c, _ = client
+    at1 = c.get("/api/v1/works/demo/arcs?n=1").json()["arcs"]
+    assert [a["name"] for a in at1] == ["Arc One", None]
+    assert [a["start_chapter"] for a in at1] == [1, 3]
+    assert [a["end_chapter"] for a in at1] == [2, 5]
+
+    at3 = c.get("/api/v1/works/demo/arcs?n=3").json()["arcs"]
+    assert [a["name"] for a in at3] == ["Arc One", "Arc Two"]
+
+
+def test_arcs_empty_list_for_a_work_with_none_configured(
+    client: tuple[TestClient, dict[str, int]],
+) -> None:
+    c, _ = client
+    repo = Repository(":memory:")  # a second, arc-less work (mirrors Hollow Crown)
+    repo.initialize_schema()
+    repo.create_work(Work(slug="bare", title="Bare"))
+    app = create_app()
+    app.dependency_overrides[get_repository] = lambda: repo
+    bare_client = TestClient(app)
+    resp = bare_client.get("/api/v1/works/bare/arcs?n=1").json()
+    assert resp["arcs"] == []
 
 
 def test_entity_detail_with_edges_and_properties(

@@ -22,6 +22,8 @@ from storyweave.api.schemas import (
     AnalysisStatusResponse,
     AppendRequest,
     AppendResponse,
+    ArcModel,
+    ArcsResponse,
     ChapterPreview,
     CitationModel,
     EdgeModel,
@@ -238,6 +240,17 @@ def list_entities(slug: str, n: ChapterParam, repo: RepoDep) -> EntitiesResponse
     nodes = fence.visible_nodes(repo, work.id or 0, n)  # fenced
     entities = [EntityModel.from_node(node) for node in nodes]
     return EntitiesResponse(slug=slug, n=n, count=len(entities), entities=entities)
+
+
+@router.get("/works/{slug}/arcs", response_model=ArcsResponse)
+def get_arcs(slug: str, n: ChapterParam, repo: RepoDep) -> ArcsResponse:
+    """D6/F6: named chapter-range arcs, fenced — an arc's NAME is sent only once its
+    `start_chapter <= n`; a not-yet-started arc still reports its range (chapter
+    numbers alone aren't spoiler-bearing) with `name: null`. A work with no arcs
+    configured returns an empty list — the frontend falls back to blocks-of-100."""
+    work = _require_work(repo, slug)
+    arcs = fence.visible_arcs(repo, work.id or 0, n)
+    return ArcsResponse(slug=slug, n=n, arcs=[ArcModel.from_arc(a) for a in arcs])
 
 
 @router.get("/works/{slug}/graph", response_model=GraphResponse)
