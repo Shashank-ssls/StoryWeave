@@ -11,7 +11,7 @@ import { roman } from "../chapter/roman";
 import { useChapter } from "../chapter/ChapterProvider";
 import { useReveal } from "../reveal/RevealContext";
 import StateCard from "../states/StateCard";
-import { buildViewModel, principalOf, tieLabel } from "../../graph/viewModel";
+import { buildViewModel, principalOf, tieLabel, tiesOf } from "../../graph/viewModel";
 import {
   identityEndpoints,
   neighboursOf,
@@ -174,8 +174,24 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
 
   const focusNode = focusId && vm ? vm.byId.get(focusId) ?? null : null;
 
+  // R9 §11 — screen-reader mirror of the focused neighbourhood: the canvas is a <canvas>,
+  // opaque to assistive tech, so this off-screen live region is the only way a screen
+  // reader user learns what focusing a name actually surfaced. Only ever built from `vm`
+  // (the fenced view model) — the same data the canvas itself draws from, nothing more.
+  const focusMirrorText = !vm || !focusNode
+    ? codexTheme.focusMirrorNone
+    : (() => {
+        const ties = tiesOf(vm, focusNode.id);
+        if (ties.length === 0) return fillTemplate(codexTheme.focusMirrorNoTies, { name: focusNode.label });
+        const list = ties
+          .map(({ edge, other }) => fillTemplate(codexTheme.focusMirrorTie, { name: other.label, rel: tieLabel(edge.relation), n: roman(edge.revealed_chapter) }))
+          .join(", ");
+        return fillTemplate(codexTheme.focusMirrorWithTies, { name: focusNode.label, ties: list });
+      })();
+
   return (
     <div className={styles.stemma} data-testid="stemma-root">
+      <div className={styles.srOnly} role="status" aria-live="polite" data-testid="focus-mirror">{focusMirrorText}</div>
       <aside className={styles.rail} data-testid="stemma-rail">
         <a className={styles.wordmark} href={routePath({ name: "landing" })}>StoryWeave</a>
         <div className={styles.novelTitle}>{title}</div>

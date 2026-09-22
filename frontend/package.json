@@ -19,7 +19,8 @@
     "test:reveal": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/reveal.spec.ts",
     "test:reveal-choreography": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/reveal-choreography.spec.ts",
     "test:chronicle": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/chronicle.spec.ts",
-    "test:landing": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/landing.spec.ts"
+    "test:landing": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/landing.spec.ts",
+    "test:shortcuts": "cross-env PLAYWRIGHT_BROWSERS_PATH=../.local/ms-playwright playwright test tests/shortcuts.spec.ts"
   },
   "dependencies": {
     "@fontsource/alegreya-sans": "^5.3.0",

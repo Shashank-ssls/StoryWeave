@@ -6,6 +6,8 @@ import Chronicle from "./Chronicle/Chronicle";
 import { ChapterProvider } from "./chapter/ChapterProvider";
 import ChapterChrome from "./chapter/ChapterChrome";
 import RevealChrome from "./reveal/RevealChrome";
+import { useGlobalShortcuts } from "./shortcuts/useGlobalShortcuts";
+import ShortcutSheet from "./shortcuts/ShortcutSheet";
 import styles from "./CodexApp.module.css";
 
 // The Codex UI's root: mural + vignette fixed background layers (DESIGN_SPEC.md §4.6
@@ -18,6 +20,9 @@ import styles from "./CodexApp.module.css";
 // payload cache and in-flight request are shared across Dossier/Stemma/Chronicle and
 // survive tab switches, and are torn down whole when the slug changes (R3).
 export default function CodexApp({ route }: { route: CodexRoute }): JSX.Element {
+  // R9 §8.5: one global keyboard map for the whole app root — `g d`/`g w`/`g c` (only
+  // meaningful inside a work; the hook itself checks the route) and `?`'s shortcut sheet.
+  const { sheetOpen, closeSheet } = useGlobalShortcuts(route);
   return (
     <div className={styles.root}>
       <div className="mural" aria-hidden="true" />
@@ -36,6 +41,7 @@ export default function CodexApp({ route }: { route: CodexRoute }): JSX.Element 
           </ChapterProvider>
         )}
       </div>
+      {sheetOpen && <ShortcutSheet onClose={closeSheet} />}
     </div>
   );
 }

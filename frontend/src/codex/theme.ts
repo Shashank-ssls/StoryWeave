@@ -189,6 +189,24 @@ export const codexTheme = {
     headline: "The sample book is missing.",
     body: "Run `storyweave seed-demo` to restore it.",
   },
+
+  // ---- R9: screen-reader mirror of the focused neighbourhood (§11) ----
+  focusMirrorTie: "{name} ({rel}, Chapter {n})",
+  focusMirrorWithTies: "{name} — ties: {ties}",
+  focusMirrorNoTies: "{name} — no ties yet recorded",
+  focusMirrorNone: "Nothing focused. Choose a name from the rail, or press / to search.",
+
+  // ---- R9: global keyboard map (§8.5) ----
+  shortcutsTitle: "Keys",
+  shortcutRows: [
+    { keys: "g d", label: "Go to Dossier" },
+    { keys: "g w", label: "Go to the Stemma" },
+    { keys: "g c", label: "Go to Chronicle" },
+    { keys: "[ / ]", label: "Previous / next chapter" },
+    { keys: "/", label: "Search" },
+    { keys: "Esc", label: "Close or unfocus" },
+    { keys: "?", label: "This sheet" },
+  ],
 } as const;
 
 /** Fills `{token}` placeholders in a theme string, e.g. fence copy's `{n}`. */

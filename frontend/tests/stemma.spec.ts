@@ -205,6 +205,22 @@ test.describe("Stemma — fenced canvas at every step", () => {
     await expect(page.locator('[data-testid="steps"]')).toHaveCount(0);
   });
 
+  test("R9 §11 — screen-reader mirror of the focused neighbourhood updates on focus change and contains only fenced ties", async ({ page }) => {
+    await openStemma(page, 1, "1");
+    const mirror = page.locator('[data-testid="focus-mirror"]');
+    await expect(mirror).toHaveAttribute("role", "status");
+    await expect(mirror).toHaveText("Wren — ties: Aldercross (in, Chapter I), Glass-sight (has ability, Chapter I), the heron ring (owns, Chapter I)");
+    // fenced: no later-chapter tie (Prince Caelum/transmigration) leaks at bookmark 1
+    expect(await mirror.innerText()).not.toMatch(/Caelum|transmigration/);
+    await page.click('[data-testid="clear-focus"]');
+    await expect(mirror).toHaveText("Nothing focused. Choose a name from the rail, or press / to search.");
+    // re-focus at chapter 4: the mirror now includes the identity tie, by chapter
+    await setBookmark(page, 4);
+    await page.fill('[data-testid="stemma-search"]', "Wren");
+    await page.keyboard.press("Enter");
+    await expect(mirror).toContainText("Prince Caelum (transmigration, Chapter IV)");
+  });
+
   test("lifecycle: Stemma → Dossier → Stemma ×3 leaves exactly one instance and ≤1 layout; leaving the work leaves none", async ({ page }) => {
     await openStemma(page, 2);
     const reg = () => page.evaluate(() => { const r = (window as unknown as { __storyweaveCy: { instances: number; layouts: number; created: number } }).__storyweaveCy; return { i: r.instances, l: r.layouts, c: r.created }; });

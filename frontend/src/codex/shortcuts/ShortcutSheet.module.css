@@ -1,0 +1,81 @@
+/* DESIGN_SPEC.md §8.5 shortcut sheet. Tokens only; same scrim/dialog pattern as the
+   Change-chapter dialog (§6.6) — the scrim is one of the two places a "shadow" is allowed. */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: var(--scrim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-6);
+  box-sizing: border-box;
+}
+
+.sheet {
+  width: 420px;
+  max-width: 100%;
+  max-height: calc(100vh - 2 * var(--s-6));
+  overflow-y: auto;
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  padding: var(--s-8) var(--s-10);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: var(--lh-heading);
+  color: var(--ink);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: var(--border);
+}
+
+.row {
+  height: var(--control-h);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: 0 var(--s-3);
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+  color: var(--ink);
+}
+.row + .row {
+  border-top: var(--border);
+}
+
+.keys {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+  background: var(--deep);
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: var(--s-1) var(--s-2);
+  min-width: 44px;
+  text-align: center;
+  box-sizing: border-box;
+}

@@ -372,3 +372,17 @@
   width: 100%;
   min-height: var(--control-h-lg);
 }
+
+/* R9 §11 — screen-reader mirror of the focused neighbourhood (the canvas itself is a
+   <canvas>, invisible to assistive tech). Standard visually-hidden pattern. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
