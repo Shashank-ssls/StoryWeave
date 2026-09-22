@@ -332,8 +332,73 @@ timing in the performance section, Part C.3).
 
 ## Part C — End-to-end assimilation
 
-*(filled in as Part C proceeds)*
+Started, not complete this session — see `docs/design/SESSION_LOG.md` Session 12
+for the exact boundary (what's done vs. deferred) and the resume order. Summary:
 
-## Known limits
+### C1. One-origin serving — done
 
-*(filled in at close)*
+`storyweave/api/app.py` optionally serves the built frontend (`frontend/dist`)
+from the same process as the API: `/assets` mounted, explicit `favicon.svg`/
+`og-image.png` routes (Vite puts these at dist root, not under `assets/`), and a
+genuine SPA-fallback catch-all to `index.html` for anything else, registered after
+the API router so `/api/v1/*` always wins. Skipped entirely when `dist/` doesn't
+exist — every existing test calling `create_app()` directly is unaffected.
+`run.ps1`/`run.bat`: build the frontend, activate the light venv, serve on one
+port. The existing two-server dev mode is untouched.
+
+**MEASURED, twice**: `tests/test_static_serving.py` (6/6, a fake dist tree, no
+real npm build needed for the light-venv gate) and a REAL run — `run.ps1 -Port
+8090 -SkipBuild` actually started uvicorn, served `/`, `/api/v1/works`, and
+`/favicon.svg` correctly from one port (`curl` verified), and a real headless-
+Chrome screenshot against that exact server (not the two-server dev setup) showed
+the-ninth-house's Dossier rendering correctly, zero console errors.
+
+### C2. Frontend arc consumption + F6 — partial
+
+`ChapterProvider` fetches `/arcs?n=` alongside the graph payload; `ChapterDialog`
+and `Chronicle` use the real arc names when present (the-ninth-house), falling
+back to blocks-of-100/of-50 unchanged for a work with none (Hollow Crown). F6 is
+no longer `test.fixme` — it runs for real against the live the-ninth-house work in
+`tests/fence.spec.ts` and passes. The rest of the planned `test:e2e-demo` walk
+(landing → open the work → Stemma Principal/Everyone/search/focus → Chronicle at
+40 chapters with arc bands → a >3-reveal jump → a single reveal → the deepening
+reveal → bookmark back, each step fence-asserted) is **not built** — only this one
+F6 slice exists.
+
+### C3–C6 — not started
+
+Performance measurements, the live in-app ingestion test, error-path tests against
+a real stopped/misbehaving backend, and the §16 checklist re-run against the new
+work are all still open. No numbers exist yet for any of them — do not assume
+performance is fine; it has not been measured.
+
+## Known limits (honest, as of this session's stop)
+
+- **Extraction precision on non-Character types is weak** (Part B.3): roughly 32%
+  aggregate precision on the real GLiNER floor pass, dominated by generic-noun
+  over-generation (Place hit hardest, ~22%) and real entities landing under the
+  wrong ontology type more often than being missed outright (Organizations typed
+  as Place, Titles absorbed into adjacent Character names). A stopword filter
+  (this session) measurably helped Character/Place specifically; the underlying
+  zero-shot type-confusion pattern is unaddressed and would need per-type
+  post-processing rules or a better-tuned GLiNER threshold to improve further.
+- **The Stemma is visually dense around hub characters** even after the stopword
+  fix — the protagonist's ~50 real (not noise) Tier-1 ties from a wide
+  co-occurrence window (`window_chars = 320`) render as a busy web at default
+  zoom. Not a bug in the fence/reveal system; a proximity-extraction density
+  effect that would need its own re-tuning pass (out of this session's scope).
+- **Several bible-planned Items never made it into the written prose** (3 of 9
+  actually appear: the Marrow Seal, Kaelen's Grimoire, the coded ledger) and one
+  Title (`Scion of the Ninth House`) is never used — see Part B.1. Harmless to the
+  demo (nothing references the missing ones), but the bible over-promises the
+  full 89-entity count relative to what's actually extractable from the text.
+- **No performance numbers exist yet** (C3 not started) — API latency, time-to-
+  interactive, and Stemma settle time on the-ninth-house's full cast are all
+  unmeasured. The Stemma's density (above) suggests settle time is worth checking
+  first when this resumes.
+- **The live in-app ingestion path (C4) has never been exercised this session** —
+  only read and understood from source (`api/jobs.py`). It may or may not work
+  cleanly end to end; that is genuinely unknown, not asserted either way.
+- **No formal §16 acceptance re-run against the-ninth-house** — the original
+  Hollow-Crown-only §16 pass (R9) still stands; whether the same 11 lines hold for
+  a 40-chapter, densely-connected work has not been checked.
