@@ -1,0 +1,106 @@
+/* DESIGN_SPEC.md §6.1 "Add a novel" (§14 checklist item). Tokens only. */
+
+.card {
+  width: 640px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 44px; /* spec role-size, between StateCard's 36px and the landing H1's 76px */
+  line-height: var(--lh-heading);
+  color: var(--ink);
+}
+
+.sub {
+  margin: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: var(--fs-18);
+  color: var(--dim);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--fs-13);
+  color: var(--dim);
+}
+
+.textarea {
+  font-family: var(--font-ui);
+  font-size: var(--fs-16);
+  padding: var(--s-3) var(--s-4);
+  background: var(--deep);
+  color: var(--ink);
+  border: var(--border);
+  border-radius: var(--radius);
+  resize: vertical;
+  min-height: 220px;
+}
+.textarea::placeholder {
+  color: var(--dim);
+}
+.textarea:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.readout {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--ink);
+}
+.readoutCount {
+  font-family: var(--font-body);
+  font-size: var(--fs-18);
+}
+.readoutDim {
+  color: var(--dim);
+}
+
+.error {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--ink);
+  padding: var(--s-3) var(--s-4);
+  border: var(--border);
+  background: var(--raise);
+}
+
+.actions {
+  display: flex;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  align-items: flex-start;
+}
+
+.progressState {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-ui);
+  font-size: var(--fs-16);
+  color: var(--ink);
+}
+
+.progressDetail {
+  font-family: var(--font-ui);
+  font-size: var(--fs-14);
+  color: var(--dim);
+}

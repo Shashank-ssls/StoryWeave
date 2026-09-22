@@ -1,24 +1,25 @@
 import { useEffect, useState } from "react";
 
 // Hand-rolled hash router (FRONTEND_OVERHAUL.md §6 Phase 2 / R2; DESIGN_SPEC.md §5).
-// Routes: landing `#/`, `#/work/:slug/entity/:id`, `#/work/:slug/web?focus=:id`,
-// `#/work/:slug/chronicle`, plus the two non-reader routes `#/_type` (dev token gallery)
-// and `#/_legacy` (the whole old app, unchanged). The chapter bookmark MUST NOT appear in
-// any URL (DESIGN_SPEC §5) — nothing here ever reads or writes a chapter number.
+// Routes: landing `#/`, `#/add` (R9 step 8: the ingest form, ported off the deleted
+// legacy app), `#/work/:slug/entity/:id`, `#/work/:slug/web?focus=:id`,
+// `#/work/:slug/chronicle`, plus the dev-only `#/_type` (token gallery). The chapter
+// bookmark MUST NOT appear in any URL (DESIGN_SPEC §5) — nothing here ever reads or
+// writes a chapter number.
 
 export type Route =
   | { name: "landing" }
+  | { name: "add" }
   | { name: "work-entity"; slug: string; entityId: string }
   | { name: "work-web"; slug: string; focus: string | null }
   | { name: "work-chronicle"; slug: string }
-  | { name: "type-scale" }
-  | { name: "legacy" };
+  | { name: "type-scale" };
 
 export type WorkRoute = Extract<
   Route,
   { name: "work-entity" } | { name: "work-web" } | { name: "work-chronicle" }
 >;
-export type CodexRoute = Extract<Route, { name: "landing" }> | WorkRoute;
+export type CodexRoute = Extract<Route, { name: "landing" } | { name: "add" }> | WorkRoute;
 
 // The entity-id placeholder used when `#/work/:slug` is visited with no entity chosen yet.
 // R4 replaces this redirect target with the real highest-degree person.
@@ -31,7 +32,7 @@ function parse(hash: string): Route {
 
   if (segs.length === 0) return { name: "landing" };
   if (segs[0] === "_type") return { name: "type-scale" };
-  if (segs[0] === "_legacy") return { name: "legacy" };
+  if (segs[0] === "add") return { name: "add" };
 
   if (segs[0] === "work" && segs[1]) {
     const slug = decodeURIComponent(segs[1]);
@@ -57,10 +58,10 @@ export function routePath(route: Route): string {
   switch (route.name) {
     case "landing":
       return "#/";
+    case "add":
+      return "#/add";
     case "type-scale":
       return "#/_type";
-    case "legacy":
-      return "#/_legacy";
     case "work-entity":
       return `#/work/${encodeURIComponent(route.slug)}/entity/${encodeURIComponent(route.entityId)}`;
     case "work-web":

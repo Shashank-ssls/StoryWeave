@@ -479,7 +479,67 @@
     `lint:design` 85 files (unchanged — neither file type is linted); `typecheck` clean;
     `test:geometry` 22/22 and `test:style` 5/5 re-run clean (no regression from the new
     `<head>` content).
-- **Stopped at:** step 7 of 10 green. Continuing straight into step 8 in this same
+- **R9 step 8 (`#/_legacy` + legacy-code deletion, with grep proof) — done, same
+  session:**
+  - **Real conflict found before deleting anything, and taken to you rather than
+    guessed:** the spec-required "Add a novel" link (§6.1) had its only working
+    implementation inside the legacy app (R8's own decision: "no new ingestion UI built
+    per the brief," reusing the legacy Composer via `#/_legacy`). Deleting the legacy
+    route wholesale, as R9's plan said, would have silently killed the one working
+    ingestion flow. You chose to port the Composer into the Codex UI as a real route
+    rather than lose the feature or leave a partial exception.
+  - **Ported:** `codex/Compose/Composer.tsx` (same state machine, same four API calls —
+    `ingestWork`/`previewChapters`/`fetchStatus`/`appendChapters`, unchanged per R3's
+    backend freeze — restyled with `Button`/`Input`/the new `LoadingDots` in place of the
+    old CSS spinner) + `Compose.tsx` (the route screen: header, centered card, on the
+    same mural/vignette every other screen sits on) + `Composer.module.css` /
+    `Compose.module.css`, both tokens-only. New route `#/add` (`router/useHashRoute.ts`,
+    `CodexApp.tsx`). Both "Add a novel" call sites in `Landing.tsx` now go there instead
+    of `#/_legacy`; `appendChapters` mode is kept fully working in the component but has
+    no new-UI entry point (the old per-work "add chapters" trigger lived in the retired
+    Library screen, and nothing in DESIGN_SPEC specs a replacement) — documented in the
+    component's own header comment rather than silently dropped.
+  - **Also fixed while touching this code:** the empty-shelf state's "Open the sample"
+    button pointed at `#/_legacy` too, which — once deleted — would have been a dead
+    link even in the old build's own behavior (the legacy library would show nothing
+    useful in the zero-works case either). Now navigates straight to the demo Dossier.
+  - **Deleted whole** (grep-verified — see below): `src/App.tsx`, `src/GraphView.tsx`,
+    `src/Library.tsx`, the old `src/Composer.tsx`, `src/codex/LegacyRoute.tsx`,
+    `src/styles.css`.
+  - **Trimmed, not deleted** (files with a real, still-needed half and a legacy-only
+    half — read every export's call sites before touching anything, not assumed from
+    the file's name): `src/ontology.ts` lost `NODE_TYPES`/`NodeTypeName`/`TYPE_COLOR`/
+    `typeColor`/`REVEAL`/`GROUND`/`INK`/`INK_DIM`/`EDGE_QUIET`/`relationLabel`/
+    `relationStepLabel` (all GraphView-Cytoscape-only; `DEMO_SLUG`/`IDENTITY_RELATIONS`/
+    `RELATION_LABELS` stay, used throughout the Codex UI). `src/api.ts` lost
+    `fetchGraph`/`deleteWork` (both legacy-only; `ChapterProvider` has always had its own
+    fenced fetch with abort support, never called `fetchGraph`). `scripts/lint-design.mjs`
+    lost the `LEGACY_FILES` hex/font-family exemption list and the whole rule-4 "collides
+    with legacy styles.css" check (and its now-dead `extractClassNames` helper) — both
+    existed only for files that no longer exist. `scripts/shots.config.mjs` lost phase
+    0's two shots and phase 1/2's three `#/_legacy`-targeting shots (they can never run
+    again; a comment points at SESSION_LOG's R0/R1/R2 entries for what they used to
+    show). `tests/geometry.spec.ts`'s "`#/_legacy` behaves unchanged" test replaced with
+    one covering `#/add` instead (form renders, both "Add a novel" links route there).
+  - **Grep proof:** `grep -rln "_legacy"` across `frontend/{src,scripts,tests}` after all
+    edits returns exactly 4 files, all historical/explanatory comments ("R9 step 8
+    deleted the legacy app…") with zero live code paths — checked line by line, not just
+    counted.
+  - MEASURED: `typecheck` clean, `build` clean (bundle actually shrank, 812KB → 791KB,
+    despite the new Compose files — the deleted legacy chunk was bigger than what
+    replaced it; the separate lazy-loaded `styles-*.css` chunk is gone from the build
+    output entirely), `lint:design` 83 files clean (85 → 83: −6 deleted, +4 new Compose
+    files). Every existing Playwright suite re-run individually (not batched — an
+    earlier batched run threw 11 Stemma failures under heavy concurrent load, same
+    known flakiness class R6/R8 already logged; re-ran `test:stemma` alone twice,
+    16/16 clean both times) plus the new `#/add` geometry test: `test:fence` 29/29 (+2
+    fixme), `test:landing` 9/9, `test:dossier` 6/6, `test:stemma` 16/16, `test:reveal`
+    11/11, `test:reveal-choreography` 3/3, `test:chronicle` 8/8, `test:shortcuts` 5/5,
+    `test:style` 5/5, `test:reduced-motion` 4/4, `test:geometry` 22/22, `test:unit`
+    63/63, backend `pytest` 124/6 (unchanged). Compose screen itself screenshotted at
+    1440×900 in both the empty and filled (live "N chapters detected" readout) states —
+    renders correctly, on-brand, no console errors.
+- **Stopped at:** step 8 of 10 green. Continuing straight into step 9 in this same
   session (no user instruction to stop here).
-- **Next:** R9 steps 8-10 (`#/_legacy` + legacy-code deletion with grep proof, the §16
-  acceptance checklist line by line, final full suite + full 1440×900/1280×720 shoot).
+- **Next:** R9 steps 9-10 (the §16 acceptance checklist line by line, final full suite +
+  full 1440×900/1280×720 shoot).

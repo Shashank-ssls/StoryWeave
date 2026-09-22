@@ -106,15 +106,15 @@ test.describe("Mural / vignette / canvas mask (§4.6)", () => {
   });
 });
 
-test.describe("#/_legacy behaves unchanged (R2 point 2)", () => {
-  test("library loads and entering a work opens the old graph canvas", async ({ page }) => {
-    await page.goto("/#/_legacy");
-    await page.waitForSelector(".lib-shelf", { timeout: 10_000 });
-    await page.click(".work-card-open");
-    await page.waitForSelector(".graph-canvas", { timeout: 10_000 });
-    // The old app's own reading-position scrubber, proof the legacy interaction wiring
-    // (not just the initial render) still works end to end.
-    await expect(page.locator(".scrubber")).toBeVisible();
+test.describe("#/add (R9 step 8 — the ingest form ported off the deleted legacy app)", () => {
+  test("renders the create-mode form and the Add-a-novel links route to it", async ({ page }) => {
+    await page.goto("/#/");
+    await page.click('[data-testid="add-novel"]');
+    await expect(page).toHaveURL(/#\/add$/);
+    await page.waitForSelector('[data-testid="compose-root"]');
+    await expect(page.locator('[data-testid="compose-title"]')).toBeVisible();
+    await expect(page.locator('[data-testid="compose-text"]')).toBeVisible();
+    await expect(page.locator('[data-testid="compose-submit"]')).toBeDisabled();
   });
 });
 

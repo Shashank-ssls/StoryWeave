@@ -1,7 +1,6 @@
 import type {
   AnalysisStatus,
   AppendResponse,
-  GraphResponse,
   IngestResponse,
   PreviewResponse,
   WorkModel,
@@ -46,12 +45,6 @@ export async function fetchWorks(): Promise<WorkModel[]> {
   return data.works;
 }
 
-export async function fetchGraph(slug: string, n: number): Promise<GraphResponse> {
-  return getJSON<GraphResponse>(
-    `/api/v1/works/${encodeURIComponent(slug)}/graph?n=${n}`,
-  );
-}
-
 // In-app ingest: paste a novel, get back the new work + the launched analysis state.
 export async function ingestWork(title: string, text: string): Promise<IngestResponse> {
   return postJSON<IngestResponse>("/api/v1/works", { title, text });
@@ -73,12 +66,4 @@ export async function appendChapters(slug: string, text: string): Promise<Append
     `/api/v1/works/${encodeURIComponent(slug)}/chapters`,
     { text },
   );
-}
-
-// True delete of a user novel (local data only; the demo is protected server-side).
-export async function deleteWork(slug: string): Promise<void> {
-  const resp = await fetch(`/api/v1/works/${encodeURIComponent(slug)}`, { method: "DELETE" });
-  if (!resp.ok) {
-    throw new Error(await errorMessage(resp, `DELETE /works/${slug}`));
-  }
 }

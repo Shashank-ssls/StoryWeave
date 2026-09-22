@@ -1,46 +1,10 @@
-// The 8-type ontology (SPEC §5.1) + the design-system palette. HEX only — Cytoscape's
-// canvas renderer does not parse oklch(), which is exactly why the old build rendered
-// every node grey. The legend and the graph both read from TYPE_COLOR, so they cannot
-// disagree. See frontend/DESIGN.md for the rationale.
+// Shared ontology constants used across the Codex UI. The 8-type node palette and the
+// old Cytoscape hex-color constants this file used to hold were deleted at R9 step 8
+// along with the legacy app (`GraphView.tsx`) that was their only reader — the new
+// Stemma's Cytoscape style lives in `graph/codexStyle.ts` instead.
 
 // The committed CC0 demo — protected from deletion (the build depends on it).
 export const DEMO_SLUG = "the-hollow-crown";
-
-export const NODE_TYPES = [
-  "Character",
-  "Place",
-  "Organization",
-  "Item",
-  "Ability",
-  "Concept",
-  "Event",
-  "Title",
-] as const;
-
-export type NodeTypeName = (typeof NODE_TYPES)[number];
-
-// The constellation: distinct hues, harmonized luminance, legible on midnight.
-export const TYPE_COLOR: Record<NodeTypeName, string> = {
-  Character: "#7aa2f7",
-  Place: "#63d29a",
-  Organization: "#e36873",
-  Item: "#d8a24a",
-  Ability: "#b58cf0",
-  Concept: "#46c7d8",
-  Event: "#ee8b49",
-  Title: "#de85c2",
-};
-
-export function typeColor(type: string): string {
-  return (TYPE_COLOR as Record<string, string>)[type] ?? "#9aa0b4";
-}
-
-// Reserved gold — the reveal/identity accent and the bloom. Semantic, never decorative.
-export const REVEAL = "#ffd073";
-export const GROUND = "#0b0d14";
-export const INK = "#e9e4d6";
-export const INK_DIM = "#8b91a8";
-export const EDGE_QUIET = "#39405c";
 
 // Tier-3 identity relations get the bloom treatment — the reveal made visible.
 export const IDENTITY_RELATIONS = new Set([
@@ -93,14 +57,3 @@ export const RELATION_LABELS: Record<string, string> = {
   REINCARNATION: "reincarnation of",
   TRANSMIGRATED_INTO: "transmigrated into",
 };
-
-// Graph/hover label: the curated label, or "" for low-quality/unknown relations (hidden).
-export function relationLabel(relation: string): string {
-  return RELATION_LABELS[relation] ?? "";
-}
-
-// Path/connection label: like relationLabel but never empty — in a traced path or a
-// connections list you always want to name the hop, so a hidden relation reads "linked".
-export function relationStepLabel(relation: string): string {
-  return RELATION_LABELS[relation] ?? "linked";
-}

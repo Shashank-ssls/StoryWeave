@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { navigate, routePath } from "../../router/useHashRoute";
+import { navigate, routePath, PENDING_ENTITY } from "../../router/useHashRoute";
 import { fetchWorks } from "../../api";
 import type { WorkModel } from "../../types";
 import { DEMO_SLUG } from "../../ontology";
@@ -83,10 +83,14 @@ export default function Landing(): JSX.Element {
             body={codexTheme.stateEmptyShelf.body}
             actions={
               <>
-                <Button variant="outline" onClick={() => navigate({ name: "legacy" })} data-testid="open-sample">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate({ name: "work-entity", slug: DEMO_SLUG, entityId: PENDING_ENTITY })}
+                  data-testid="open-sample"
+                >
                   {codexTheme.openSample}
                 </Button>
-                <Button variant="outline" onClick={() => navigate({ name: "legacy" })} data-testid="add-novel-empty">
+                <Button variant="outline" onClick={() => navigate({ name: "add" })} data-testid="add-novel-empty">
                   {codexTheme.addNovel}
                 </Button>
               </>
@@ -100,11 +104,9 @@ export default function Landing(): JSX.Element {
                 <span className={styles.shelfCardMeta}>{w.chapter_count} {w.chapter_count === 1 ? "chapter" : "chapters"}</span>
               </a>
             ))}
-            {/* R8: no dedicated ingestion screen exists in the redesign — the backend's
-                real ingest endpoint (POST /api/v1/works) is already wired up behind the
-                legacy Composer (#/_legacy), so "Add a novel" reuses that route as-is
-                rather than building a second ingestion UI (out of scope, per the brief). */}
-            <button type="button" className={styles.shelfAdd} onClick={() => navigate({ name: "legacy" })} data-testid="add-novel">
+            {/* R9 step 8: the ingest form was ported off the deleted legacy app into its
+                own route (#/add, codex/Compose) — same backend calls, new chrome. */}
+            <button type="button" className={styles.shelfAdd} onClick={() => navigate({ name: "add" })} data-testid="add-novel">
               <span className={styles.shelfAddPlus}>+</span>
               <span>{codexTheme.addNovel}</span>
               <span className={styles.shelfCardMeta}>{codexTheme.addNovelCaption}</span>

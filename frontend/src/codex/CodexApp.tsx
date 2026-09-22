@@ -1,5 +1,6 @@
 import type { CodexRoute } from "../router/useHashRoute";
 import Landing from "./Landing/Landing";
+import Compose from "./Compose/Compose";
 import Dossier from "./Dossier/Dossier";
 import Stemma from "./Stemma/Stemma";
 import Chronicle from "./Chronicle/Chronicle";
@@ -30,6 +31,8 @@ export default function CodexApp({ route }: { route: CodexRoute }): JSX.Element 
       <div className={styles.content}>
         {route.name === "landing" ? (
           <Landing />
+        ) : route.name === "add" ? (
+          <Compose />
         ) : (
           <ChapterProvider key={route.slug} slug={route.slug}>
             <RevealChrome>

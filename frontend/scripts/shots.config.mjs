@@ -2,11 +2,10 @@
 // Each phase adds its own entry; nothing here is shared state between phases, so an old
 // phase's shots keep working as "before" pictures even after later phases change the app.
 //
-// Phase 0/1's "library"/"graph"/"*-expected-degraded" shots originally navigated to the
-// bare `baseUrl` — before R2 there was no router and the old app WAS the root. Since R2
-// the old app lives only at `#/_legacy`, so those shots were retargeted there (R3, Step 1:
-// a harness with known-failing configs is not allowed). They still shoot the same old UI
-// they always did; only the URL contract moved.
+// R9 step 8 deleted the old app and its `#/_legacy` route whole. Phase 0's two shots and
+// phase 1's two "-expected-degraded" shots existed only to picture that old UI (see
+// SESSION_LOG.md's R0/R1 entries for what they showed at the time) and can no longer run
+// against anything real, so they were removed here rather than left broken.
 //
 // A shot is { name, run(page, baseUrl) }: `run` OWNS its navigation (calls page.goto
 // itself) rather than relying on a shared pre-navigation from the harness — a same-origin
@@ -18,26 +17,6 @@
 /** @param {string} phase @returns {Promise<Shot[]>} */
 export async function getShots(phase) {
   switch (phase) {
-    case "0":
-      return [
-        {
-          name: "library",
-          async run(page, baseUrl) {
-            await page.goto(`${baseUrl}/#/_legacy`, { waitUntil: "networkidle" });
-            await page.waitForSelector(".lib-shelf", { timeout: 10_000 });
-          },
-        },
-        {
-          name: "graph",
-          async run(page, baseUrl) {
-            await page.goto(`${baseUrl}/#/_legacy`, { waitUntil: "networkidle" });
-            await page.click(".work-card-open");
-            await page.waitForSelector(".graph-canvas", { timeout: 10_000 });
-            // cola physics settle time (see memory/screenshot-gate-workflow.md).
-            await page.waitForTimeout(2_500);
-          },
-        },
-      ];
     case "1":
       return [
         {
@@ -45,24 +24,6 @@ export async function getShots(phase) {
           async run(page, baseUrl) {
             await page.goto(`${baseUrl}/#/_type`, { waitUntil: "networkidle" });
             await page.waitForSelector(".type-page");
-          },
-        },
-        // "expected-degraded" — record only, not something to fix (FRONTEND_OVERHAUL §1 /
-        // R1 scope: old fonts/palette removed, old screens are allowed to look wrong).
-        {
-          name: "library-expected-degraded",
-          async run(page, baseUrl) {
-            await page.goto(`${baseUrl}/#/_legacy`, { waitUntil: "networkidle" });
-            await page.waitForSelector(".lib-shelf", { timeout: 10_000 });
-          },
-        },
-        {
-          name: "graph-expected-degraded",
-          async run(page, baseUrl) {
-            await page.goto(`${baseUrl}/#/_legacy`, { waitUntil: "networkidle" });
-            await page.click(".work-card-open");
-            await page.waitForSelector(".graph-canvas", { timeout: 10_000 });
-            await page.waitForTimeout(2_500);
           },
         },
       ];
@@ -104,13 +65,8 @@ export async function getShots(phase) {
             await page.waitForSelector(".type-page");
           },
         },
-        {
-          name: "legacy",
-          async run(page, baseUrl) {
-            await page.goto(`${baseUrl}/#/_legacy`, { waitUntil: "networkidle" });
-            await page.waitForSelector(".lib-shelf", { timeout: 10_000 });
-          },
-        },
+        // The "legacy" shot that used to live here (proving `#/_legacy` still worked at
+        // R2) was removed at R9 step 8, when the legacy route was deleted whole.
       ];
     }
     case "3": {
