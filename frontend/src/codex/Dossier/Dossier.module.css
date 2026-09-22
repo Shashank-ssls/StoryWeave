@@ -7,6 +7,14 @@
   min-height: 100vh;
 }
 
+.panelToggle,
+.railToggle {
+  display: none;
+}
+.panelScrim {
+  display: none;
+}
+
 /* ---------- left rail ---------- */
 
 .rail {
@@ -427,4 +435,72 @@
   width: 100%;
   height: 430px;
   flex: none;
+}
+
+/* ---------- R9 §11 responsive: 1024-1279 right panel becomes a toggle drawer;
+   below 1024 additionally single-column, rail becomes a top drawer. Declared LAST in the
+   cascade (not just inside its own @media block) so these overrides win specificity ties
+   against the base .rail/.rightPanel/.topRow rules above — a real bug caught here: placed
+   near the top of the file, the base rules further down silently re-won every property. */
+
+@media (max-width: 1279px) {
+  .topRow {
+    flex-wrap: wrap;
+    row-gap: var(--s-3);
+  }
+  .panelToggle {
+    display: inline-flex;
+    order: 10;
+    width: 100%;
+  }
+  .rightPanel {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(380px, 88vw);
+    height: 100vh;
+    transform: translateX(100%);
+    transition: transform var(--dur-slow) var(--ease-out);
+    z-index: 25;
+    overflow-y: auto;
+  }
+  .rightPanel.panelOpen {
+    transform: translateX(0);
+  }
+  .panelScrim.panelOpen {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: var(--scrim);
+    z-index: 24;
+  }
+}
+
+@media (max-width: 1023px) {
+  .dossier {
+    flex-direction: column;
+  }
+  .railToggle {
+    display: inline-flex;
+    order: -1;
+    width: 100%;
+  }
+  .rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    max-height: 80vh;
+    width: auto;
+    transform: translateY(-100%);
+    transition: transform var(--dur-slow) var(--ease-out);
+    z-index: 25;
+    overflow-y: auto;
+  }
+  .rail.railOpen {
+    transform: translateY(0);
+  }
+  .main {
+    padding-top: var(--s-8);
+  }
 }

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PENDING_ENTITY, navigate, routePath, type WorkRoute } from "../../router/useHashRoute";
 import { useWorkTitle } from "../useWorkTitle";
 import Tabs from "../../components/Tabs/Tabs";
@@ -25,6 +25,19 @@ export default function Dossier({ route }: { route: WorkRoute }): JSX.Element {
   const m = useChapter();
   const { vm, principal, changed } = useDossier();
   const entityId = route.name === "work-entity" ? route.entityId : PENDING_ENTITY;
+  // R9 §11: 1024-1279 the right panel is a toggle drawer; <1024 the rail is a top drawer
+  // too (CSS media queries do the actual layout switch; these just gate whether the
+  // drawer classes apply, since the toggles themselves are display:none outside range).
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
+  useEffect(() => {
+    if (!panelOpen && !railOpen) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") { setPanelOpen(false); setRailOpen(false); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [panelOpen, railOpen]);
 
   // `#/work/:slug` (no entity) → the principal character at the current bookmark (P1).
   // location.replace: no history entry, but hashchange still fires so the router follows.
@@ -41,7 +54,7 @@ export default function Dossier({ route }: { route: WorkRoute }): JSX.Element {
 
   return (
     <div className={styles.dossier} data-testid="dossier-root">
-      <aside className={styles.rail} data-testid="dossier-rail">
+      <aside className={`${styles.rail} ${railOpen ? styles.railOpen : ""}`} data-testid="dossier-rail">
         <a className={styles.wordmark} href={routePath({ name: "landing" })}>StoryWeave</a>
         <div className={styles.novelTitle}>{title}</div>
         <ChapterListCompact />
@@ -50,8 +63,14 @@ export default function Dossier({ route }: { route: WorkRoute }): JSX.Element {
 
       <main className={styles.main}>
         <div className={styles.topRow}>
+          <Button variant="outline" className={styles.railToggle} onClick={() => setRailOpen((v) => !v)} aria-expanded={railOpen} data-testid="rail-toggle">
+            {codexTheme.castMenuToggle}
+          </Button>
           <span className={styles.sectionLabel}>{codexTheme.personsHeading}</span>
           <Tabs items={tabItems} activeKey="entity" onChange={(k) => navigateToTab(k, route)} />
+          <Button variant="outline" className={styles.panelToggle} onClick={() => setPanelOpen((v) => !v)} aria-expanded={panelOpen} data-testid="panel-toggle">
+            {codexTheme.showStemmaToggle}
+          </Button>
         </div>
 
         {failedWithNothing ? (
@@ -105,7 +124,12 @@ export default function Dossier({ route }: { route: WorkRoute }): JSX.Element {
         )}
       </main>
 
-      <aside className={styles.rightPanel} data-testid="dossier-right-panel">
+      <div
+        className={`${styles.panelScrim} ${panelOpen || railOpen ? styles.panelOpen : ""}`}
+        onMouseDown={() => { setPanelOpen(false); setRailOpen(false); }}
+        data-testid="panel-scrim"
+      />
+      <aside className={`${styles.rightPanel} ${panelOpen ? styles.panelOpen : ""}`} data-testid="dossier-right-panel">
         {vm && entity && (
           <>
             <div className={styles.panelHeader}>

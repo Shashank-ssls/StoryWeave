@@ -137,3 +137,62 @@ test.describe("No horizontal scroll at 1280x720", () => {
     });
   }
 });
+
+// R9 §11 responsive: 1024-1279 the Dossier/Stemma right panels and the Chronicle panel
+// become toggle drawers (closed by default, off-canvas); below 1024 the Dossier/Stemma
+// rail becomes a top drawer too, single column. Shot widths per the brief: 1100 (inside
+// the drawer breakpoint) and 900 (below the single-column breakpoint).
+test.describe("R9 responsive: no horizontal scroll at 1100x800 and 900x800", () => {
+  for (const width of [1100, 900]) {
+    for (const [name, hash] of [
+      ["dossier", `#/work/${SLUG}/entity/1`],
+      ["stemma", `#/work/${SLUG}/web`],
+      ["chronicle", `#/work/${SLUG}/chronicle`],
+    ] as const) {
+      test(`${name} @ ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: 800 });
+        await page.goto(`/${hash}`);
+        await page.waitForSelector("body");
+        const { scrollWidth, clientWidth } = await page.evaluate(() => ({
+          scrollWidth: document.documentElement.scrollWidth,
+          clientWidth: document.documentElement.clientWidth,
+        }));
+        expect(scrollWidth).toBeLessThanOrEqual(clientWidth);
+      });
+    }
+  }
+});
+
+test.describe("R9 responsive: drawer toggles", () => {
+  test("Dossier: right panel is off-canvas by default at 1100px, opens/closes via toggle + scrim", async ({ page }) => {
+    await page.setViewportSize({ width: 1100, height: 800 });
+    await page.goto(`/#/work/${SLUG}/entity/1`);
+    await page.waitForSelector('[data-testid="dossier-root"]');
+    const panel = page.locator('[data-testid="dossier-right-panel"]');
+    expect((await panel.boundingBox())!.x).toBeGreaterThanOrEqual(1100); // off-canvas (translated right)
+    await page.click('[data-testid="panel-toggle"]');
+    await expect.poll(async () => (await panel.boundingBox())!.x).toBeLessThan(1100);
+    await page.click('[data-testid="panel-scrim"]');
+    await expect.poll(async () => (await panel.boundingBox())!.x).toBeGreaterThanOrEqual(1100);
+  });
+
+  test("Dossier: rail is a top drawer at 900px, off-canvas until toggled", async ({ page }) => {
+    await page.setViewportSize({ width: 900, height: 800 });
+    await page.goto(`/#/work/${SLUG}/entity/1`);
+    await page.waitForSelector('[data-testid="dossier-root"]');
+    const rail = page.locator('[data-testid="dossier-rail"]');
+    expect((await rail.boundingBox())!.y).toBeLessThan(0); // translated above the viewport
+    await page.click('[data-testid="rail-toggle"]');
+    await expect.poll(async () => (await rail.boundingBox())!.y).toBeGreaterThanOrEqual(0);
+  });
+
+  test("Chronicle: right panel is a bottom sheet at 1100px, off-canvas until toggled", async ({ page }) => {
+    await page.setViewportSize({ width: 1100, height: 800 });
+    await page.goto(`/#/work/${SLUG}/chronicle`);
+    await page.waitForSelector('[data-testid="chronicle-right-panel"]');
+    const panel = page.locator('[data-testid="chronicle-right-panel"]');
+    expect((await panel.boundingBox())!.y).toBeGreaterThanOrEqual(800); // off-canvas below
+    await page.click('[data-testid="panel-toggle"]');
+    await expect.poll(async () => (await panel.boundingBox())!.y).toBeLessThan(800);
+  });
+});

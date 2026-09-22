@@ -190,6 +190,12 @@ export const codexTheme = {
     body: "Run `storyweave seed-demo` to restore it.",
   },
 
+  // ---- R9: responsive drawers (§11, 1024-1279 panel drawer / <1024 rail drawer) ----
+  showStemmaToggle: "Show the Stemma",
+  showSelectionToggle: "Show selection",
+  showChronicleDetail: "Show details",
+  castMenuToggle: "Cast & chapters",
+
   // ---- R9: screen-reader mirror of the focused neighbourhood (§11) ----
   focusMirrorTie: "{name} ({rel}, Chapter {n})",
   focusMirrorWithTies: "{name} — ties: {ties}",

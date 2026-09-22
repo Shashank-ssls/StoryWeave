@@ -58,6 +58,18 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
   const canvas = useRef<StemmaCanvasHandle>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const hoverTimer = useRef<number | null>(null);
+  // R9 §11: 1024-1279 the right panel is a toggle drawer; <1024 the rail is a top drawer
+  // too (see Dossier.tsx for the same pattern; the CSS media queries do the layout work).
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
+  useEffect(() => {
+    if (!panelOpen && !railOpen) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === "Escape") { setPanelOpen(false); setRailOpen(false); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [panelOpen, railOpen]);
 
   const reducedMotion = useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches, []);
 
@@ -192,7 +204,12 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
   return (
     <div className={styles.stemma} data-testid="stemma-root">
       <div className={styles.srOnly} role="status" aria-live="polite" data-testid="focus-mirror">{focusMirrorText}</div>
-      <aside className={styles.rail} data-testid="stemma-rail">
+      <div
+        className={`${styles.panelScrim} ${panelOpen || railOpen ? styles.panelOpen : ""}`}
+        onMouseDown={() => { setPanelOpen(false); setRailOpen(false); }}
+        data-testid="panel-scrim"
+      />
+      <aside className={`${styles.rail} ${railOpen ? styles.railOpen : ""}`} data-testid="stemma-rail">
         <a className={styles.wordmark} href={routePath({ name: "landing" })}>StoryWeave</a>
         <div className={styles.novelTitle}>{title}</div>
 
@@ -276,12 +293,18 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
 
       <div className={`${styles.canvas} web-canvas-mask`} data-testid="stemma-canvas">
         <div className={styles.canvasTopBar}>
+          <Button variant="outline" className={styles.railToggle} onClick={() => setRailOpen((v) => !v)} aria-expanded={railOpen} data-testid="rail-toggle">
+            {codexTheme.castMenuToggle}
+          </Button>
           <span className={styles.focusLabel} data-testid="focus-label">
             {focusNode
               ? fillTemplate(codexTheme.focusedOn, { name: focusNode.label, steps: steps === 1 ? codexTheme.stepOne : codexTheme.stepTwo })
               : codexTheme.unfocused}
           </span>
           <Tabs items={tabItems} activeKey="web" onChange={(k) => navigateToTab(k, route)} />
+          <Button variant="outline" className={styles.panelToggle} onClick={() => setPanelOpen((v) => !v)} aria-expanded={panelOpen} data-testid="panel-toggle">
+            {codexTheme.showSelectionToggle}
+          </Button>
         </div>
 
         <div className={styles.canvasBody}>
@@ -335,7 +358,7 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
         </div>
       </div>
 
-      <aside className={styles.rightPanel} data-testid="stemma-right-panel">
+      <aside className={`${styles.rightPanel} ${panelOpen ? styles.panelOpen : ""}`} data-testid="stemma-right-panel">
         {vm && <SelectionPanel vm={vm} selected={selected} onOpen={openDossier} />}
       </aside>
     </div>

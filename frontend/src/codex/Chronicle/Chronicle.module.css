@@ -8,6 +8,21 @@
   min-height: 100vh;
 }
 
+/* ---------- R9 §11 responsive: below 1280 the right panel becomes a bottom sheet
+   (Chronicle has no left rail, so there's no separate <1024 case here) ---------- */
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+.panelToggle {
+  display: none;
+}
+.panelScrim {
+  display: none;
+}
+
 .headerBar {
   height: 76px;
   flex: none;
@@ -298,4 +313,43 @@
 .readOn {
   width: 100%;
   min-height: var(--control-h-lg);
+}
+
+/* ---------- R9 §11 responsive: below 1280 the right panel becomes a bottom sheet
+   (Chronicle has no left rail, so there's no separate <1024 case here). Declared LAST in
+   the cascade so this wins specificity ties against the base .rightPanel rule above (same
+   source-order bug as Dossier/Stemma's equivalent block — fixed the same way here). ---- */
+
+@media (max-width: 1279px) {
+  .headerBar {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 76px;
+    row-gap: var(--s-2);
+    padding: var(--s-3) var(--s-8);
+  }
+  .panelToggle {
+    display: inline-flex;
+  }
+  .rightPanel {
+    position: fixed;
+    inset: auto 0 0 0;
+    width: auto;
+    max-height: 70vh;
+    border-left: none;
+    border-top: var(--border);
+    transform: translateY(100%);
+    transition: transform var(--dur-slow) var(--ease-out);
+    z-index: 25;
+  }
+  .rightPanel.panelOpen {
+    transform: translateY(0);
+  }
+  .panelScrim.panelOpen {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: var(--scrim);
+    z-index: 24;
+  }
 }

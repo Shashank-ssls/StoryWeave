@@ -57,6 +57,14 @@ export default function Chronicle({ route }: { route: WorkRoute }): JSX.Element 
   const m = useChapter();
   const [cast, setCast] = useState<CastSize>("principal");
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  // R9 §11: below 1280 the right panel becomes a bottom sheet toggle drawer.
+  const [panelOpen, setPanelOpen] = useState(false);
+  useEffect(() => {
+    if (!panelOpen) return;
+    const onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") setPanelOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [panelOpen]);
   const [historyVersion, setHistoryVersion] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrolledFor = useRef<number | null>(null);
@@ -148,8 +156,19 @@ export default function Chronicle({ route }: { route: WorkRoute }): JSX.Element 
           <div className={styles.novelTitle}>{title}</div>
           <div className={styles.subtitle}>{codexTheme.chronicleSubtitle}</div>
         </div>
-        <Tabs items={tabItems} activeKey="chronicle" onChange={(k) => navigateToTab(k, route)} />
+        <div className={styles.headerRight}>
+          <Tabs items={tabItems} activeKey="chronicle" onChange={(k) => navigateToTab(k, route)} />
+          <Button variant="outline" className={styles.panelToggle} onClick={() => setPanelOpen((v) => !v)} aria-expanded={panelOpen} data-testid="panel-toggle">
+            {codexTheme.showChronicleDetail}
+          </Button>
+        </div>
       </header>
+
+      <div
+        className={`${styles.panelScrim} ${panelOpen ? styles.panelOpen : ""}`}
+        onMouseDown={() => setPanelOpen(false)}
+        data-testid="panel-scrim"
+      />
 
       <div className={styles.body}>
         {failedWithNothing ? (
@@ -352,7 +371,7 @@ export default function Chronicle({ route }: { route: WorkRoute }): JSX.Element 
               </div>
             </div>
 
-            <aside className={styles.rightPanel} data-testid="chronicle-right-panel">
+            <aside className={`${styles.rightPanel} ${panelOpen ? styles.panelOpen : ""}`} data-testid="chronicle-right-panel">
               <div className={styles.panel} data-testid="chronicle-reveal">
                 {selected && vm ? (
                   <>
