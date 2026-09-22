@@ -149,9 +149,21 @@ export async function getShots(phase) {
           },
         },
         {
+          // R6 (fixed at R9 step 10): every real forward step in this demo now reveals
+          // something (Wren/Caelum deepens at 3→4), so the plain toast this shot wants
+          // is unreachable on real data — it would open the reveal overlay instead,
+          // which is what a live run of this shot surfaced. Same fix fence.spec.ts uses:
+          // strip identity edges from the response so the diff stays reveal-free.
           name: "toast-forward",
           async run(page, baseUrl) {
             await atChapter(page, baseUrl, 3);
+            await page.route(GRAPH_RE, async (route) => {
+              const resp = await route.fetch();
+              const body = await resp.json();
+              const IDENTITY = new Set(["SAME_AS", "ALIAS", "SECRET_IDENTITY", "REINCARNATION", "TRANSMIGRATED_INTO"]);
+              body.elements.edges = body.elements.edges.filter((e) => !IDENTITY.has(e.data.relation));
+              await route.fulfill({ response: resp, body: JSON.stringify(body) });
+            });
             await confirm(page, 4);
             await page.waitForSelector('[data-testid="toast"][data-kind="forward"]');
           },

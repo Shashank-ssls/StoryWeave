@@ -560,7 +560,40 @@
   structurally asserted (`geometry.spec.ts` checks the class is present), never looked
   at, so a live screenshot of the Stemma at 1440×900 was taken and inspected: canvas
   centre is flat `--bg`, no mural line art bleeding through.
-- **Stopped at:** step 9 of 10 green. Continuing straight into step 10 in this same
-  session (no user instruction to stop here).
-- **Next:** R9 step 10 — final full suite + full 1440×900/1280×720 shoot, the closing
-  step of the phase.
+- **R9 step 10 (final full suite + full shoot, closing step) — done, same session:**
+  - Full suite, every command run individually (not batched — see the step-8 flakiness
+    note above): backend `pytest` 124 passed / 6 skipped, `typecheck` clean, `build`
+    clean (791KB, one pre-existing Cytoscape chunk-size warning, unchanged since R0),
+    `lint:design` 83 files clean, `test:unit` 63/63, `test:fence` 29/29 (+2 fixme),
+    `test:dossier` 6/6, `test:stemma` 16/16, `test:reveal` 11/11,
+    `test:reveal-choreography` 3/3, `test:chronicle` 8/8, `test:landing` 9/9,
+    `test:shortcuts` 5/5, `test:style` 5/5, `test:geometry` 22/22, `test:reduced-motion`
+    4/4.
+  - Full shoot: every existing phase config (1 through 9, `npm run shoot -- --phase=N`)
+    re-run fresh against the final `redesign/codex` state — 126 shots total, both
+    viewports, zero console errors, once one real finding (below) was fixed.
+  - **Real finding, fixed same-session:** phase 3's `toast-forward` shot failed outright
+    (`waitForSelector` timeout on both viewports) — not a flake, reproduced identically
+    both times. Root cause: this shot predates R6 and still drives a plain 3→4 forward
+    move expecting a plain toast, but R6 made every real forward step in the Hollow Crown
+    demo trigger a reveal (3→4 is the Wren/Caelum deepening) — the reveal overlay opens
+    instead of the toast, exactly the same class of staleness `fence.spec.ts` already
+    solved for its own tests via a `stripReveals` route handler. Applied the identical
+    fix to the shot (strip identity-relation edges from the intercepted response so the
+    diff stays reveal-free); re-ran phase 3 alone, 20/20 clean. This was a genuine gap
+    the closing full-shoot pass exists to catch — nothing before this ever executed that
+    shot config end-to-end after R6 shipped.
+  - Spot-checked a representative sample of the 126 shots by eye (not just "zero console
+    errors"): `toast-forward` (the fix above — correct copy, correct kind), `landing` (my
+    own step-8 edit — wordmark, H1, try-it panel, "Add a novel" card all intact),
+    `stemma-ch4` (both identity edges — Wren/Caelum, Veris/Sparrow — drawn as single
+    glowing edges, no duplicate nodes, independently re-confirming §16 item 7). All
+    correct, on-brand, nothing degraded by this session's deletions/additions.
+- **Stopped at:** step 10 of 10 green — **R9 is complete. The redesign (R0–R9) is
+  complete.** Committed and pushed. `main` has not been touched (R1: only the user
+  merges, and only after R9 — that decision is still theirs to make, not taken here).
+  All suites and the full shoot confirmed green at this commit (see above); nothing
+  deferred, nothing BROKEN.
+- **Next:** none within the redesign track — R0–R9 are all done. A fresh session on this
+  branch should read this entry, confirm clean, and wait for your direction: further
+  polish, new feature work, or merging `redesign/codex` into `main`.
