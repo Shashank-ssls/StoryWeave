@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- DESIGN_SPEC.md §14: "an ink seal with 'S' in Pirata One on the bg token". A favicon
+       is a standalone resource with no access to the page's @font-face fonts, so the "S"
+       is drawn as a bold generic serif rather than actually depending on Pirata One
+       loading, same wax-seal motif as RevealOverlay's .seal (solid ink disc, thin ring). -->
+  <rect width="64" height="64" fill="#150B0A" />
+  <circle cx="32" cy="32" r="27" fill="#E8D8C2" stroke="#150B0A" stroke-width="2" />
+  <text
+    x="32"
+    y="34"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="34"
+    font-weight="700"
+    fill="#150B0A"
+  >S</text>
+</svg>
