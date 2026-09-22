@@ -5,6 +5,7 @@ import { codexTheme, fillTemplate } from "../theme";
 import { roman } from "./roman";
 import { compactRows } from "./ChapterListCompact";
 import { useChapter } from "./ChapterProvider";
+import type { ArcModel } from "../../types";
 import styles from "./ChapterDialog.module.css";
 
 // Change-chapter dialog (DESIGN_SPEC §6.6). The ONLY forward path for the bookmark:
@@ -12,28 +13,53 @@ import styles from "./ChapterDialog.module.css";
 // hands it to requestChapter, which is where §8.1 begins. A mistyped 2000 therefore can't
 // flash anything on screen: it never leaves this component.
 
-const BLOCK = 100; // D6 arc config is absent → blocks-of-100 fallback (spec §6.6 item 5)
+const BLOCK = 100; // D6 arc config absent (Hollow Crown, any plain ingest) → this fallback
+
+interface DialogBlock {
+  label: string;
+  end: number; // the chapter the block's "Fill in Chapter N?" confirm offers
+}
+
+/** D6/F6: real arc names (already server-fenced — a not-yet-started arc's `name` is
+ *  null on arrival) when the work has any configured, else the blocks-of-100
+ *  fallback (spec §6.6 item 5). Each arc block confirms into its END chapter, same
+ *  as a numeric block — "fill in the whole act" reads the same either way. */
+function dialogBlocks(chapterCount: number, arcs: ArcModel[]): DialogBlock[] {
+  if (arcs.length > 0) {
+    return arcs.map((a) => ({
+      label: a.name ?? fillTemplate(codexTheme.dialogArcSealed, { n: a.ordinal, a: a.start_chapter, b: a.end_chapter }),
+      end: a.end_chapter,
+    }));
+  }
+  const blocks: DialogBlock[] = [];
+  for (let a = 1; a <= chapterCount; a += BLOCK) {
+    const b = Math.min(a + BLOCK - 1, chapterCount);
+    blocks.push({ label: fillTemplate(codexTheme.dialogBlock, { a, b }), end: b });
+  }
+  return blocks;
+}
 
 function parseDigits(s: string): number | null {
   return /^\d+$/.test(s) ? Number(s) : null;
 }
 
 export default function ChapterDialog(): JSX.Element | null {
-  const { dialog, chapterCount, bookmark, closeDialog, requestChapter } = useChapter();
+  const { dialog, chapterCount, bookmark, arcs, closeDialog, requestChapter } = useChapter();
   if (!dialog.open) return null;
   return <DialogBody key={dialog.prefill} prefill={dialog.prefill} chapterCount={chapterCount}
-    bookmark={bookmark} onCancel={closeDialog} onConfirm={(n) => { closeDialog(); requestChapter(n); }} />;
+    bookmark={bookmark} arcs={arcs} onCancel={closeDialog} onConfirm={(n) => { closeDialog(); requestChapter(n); }} />;
 }
 
 interface BodyProps {
   prefill: number;
   chapterCount: number;
   bookmark: number;
+  arcs: ArcModel[];
   onCancel(): void;
   onConfirm(n: number): void;
 }
 
-function DialogBody({ prefill, chapterCount, bookmark, onCancel, onConfirm }: BodyProps): JSX.Element {
+function DialogBody({ prefill, chapterCount, bookmark, arcs, onCancel, onConfirm }: BodyProps): JSX.Element {
   const [value, setValue] = useState(String(prefill));
   const [pendingBlock, setPendingBlock] = useState<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -82,8 +108,7 @@ function DialogBody({ prefill, chapterCount, bookmark, onCancel, onConfirm }: Bo
   };
 
   const rows = compactRows(bookmark, chapterCount);
-  const blocks: [number, number][] = [];
-  for (let a = 1; a <= chapterCount; a += BLOCK) blocks.push([a, Math.min(a + BLOCK - 1, chapterCount)]);
+  const blocks = dialogBlocks(chapterCount, arcs);
 
   return (
     <div className={styles.scrim} data-testid="chapter-dialog-scrim" onMouseDown={(e) => e.target === e.currentTarget && onCancel()}>
@@ -156,15 +181,16 @@ function DialogBody({ prefill, chapterCount, bookmark, onCancel, onConfirm }: Bo
         <div className={styles.serials}>
           <div className={styles.serialsLabel}>{codexTheme.dialogLongSerials}</div>
           <div className={styles.blocks}>
-            {blocks.map(([a, b]) => (
+            {blocks.map((block) => (
               <button
-                key={a}
+                key={block.end}
                 type="button"
                 className={styles.block}
-                onClick={() => setPendingBlock(b)}
-                aria-pressed={pendingBlock === b}
+                data-testid="dialog-block"
+                onClick={() => setPendingBlock(block.end)}
+                aria-pressed={pendingBlock === block.end}
               >
-                {fillTemplate(codexTheme.dialogBlock, { a, b })}
+                {block.label}
               </button>
             ))}
           </div>

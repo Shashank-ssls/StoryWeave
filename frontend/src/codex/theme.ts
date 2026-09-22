@@ -40,6 +40,9 @@ export const codexTheme = {
   dialogInvalid: "There are only {n} chapters.",
   dialogLongSerials: "For long serials",
   dialogBlock: "Chapters {a}–{b}",
+  // D6/F6: an arc whose name hasn't been revealed yet (start_chapter > bookmark) —
+  // the range alone, never the title. Literal wording per the integration brief.
+  dialogArcSealed: "Arc {n} · chapters {a}–{b}",
   dialogBlockConfirm: "Fill in Chapter {n}?",
   dialogYes: "Yes",
   dialogNo: "No",

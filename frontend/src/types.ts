@@ -80,3 +80,20 @@ export interface AppendResponse {
   chunks_added: number;
   state: string;
 }
+
+// D6/F6 (integration phase): a named chapter-range arc. `name` is null when the
+// reader's bookmark hasn't reached `start_chapter` yet — the server redacts it
+// (query/fence.py's visible_arcs), never the client; a work with none configured
+// returns an empty array.
+export interface ArcModel {
+  ordinal: number;
+  name: string | null;
+  start_chapter: number;
+  end_chapter: number;
+}
+
+export interface ArcsResponse {
+  slug: string;
+  n: number;
+  arcs: ArcModel[];
+}

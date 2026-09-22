@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { fetchWorks } from "../../api";
-import type { GraphElements, GraphResponse, WorkModel } from "../../types";
+import type { ArcModel, ArcsResponse, GraphElements, GraphResponse, WorkModel } from "../../types";
 import { diffGraphs, type GraphDiff, type Reveal } from "../../graph/diff";
 import { readBookmark, writeBookmark } from "./bookmarkStore";
 
@@ -65,6 +65,11 @@ export interface ChapterModel {
   /** Fenced payload for `bookmark - 1` (F8: "changed" tags diff n against n−1), null at
    *  chapter 1 or while it loads. Always ≤ bookmark, always via the same cache. */
   prevData: GraphElements | null;
+  /** D6/F6 (integration phase): named chapter-range arcs at the current bookmark,
+   *  server-fenced (a not-yet-started arc's `name` is already null on arrival — the
+   *  client never redacts anything itself). Empty for a work with none configured
+   *  (Hollow Crown); callers fall back to blocks-of-100 in that case. */
+  arcs: ArcModel[];
   /** Chapter currently being fetched, or null when idle. */
   loading: number | null;
   banner: ChapterBanner | null;
@@ -115,12 +120,21 @@ async function fetchFencedGraph(slug: string, n: number, signal: AbortSignal): P
   return body.elements;
 }
 
+// Same shape as fetchFencedGraph: private to this file, its own AbortSignal.
+async function fetchFencedArcs(slug: string, n: number, signal: AbortSignal): Promise<ArcModel[]> {
+  const resp = await fetch(`/api/v1/works/${encodeURIComponent(slug)}/arcs?n=${n}`, { signal });
+  if (!resp.ok) throw new Error(`${resp.status} for arcs?n=${n}`);
+  const body = (await resp.json()) as ArcsResponse;
+  return body.arcs;
+}
+
 export function ChapterProvider({ slug, children }: { slug: string; children: ReactNode }): JSX.Element {
   const [work, setWork] = useState<WorkModel | null>(null);
   const [workError, setWorkError] = useState(false);
   const [bookmark, setBookmark] = useState(1);
   const [data, setData] = useState<GraphElements | null>(null);
   const [prevData, setPrevData] = useState<GraphElements | null>(null);
+  const [arcs, setArcs] = useState<ArcModel[]>([]);
   const [loading, setLoading] = useState<number | null>(null);
   const [banner, setBanner] = useState<ChapterBanner | null>(null);
   const [toast, setToast] = useState<ChapterToast | null>(null);
@@ -317,6 +331,24 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
     return () => controller.abort();
   }, [slug, bookmark, data]);
 
+  // D6/F6: arc names/ranges at the current bookmark. Own controller, same reasoning
+  // as prevData above — never aborts, or is aborted by, the main graph request. The
+  // server already redacts a not-yet-started arc's name (query/fence.py), so this
+  // effect just mirrors whatever it receives; a fetch failure leaves `arcs` at its
+  // last-known value (harmless — callers fall back to blocks-of-100 on empty/stale).
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchFencedArcs(slug, bookmark, controller.signal)
+      .then((result) => {
+        if (controller.signal.aborted) return;
+        setArcs(result);
+      })
+      .catch(() => {
+        /* arcs are a display nicety, not load-bearing for the fence itself */
+      });
+    return () => controller.abort();
+  }, [slug, bookmark]);
+
   // Unmount (work change / leaving the work): nothing in flight may outlive the model.
   useEffect(
     () => () => {
@@ -378,6 +410,7 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       bookmark,
       data,
       prevData,
+      arcs,
       loading,
       banner,
       toast,
@@ -392,8 +425,8 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       getCachedPayload,
       ensureHistory,
     }),
-    [slug, work, workError, chapterCount, bookmark, data, prevData, loading, banner, toast, dialog,
-      pendingReveal, requestChapter, openDialog, closeDialog, dismissToast, dismissBanner,
+    [slug, work, workError, chapterCount, bookmark, data, prevData, arcs, loading, banner, toast,
+      dialog, pendingReveal, requestChapter, openDialog, closeDialog, dismissToast, dismissBanner,
       dismissReveal, getCachedPayload, ensureHistory],
   );
 

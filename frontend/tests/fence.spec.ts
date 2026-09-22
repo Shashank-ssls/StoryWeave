@@ -450,8 +450,51 @@ test.describe("Spoiler fence (DESIGN_SPEC §9.1)", () => {
     expect(text).not.toContain("veris");
     expect(text).not.toMatch(/appears? later|later chapter|not yet|will appear/);
   });
-  test.fixme("F6 (R3 arcs — inactive: D6 arc config absent, blocks-of-100 fallback carries no names) — arc names hidden until start <= bookmark", async () => {});
-  test.fixme("F7 (R7) — chapter titles, if added, follow F6", async () => {});
+  test("F6 (integration phase) — arc names hidden until start <= bookmark, range always visible", async ({ page }) => {
+    // the-ninth-house is the only demo work with arcs configured (D6); Hollow Crown
+    // has none, which is exactly the blocks-of-100 fallback path (already covered
+    // by every other dialog test in this file, all running against SLUG).
+    const NH_SLUG = "the-ninth-house";
+    const NH_KEY = `storyweave:bookmark:${NH_SLUG}`;
+    const ARCS_RE = /\/api\/v1\/works\/[^/]+\/arcs\?n=\d+/;
+    const arcLog: string[] = [];
+    page.on("request", (req) => { if (ARCS_RE.test(req.url())) arcLog.push(req.url()); });
+
+    // Bookmark 5: inside Arc 1 (ch1-8, "The Mourning Bell"), well before Arc 2
+    // (ch9-16, "The Salt Cipher") starts.
+    await page.goto(`/#/work/${NH_SLUG}`); // no entity id — PENDING_ENTITY resolves to the principal
+    await page.evaluate(([k, v]) => localStorage.setItem(k, v), [NH_KEY, "5"] as const);
+    // The arcs fetch (its own effect, keyed on bookmark) lands after the dossier's
+    // own render — wait for it rather than racing it. Registered before the reload
+    // that triggers it, so the response can't resolve before we start watching.
+    const arcsAt5 = page.waitForResponse((r) => ARCS_RE.test(r.url()) && r.url().includes("n=5"));
+    await page.reload();
+    await page.waitForSelector('[data-testid="chapter-row-bookmark"]');
+    await arcsAt5;
+    await page.click('[data-testid="change-chapter"]');
+    const blocksAt5 = await page.locator('[data-testid="dialog-block"]').allInnerTexts();
+    expect(blocksAt5[0]).toBe("The Mourning Bell"); // arc 1 started -> real name
+    expect(blocksAt5[1]).toBe("Arc 2 · chapters 9–16"); // arc 2 not started -> redacted
+    expect(blocksAt5.join(" ")).not.toContain("Salt Cipher"); // the name itself never leaks
+    await page.click('[data-testid="dialog-cancel"]');
+
+    // Cross into Arc 2 (bookmark 10) — its name should now appear.
+    await page.evaluate(([k, v]) => localStorage.setItem(k, v), [NH_KEY, "10"] as const);
+    const arcsAt10 = page.waitForResponse((r) => ARCS_RE.test(r.url()) && r.url().includes("n=10"));
+    await page.reload();
+    await page.waitForSelector('[data-testid="chapter-row-bookmark"]');
+    await arcsAt10;
+    await page.click('[data-testid="change-chapter"]');
+    const blocksAt10 = await page.locator('[data-testid="dialog-block"]').allInnerTexts();
+    expect(blocksAt10[1]).toBe("The Salt Cipher");
+    expect(blocksAt10[2]).toBe("Arc 3 · chapters 17–26"); // still redacted
+
+    // F1 extends to /arcs too: never a request above the confirmed bookmark.
+    for (const url of arcLog) {
+      expect(Number(/[?&]n=(\d+)/.exec(url)?.[1])).toBeLessThanOrEqual(10);
+    }
+  });
+  test.fixme("F7 (R7) — chapter titles, if added, follow F6 (no chapter-title feature exists yet)", async () => {});
   test("F8 (R4) — \"changed\" tags come from graph(n) and graph(n−1) only: exactly those two requests, both fenced", async ({ page }) => {
     const log = recordGraphRequests(page);
     await openDossier(page, "3");

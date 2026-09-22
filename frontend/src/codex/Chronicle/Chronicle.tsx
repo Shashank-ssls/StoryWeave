@@ -98,7 +98,7 @@ export default function Chronicle({ route }: { route: WorkRoute }): JSX.Element 
   const rows = useMemo(() => (vm ? chronicleRows(vm, cast) : []), [vm, cast]);
   const rowIndex = useMemo(() => new Map(rows.map((r, i) => [r.node.id, i])), [rows]);
   const idEndpoints = useMemo(() => (vm ? identityEndpoints(vm) : new Set<string>()), [vm]);
-  const layout = useMemo(() => columnLayout(m.bookmark), [m.bookmark]);
+  const layout = useMemo(() => columnLayout(m.bookmark, m.arcs), [m.bookmark, m.arcs]);
   const stitchList = useMemo(() => (vm ? stitches(vm, new Set(rows.map((r) => r.node.id))) : []), [vm, rows]);
   const timeline = useMemo(() => identityTimeline(history, m.bookmark), [history, m.bookmark]);
 

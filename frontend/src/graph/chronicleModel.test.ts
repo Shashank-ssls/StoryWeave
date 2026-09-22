@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildViewModel } from "./viewModel";
 import { chronicleRows, columnLayout, identityTimeline, stitches, SMALL_COL, LARGE_COL, LARGE_BLOCK } from "./chronicleModel";
-import type { GraphElements } from "../types";
+import type { ArcModel, GraphElements } from "../types";
 import raw1 from "../../tests/fixtures/hollow-crown/graph-n1.json";
 import raw2 from "../../tests/fixtures/hollow-crown/graph-n2.json";
 import raw3 from "../../tests/fixtures/hollow-crown/graph-n3.json";
@@ -60,6 +60,48 @@ describe("columnLayout", () => {
   it("boundary: bookmark exactly 12 is still small mode, 13 is large", () => {
     expect(columnLayout(12).mode).toBe("small");
     expect(columnLayout(13).mode).toBe("large");
+  });
+
+  // D6/F6 (integration phase): arc-named bands replace blocks-of-50 when a work has
+  // arcs configured; small mode never grows bands, arc or not.
+  const ARCS: ArcModel[] = [
+    { ordinal: 1, name: "The Mourning Bell", start_chapter: 1, end_chapter: 8 },
+    { ordinal: 2, name: "The Salt Cipher", start_chapter: 9, end_chapter: 16 },
+    { ordinal: 3, name: null, start_chapter: 17, end_chapter: 26 }, // not started yet
+  ];
+
+  it("large mode with arcs: bands use the real names instead of Chapters a-b", () => {
+    const l = columnLayout(16, ARCS);
+    expect(l.mode).toBe("large");
+    expect(l.bands).toEqual([
+      { label: "The Mourning Bell", x: 0, width: 8 * LARGE_COL },
+      { label: "The Salt Cipher", x: 8 * LARGE_COL, width: 8 * LARGE_COL },
+    ]);
+  });
+
+  it("F6: an arc whose name is redacted (null) still bands with the generic label", () => {
+    // Bookmark 20 is inside arc 3's range (17-26), which arrives with name: null
+    // (the server hasn't revealed it yet). The RANGE still bands normally — chapter
+    // numbers alone aren't spoiler-bearing — just with "Arc N · chapters a-b"
+    // instead of the real title.
+    const l = columnLayout(20, ARCS);
+    expect(l.bands.length).toBe(3);
+    expect(l.bands[2]).toMatchObject({ label: "Arc 3 · chapters 17–26" });
+  });
+
+  it("F6: an arc that hasn't started at all yet contributes no band", () => {
+    // bookmark 14: large mode (>12), but arc 3 (starts ch17) hasn't begun.
+    const l = columnLayout(14, ARCS);
+    expect(l.bands.length).toBe(2);
+  });
+
+  it("small mode ignores arcs entirely — no bands below the 12-chapter threshold", () => {
+    expect(columnLayout(8, ARCS).bands).toEqual([]);
+  });
+
+  it("no arcs configured (Hollow Crown): falls back to blocks-of-50, unchanged", () => {
+    const l = columnLayout(120, []);
+    expect(l.bands[0]).toMatchObject({ label: "Chapters 1–50" });
   });
 });
 

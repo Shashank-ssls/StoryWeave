@@ -5,7 +5,7 @@
 // bookmark, and the sealed band's size is a constant, never a function of book length.
 
 import { diffGraphs, type Reveal } from "./diff";
-import type { GraphElements } from "../types";
+import type { ArcModel, GraphElements } from "../types";
 import type { NodeKind, ViewModel, VmEdge, VmNode } from "./viewModel";
 import { sortCast } from "./viewModel";
 import { type CastSize, type ShowFilter, SHOW_ALL, visibleGraph } from "./stemmaModel";
@@ -57,16 +57,32 @@ export interface ColumnLayout {
   totalWidth: number;
 }
 
-export function columnLayout(bookmark: number): ColumnLayout {
+// D6/F6 (integration phase): when the work has arcs configured, large-mode header
+// bands use the real arc names (already server-fenced — a not-yet-started arc's
+// `name` arrives as null) instead of generic "Chapters a-b" blocks. Small mode has
+// no bands at all either way (its 240px columns are wide enough to label each
+// chapter individually) — arcs only change what a LARGE-mode band is labeled, never
+// whether bands exist.
+export function columnLayout(bookmark: number, arcs: ArcModel[] = []): ColumnLayout {
   const mode: "small" | "large" = bookmark <= SMALL_N_MAX ? "small" : "large";
   const colWidth = mode === "small" ? SMALL_COL : LARGE_COL;
   const colX = (n: number): number => (n - 1) * colWidth;
   const sealedX = colX(bookmark + 1);
   const bands: ChronicleBand[] = [];
   if (mode === "large") {
-    for (let start = 1; start <= bookmark; start += LARGE_BLOCK) {
-      const end = Math.min(start + LARGE_BLOCK - 1, bookmark);
-      bands.push({ label: `Chapters ${start}–${end}`, x: colX(start), width: colX(end) - colX(start) + colWidth });
+    if (arcs.length > 0) {
+      for (const arc of arcs) {
+        if (arc.start_chapter > bookmark) break; // arc hasn't started — no band yet
+        const start = arc.start_chapter;
+        const end = Math.min(arc.end_chapter, bookmark);
+        const label = arc.name ?? `Arc ${arc.ordinal} · chapters ${arc.start_chapter}–${arc.end_chapter}`;
+        bands.push({ label, x: colX(start), width: colX(end) - colX(start) + colWidth });
+      }
+    } else {
+      for (let start = 1; start <= bookmark; start += LARGE_BLOCK) {
+        const end = Math.min(start + LARGE_BLOCK - 1, bookmark);
+        bands.push({ label: `Chapters ${start}–${end}`, x: colX(start), width: colX(end) - colX(start) + colWidth });
+      }
     }
   }
   return { mode, colWidth, bookmark, colX, bands, sealedX, sealedWidth: colWidth, totalWidth: sealedX + colWidth };
