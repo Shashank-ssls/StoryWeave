@@ -311,3 +311,79 @@
   visual judgment calls (drawer/bottom-sheet behaviour, physics-finite verification) — a
   fresh session should re-read this entry, confirm clean on `redesign/codex` at 562832c,
   restart the dev stack, and continue straight into step 5 without re-deriving steps 1-4.
+
+## Session 10 — R9 continued: user-reported bugs + step 5 (responsive), stopped on request
+
+- **Date:** 2026-09-22
+- **Model / effort:** Sonnet 5, high effort
+- **Phase(s):** R9 (step 5 of 10 completed this session; steps 6-10 not started — user
+  asked mid-session to stop after step 5, "we will resume others later")
+- **Commits:** 0fd0309 → 3f5da2f (bug fixes) → 6ea8d35 (step 5)
+- **Started from:** a fresh session, dev servers not running (stopped at the end of Session
+  9); the user's first message included a screenshot showing the landing page's try-it
+  panel erroring ("The archive didn't answer") because of exactly that — restarting
+  `dev.ps1` + uvicorn + vite resolved it immediately, not a code bug.
+- **Done (bug fixes, before step 5):**
+  - **Scrollbars hidden, still functional.** Global rule in `tokens.css`
+    (`scrollbar-width: none` / `-ms-overflow-style: none` / `::-webkit-scrollbar{display:
+    none}` on `*`). Verified the Chronicle's horizontal chart still scrolls via
+    `scrollLeft` with no visible thumb.
+  - **Stemma small-cast node clipping ("node fluidity").** A focus fit only ever framed
+    the near+focus set; a dimmed "far" context node (not in that set, still drawn) could
+    land partly off the canvas edge — measured live: Lady Veris rendered half off the top
+    edge on the demo's 6-node graph at bookmark 4. Below `FIT_ALL_WHEN_SMALL` (20 total
+    nodes) there's no legibility pressure at all (the R9 `FIT_FOCUS_BUDGET` only matters
+    for a 13+-tie hub), so `fitFocusNow` now fits the whole connected web in that case.
+    New Playwright test asserts every node's rendered centre stays on-canvas; the three
+    existing camera-fit tests' centering tolerance widened to 5%-95% since fitting the
+    whole small web no longer centres the focus node when other nodes pull the frame wider
+    on one side.
+  - **Font audit ("some are not integrating properly"): no bug found.** Checked computed
+    `font-family` on every leaf DOM node app-wide (all three token fonts, zero fallback),
+    `document.fonts` network requests (all six weight/style files 200, none 404), the
+    Cytoscape canvas stylesheet's literal font mirrors, `lint:design` (0 raw font-family
+    literals) and `test:style` (fonts actually loaded, not fallback) — all clean. Screens
+    individually inspected (landing, Dossier, Stemma, the `?` shortcut sheet) show the
+    intended three-role system (Pirata One display / EB Garamond body / Alegreya Sans UI)
+    consistently. Flagging as ASSERTED-clean rather than claiming the user's original
+    concern is fully explained — nothing reproduced, so there's nothing further to fix
+    without a more specific report.
+- **Done (R9 step 5 — responsive, §11):**
+  - 1024-1279: Dossier's and Stemma's right panels, and Chronicle's right panel, collapse
+    into toggle drawers — closed (off-canvas) by default, a `Button` toggle + scrim opens/
+    closes them, Esc also closes. Chronicle's is a bottom sheet (no left rail to spare);
+    Dossier/Stemma's are right-side slide-ins, labelled "Show the Stemma" / "Show
+    selection" per the spec's own example wording.
+  - <1024: Dossier's and Stemma's left rail additionally becomes a top drawer (single
+    column, "Cast & chapters" toggle), on top of the panel-drawer behaviour already active.
+  - **Real bug found and fixed same-session:** the first-pass CSS declared each screen's
+    responsive `@media` block near the TOP of its `.module.css`, before the base `.rail`/
+    `.rightPanel`/`.topRow` rules further down. Same specificity → later rule wins in the
+    cascade regardless of the media query matching, so the drawer silently never activated
+    (measured: `.rightPanel` stayed `position: sticky` at 1100px width even though the
+    override rule's `max-width: 1279px` query matched). Fixed by moving all three
+    responsive blocks to the end of their stylesheets. Also fixed a related crowding bug
+    (toggle button + section label + tabs collided on one line at 1024-1279) by making
+    `topRow`/`canvasTopBar`/`headerBar` wrap, with the toggle forced onto its own row.
+  - New tests in `tests/geometry.spec.ts`: no horizontal scroll at 1100×800 and 900×800 for
+    all three screens (9 tests), plus toggle-mechanics tests (off-canvas by default, opens
+    on toggle, closes on scrim) for the Dossier panel drawer, Dossier rail drawer and the
+    Chronicle bottom sheet (3 tests) — these specifically would have caught the
+    cascade-order bug above.
+- **Issues:** MEASURED, both found and fixed same-session (see above) — the CSS
+  cascade-order bug (real, would have shipped a fully broken responsive mode) and the
+  topRow crowding bug. Nothing left BROKEN.
+- **Stopped at:** step 5 of 10 green, committed (6ea8d35) and pushed — **on the user's
+  explicit mid-session instruction to stop after step 5**, not a context or failure
+  boundary. Steps 6-10 (reduced-motion audit + full shoot, favicon/OG, `#/_legacy` +
+  legacy-code deletion with grep proof, the §16 acceptance checklist, and the final full
+  suite + full 1440×900/1280×720 shoot) have **not been started**. All suites confirmed
+  green at this commit: backend `pytest` 124/6 (unchanged), `typecheck` clean,
+  `lint:design` 83 files clean, `test:unit` 63/63, `test:stemma` 16/16, `test:shortcuts`
+  5/5, `test:reveal` 11/11, `test:dossier` 6/6, `test:chronicle` 8/8, `test:landing` 9/9,
+  `test:fence` 29/29 (+2 fixme), `test:style` 5/5, `test:geometry` 22/22.
+- **Next:** R9 step 6 (reduced-motion audit: physics finite, no line drawing, reveal as a
+  plain 200ms fade, loading dots static — then a full shoot with reduced motion emulated),
+  then steps 7-10 as FRONTEND_OVERHAUL.md §9's task brief lists them. A fresh session
+  should re-read this entry, confirm clean on `redesign/codex` at 6ea8d35, restart the dev
+  stack, and continue straight into step 6 without re-deriving steps 1-5.
