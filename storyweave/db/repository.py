@@ -22,6 +22,7 @@ from storyweave.db.models import (
     Chapter,
     Chunk,
     Edge,
+    ExtractionMethod,
     Mention,
     Node,
     NodeProperty,
@@ -35,6 +36,7 @@ from storyweave.db.models import (
 _NODE_TYPE_LIST = ", ".join(f"'{t.value}'" for t in NodeType)
 _RELATION_LIST = ", ".join(f"'{r}'" for r in ALL_RELATIONS)
 _TIER_LIST = ", ".join(str(t.value) for t in RelationTier)
+_METHOD_LIST = ", ".join(f"'{m.value}'" for m in ExtractionMethod)
 
 SCHEMA: str = f"""
 PRAGMA foreign_keys = ON;
@@ -56,7 +58,7 @@ CREATE TABLE IF NOT EXISTS nodes (
     importance          REAL NOT NULL DEFAULT 0.0,
     first_seen_chapter  INTEGER NOT NULL,
     revealed_chapter    INTEGER NOT NULL,
-    extraction_method   TEXT NOT NULL CHECK (extraction_method IN ('gliner', 'rule', 'llm')),
+    extraction_method   TEXT NOT NULL CHECK (extraction_method IN ({_METHOD_LIST})),
     evidence_span       TEXT
 );
 
@@ -71,7 +73,7 @@ CREATE TABLE IF NOT EXISTS edges (
     tier                INTEGER NOT NULL CHECK (tier IN ({_TIER_LIST})),
     first_seen_chapter  INTEGER NOT NULL,
     revealed_chapter    INTEGER NOT NULL,
-    extraction_method   TEXT NOT NULL CHECK (extraction_method IN ('gliner', 'rule', 'llm')),
+    extraction_method   TEXT NOT NULL CHECK (extraction_method IN ({_METHOD_LIST})),
     evidence_span       TEXT
 );
 
@@ -83,7 +85,7 @@ CREATE TABLE IF NOT EXISTS node_properties (
     value               TEXT NOT NULL,
     first_seen_chapter  INTEGER NOT NULL,
     revealed_chapter    INTEGER NOT NULL,
-    extraction_method   TEXT NOT NULL CHECK (extraction_method IN ('gliner', 'rule', 'llm')),
+    extraction_method   TEXT NOT NULL CHECK (extraction_method IN ({_METHOD_LIST})),
     evidence_span       TEXT
 );
 
@@ -126,7 +128,7 @@ CREATE TABLE IF NOT EXISTS mentions (
     char_start        INTEGER NOT NULL,
     char_end          INTEGER NOT NULL,
     score             REAL NOT NULL,
-    extraction_method TEXT NOT NULL CHECK (extraction_method IN ('gliner', 'rule', 'llm')),
+    extraction_method TEXT NOT NULL CHECK (extraction_method IN ({_METHOD_LIST})),
     node_id           INTEGER REFERENCES nodes(id) ON DELETE SET NULL
 );
 
