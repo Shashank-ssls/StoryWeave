@@ -1,0 +1,33 @@
+/* DESIGN_SPEC.md §6.7 loading glyph. Tokens only.
+   Motion: each dot cycles ink -> faint -> ink over 1.2s, staggered so they fade in
+   sequence (a left-to-right wave). Reduced motion collapses this to the same three
+   colors held still, in the same ink/dim/faint order the spec names literally. */
+.dots {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: var(--s-2);
+  vertical-align: middle;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink);
+  animation: dotFade 1.2s ease-in-out infinite;
+}
+.dot:nth-child(1) { animation-delay: 0ms; }
+.dot:nth-child(2) { animation-delay: 150ms; }
+.dot:nth-child(3) { animation-delay: 300ms; }
+
+@keyframes dotFade {
+  0%, 100% { background: var(--ink); }
+  50% { background: var(--faint); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot { animation: none; }
+  .dot:nth-child(1) { background: var(--ink); }
+  .dot:nth-child(2) { background: var(--dim); }
+  .dot:nth-child(3) { background: var(--faint); }
+}

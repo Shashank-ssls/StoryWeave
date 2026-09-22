@@ -530,6 +530,58 @@ export async function getShots(phase) {
         },
       ];
     }
+    case "9": {
+      // R9 step 6 — reduced-motion audit. Run with `--reducedMotion=reduce` to visually
+      // confirm the physics burst, reveal choreography and loading glyph all land in their
+      // settled/static end states with nothing mid-animation or cut off. The reveal shots
+      // reuse R6's own `atChapter`/`confirm` helpers verbatim.
+      const SLUG = "the-hollow-crown";
+      const KEY = `storyweave:bookmark:${SLUG}`;
+      const GRAPH_RE = /\/api\/v1\/works\/[^/]+\/graph\?n=\d+/;
+      const atChapter = async (page, baseUrl, n, entity = "1") => {
+        await page.goto(`${baseUrl}/#/work/${SLUG}/entity/${entity}`, { waitUntil: "networkidle" });
+        await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, String(n)]);
+        await page.reload({ waitUntil: "networkidle" });
+        await page.waitForSelector(`[data-testid="chapter-row-bookmark"][data-chapter="${n}"]`);
+      };
+      const confirm = async (page, n) => {
+        await page.click('[data-testid="change-chapter"]');
+        await page.fill('[data-testid="chapter-input"]', String(n));
+        await page.click('[data-testid="set-bookmark"]');
+      };
+      return [
+        {
+          name: "reveal-normal",
+          async run(page, baseUrl) {
+            await atChapter(page, baseUrl, 1);
+            await confirm(page, 2);
+            await page.waitForSelector('[data-testid="reveal-overlay"]');
+            await page.waitForTimeout(500); // the whole reduced-motion fade is 200ms
+          },
+        },
+        {
+          name: "stemma-settled",
+          async run(page, baseUrl) {
+            await page.goto(`${baseUrl}/#/work/${SLUG}/web`, { waitUntil: "networkidle" });
+            await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "4"]);
+            await page.reload({ waitUntil: "networkidle" });
+            await page.waitForSelector('[data-testid="stemma-cy"]');
+            await page.waitForTimeout(900); // past the reduced-motion 800ms burst
+          },
+        },
+        {
+          name: "loading-dots-chronicle",
+          async run(page, baseUrl) {
+            await page.route(GRAPH_RE, async (route) => {
+              await new Promise((r) => setTimeout(r, 4000));
+              await route.continue();
+            });
+            await page.goto(`${baseUrl}/#/work/${SLUG}/chronicle`, { waitUntil: "domcontentloaded" });
+            await page.waitForSelector('[data-testid="loading-dots"]');
+          },
+        },
+      ];
+    }
     default:
       throw new Error(`No shots defined for phase "${phase}" yet — add one to shots.config.mjs.`);
   }

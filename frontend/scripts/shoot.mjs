@@ -33,9 +33,12 @@ function parseArgs(argv) {
 const args = parseArgs(process.argv.slice(2));
 const phase = args.phase;
 if (!phase) {
-  console.error("Usage: npm run shoot -- --phase=<id>");
+  console.error("Usage: npm run shoot -- --phase=<id> [--reducedMotion=reduce]");
   process.exit(1);
 }
+// R9 step 6: forces `prefers-reduced-motion: reduce` for the whole context (real emulation,
+// same mechanism Playwright's own reducedMotion tests use — not a CSS override).
+const reducedMotion = args.reducedMotion === "reduce" ? "reduce" : undefined;
 
 const BASE_URL = process.env.SHOOT_BASE_URL ?? "http://localhost:5173";
 const VIEWPORTS = [
@@ -43,7 +46,7 @@ const VIEWPORTS = [
   { w: 1280, h: 720 },
 ];
 
-const outDir = path.join(frontendRoot, ".shots", `phase-${phase}`);
+const outDir = path.join(frontendRoot, ".shots", `phase-${phase}${reducedMotion ? "-reduced-motion" : ""}`);
 fs.mkdirSync(outDir, { recursive: true });
 
 // Chromium issues an automatic favicon.ico probe outside Playwright's normal network
@@ -64,7 +67,7 @@ const browser = await chromium.launch({ channel: "chrome", headless: true });
 
 for (const shot of shots) {
   for (const vp of VIEWPORTS) {
-    const context = await browser.newContext({ viewport: { width: vp.w, height: vp.h } });
+    const context = await browser.newContext({ viewport: { width: vp.w, height: vp.h }, reducedMotion });
     const page = await context.newPage();
 
     const consoleErrors = [];

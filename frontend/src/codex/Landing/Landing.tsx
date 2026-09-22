@@ -58,7 +58,7 @@ export default function Landing(): JSX.Element {
         </div>
         <div className={styles.tryItPanel} data-testid="try-it-panel">
           {worksState.status === "loading" ? (
-            <StateCard testId="try-it-loading" label={codexTheme.stateLoading.label} headline={codexTheme.stateLoading.headline} body="" />
+            <StateCard testId="try-it-loading" label={codexTheme.stateLoading.label} headline={codexTheme.stateLoading.headline} body="" loading />
           ) : worksState.status === "error" ? (
             <StateCard testId="state-try-it-error" label={codexTheme.stateError.label} headline={codexTheme.stateError.headline} body={codexTheme.stateError.body} />
           ) : worksState.works.some((w) => w.slug === DEMO_SLUG) ? (

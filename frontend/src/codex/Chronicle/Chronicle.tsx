@@ -189,7 +189,13 @@ export default function Chronicle({ route }: { route: WorkRoute }): JSX.Element 
           </div>
         ) : !vm ? (
           <div className={styles.chart}>
-            <StateCard testId="skeleton" label={codexTheme.stateLoading.label} headline={codexTheme.stateLoading.headline} body="" />
+            <StateCard
+              testId="skeleton"
+              label={codexTheme.stateLoading.label}
+              headline={codexTheme.stateLoading.headline}
+              body={fillTemplate(codexTheme.stateLoading.body, { n: roman(m.loading ?? m.bookmark) })}
+              loading
+            />
           </div>
         ) : (
           <>

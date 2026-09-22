@@ -387,3 +387,72 @@
   then steps 7-10 as FRONTEND_OVERHAUL.md §9's task brief lists them. A fresh session
   should re-read this entry, confirm clean on `redesign/codex` at 6ea8d35, restart the dev
   stack, and continue straight into step 6 without re-deriving steps 1-5.
+
+## Session 11 — R9 step 6 (reduced-motion audit)
+
+- **Date:** 2026-09-22
+- **Model / effort:** Sonnet 5, high effort
+- **Phase(s):** R9 (step 6 of 10)
+- **Commits:** 07c5260 → (this commit; see `git log`)
+- **Started from:** a fresh session, dev servers not running; restarted `dev.ps1` +
+  uvicorn (`storyweave-demo.sqlite`) + `npm run dev` before touching anything.
+- **Done:**
+  - **Audited the four reduced-motion requirements (§4.5/§6.7) one by one, against the
+    real running app, not by re-reading old code:**
+    1. Physics finite — already correct (`GraphView`/`StemmaCanvas`/`colaOptions` all
+       branch on `matchMedia("(prefers-reduced-motion: reduce)")`, `maxSimulationTime`
+       800ms). Previously unverified by any suite; now MEASURED by a new test (below).
+    2. No line drawing — already correct: `RevealOverlay.module.css`'s `.reduced .thread`
+       drops `threadDraw` entirely and only fades (built at R6). Already covered by
+       `reveal-choreography.spec.ts`'s existing reduced-motion test; nothing to fix.
+    3. Reveal as a plain 200ms fade — already correct, same R6 code, same existing test.
+    4. **Loading dots static — real gap found: the dots didn't exist at all.** The §6.7
+       Loading state card's spec'd "3-dot line glyph (ink→dim→faint; fade in sequence,
+       1.2s loop; static under reduced motion)" was never built — all three of its
+       `StateCard` call sites (Chronicle's chart skeleton, the landing try-it panel's
+       loading state, and the `/works`-list loading state) passed `body=""` and no glyph,
+       silently dropping both the required body sentence and the dots. Found by reading
+       every `stateLoading` call site, not assumed from the spec table.
+  - **Fix:** new `codex/states/LoadingDots.tsx` + `.module.css` (3 spans, `dotFade`
+    keyframe cycling ink↔faint with staggered 0/150/300ms delays for the "fade in
+    sequence" look under full motion; a `prefers-reduced-motion` media query kills the
+    animation and fixes the three dots to ink/dim/faint respectively — the spec's own
+    literal order, held still). `StateCard` gained an optional `loading` prop that
+    appends `<LoadingDots/>` after the body paragraph. Chronicle's skeleton and the
+    landing try-it panel's loading state now also fill in the real body sentence
+    (`loadingUpTo`, templated with `m.loading ?? m.bookmark`) they'd been dropping; the
+    `/works`-list loading state (no chapter context available pre-fetch) gets the dots
+    only, body stays empty — the spec's example sentence doesn't apply before any work
+    has loaded.
+  - **New suite `tests/reduced-motion.spec.ts` (4/4)**, none of it existed before this
+    session: global `--dur-*` token collapse under emulated reduced motion; Stemma
+    physics genuinely stops (positions stable within 1px, sampled after its own declared
+    800ms burst) rather than just animating more calmly; loading glyph static + 3
+    distinct held colors under reduced motion; loading glyph staggered/animating under
+    full motion. `npm run test:reduced-motion` added to `package.json`.
+  - **`scripts/shoot.mjs` gained a `--reducedMotion=reduce` flag** (sets
+    `browser.newContext({ reducedMotion })`, real Playwright emulation, output goes to
+    `.shots/phase-<n>-reduced-motion/`) and a new phase-9 shot set (`reveal-normal`,
+    `stemma-settled`, `loading-dots-chronicle`) reusing R6's own `atChapter`/`confirm`
+    helpers. Ran it: 6/6 shots, zero console errors. Inspected all six — reveal overlay
+    fully drawn (thread, eye, all text) after 500ms with nothing mid-animation; Stemma
+    canvas settled and legible with no drift artifacts; Chronicle's loading card now
+    shows the real sentence + three static dots exactly as spec'd.
+- **Decisions:** kept the `/works`-loading state's body empty rather than inventing
+  chapter-specific copy it has no chapter to describe (no ChapterProvider exists yet at
+  that point in Landing.tsx) — dots-only there, full sentence+dots everywhere a chapter
+  number is actually known. `LoadingDots` is `aria-hidden` (decorative; the card's own
+  `role="status"` + label already announce "Loading").
+- **Issues:** MEASURED — the missing loading-dots glyph (real spec gap, not a regression,
+  fixed same-session). Nothing left BROKEN. Full regression pass after the fix: backend
+  `pytest` 124/6 (unchanged), `typecheck` clean, `build` clean, `lint:design` 85 files
+  clean (2 new files), `test:unit` 63/63, every existing Playwright suite re-run and
+  unchanged (`test:fence` 29/29 +2 fixme, `test:dossier` 6/6, `test:stemma` 16/16,
+  `test:reveal` 11/11, `test:reveal-choreography` 3/3, `test:chronicle` 8/8,
+  `test:landing` 9/9, `test:shortcuts` 5/5, `test:style` 5/5, `test:geometry` 22/22),
+  plus the new `test:reduced-motion` 4/4.
+- **Stopped at:** step 6 of 10 green. Continuing straight into step 7 in this same
+  session (no user instruction to stop here).
+- **Next:** R9 steps 7-10 (favicon/OG, `#/_legacy` + legacy-code deletion with grep
+  proof, the §16 acceptance checklist line by line, final full suite + full
+  1440×900/1280×720 shoot).

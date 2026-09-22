@@ -3,6 +3,7 @@ import { navigate, PENDING_ENTITY } from "../../router/useHashRoute";
 import Button from "../../components/Button/Button";
 import { EyeIcon } from "../../icons";
 import { codexTheme, fillTemplate } from "../theme";
+import { roman } from "../chapter/roman";
 import { DEMO_SLUG } from "../../ontology";
 import { ChapterProvider, useChapter } from "../chapter/ChapterProvider";
 import ChapterChrome from "../chapter/ChapterChrome";
@@ -26,7 +27,15 @@ function TryItInner(): JSX.Element {
     return <StateCard testId="state-demo-missing" label={codexTheme.stateDemoMissing.label} headline={codexTheme.stateDemoMissing.headline} body={codexTheme.stateDemoMissing.body} />;
   }
   if (!m.work || !vm) {
-    return <StateCard testId="try-it-loading" label={codexTheme.stateLoading.label} headline={codexTheme.stateLoading.headline} body="" />;
+    return (
+      <StateCard
+        testId="try-it-loading"
+        label={codexTheme.stateLoading.label}
+        headline={codexTheme.stateLoading.headline}
+        body={fillTemplate(codexTheme.stateLoading.body, { n: roman(m.loading ?? m.bookmark) })}
+        loading
+      />
+    );
   }
 
   const openDossier = (): void => navigate({ name: "work-entity", slug: DEMO_SLUG, entityId: PENDING_ENTITY });
