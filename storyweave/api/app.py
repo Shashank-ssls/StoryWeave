@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from storyweave import __version__
 from storyweave.api import jobs
@@ -58,6 +60,13 @@ from storyweave.search.store import BaseVectorStore
 
 API_PREFIX = "/api/v1"
 router = APIRouter(prefix=API_PREFIX)
+
+# One-origin serving (integration phase Part C.1): if the frontend has been built
+# (`npm run build` -> frontend/dist), serve it from this same FastAPI process so the
+# app needs no CORS and no second dev server. `run.ps1`/`run.bat` build then start
+# this way; the two-server dev mode (Vite's own proxy) keeps working unchanged.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_FRONTEND_DIST = _REPO_ROOT / "frontend" / "dist"
 
 # Mandatory reading-position param: required (no default) + non-negative => missing or
 # out-of-range yields 422 automatically.
@@ -321,6 +330,34 @@ def create_app() -> FastAPI:
         description="A spoiler-aware knowledge engine for web novels.",
     )
     app.include_router(router)
+
+    # Skipped when dist/ doesn't exist: every existing test that calls create_app()
+    # directly, and the two-server dev mode, are both unaffected. Registered AFTER
+    # the API router, so /api/v1/* always matches first — Starlette checks routes
+    # in registration order, first match wins, regardless of a later route's own
+    # path breadth.
+    if _FRONTEND_DIST.is_dir():
+        app.mount(
+            "/assets", StaticFiles(directory=_FRONTEND_DIST / "assets"), name="assets"
+        )
+
+        @app.get("/favicon.svg", include_in_schema=False)
+        def _favicon() -> FileResponse:
+            return FileResponse(_FRONTEND_DIST / "favicon.svg")
+
+        @app.get("/og-image.png", include_in_schema=False)
+        def _og_image() -> FileResponse:
+            return FileResponse(_FRONTEND_DIST / "og-image.png")
+
+        @app.get("/{full_path:path}", include_in_schema=False)
+        def _spa_fallback(full_path: str) -> FileResponse:
+            # The app's own router is hash-based (#/work/...), so the fragment
+            # never reaches the server at all — in practice this only ever serves
+            # index.html for "/". Kept as a genuine catch-all anyway (not just a
+            # "/" route), for a future history-API router and for any client that
+            # requests the pre-hash path directly.
+            return FileResponse(_FRONTEND_DIST / "index.html")
+
     return app
 
 

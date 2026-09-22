@@ -9,6 +9,9 @@
 *.sqlite
 *.sqlite3
 *.db
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 
 # --- Raw novel text (copyrighted / large; samples/ and labels/ ARE committed) ---
 data/raw/*
