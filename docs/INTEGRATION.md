@@ -253,6 +253,27 @@ code, per CLAUDE.md), and re-tuning it down would need its own sweep (Hollow
 Crown's `relex_rel_threshold` was chosen this way, by a real sweep, per its own
 `storyweave.toml` comment); out of this phase's scope, logged as a known limit.
 
+**Addendum, found live in Part C while checking the demo actually looks showable**:
+the Stemma at a mid-book bookmark was cluttered enough to undercut the demo — a real
+screenshot (`Focused on Sorrel`, bookmark 20) showed bare pronouns (`she`, `you`) and
+generic-object nouns (`desk`, `door`, `upper city`) rendered as their own graph nodes,
+label-overlapping everything real. Root cause: exactly the Character/Place noise
+already measured above, now visible on screen instead of just in a node dump. Fixed
+with a small, principled addition to `nlp/cluster.py` (`_PRONOUNS`/
+`_GENERIC_OBJECTS`, applied in `cluster_mentions` before a mention can become a
+node) — closed-class pronouns and bare single-word generic nouns are dropped
+outright; anything with a modifier, a proper noun, or capitalized mid-sentence
+context is untouched. This is standard NER post-processing, generic to any work
+(not tuned to this book's specific text), covered by 4 new tests in
+`tests/test_cluster.py` (7/7 passing). **Re-measured after the fix** (same command,
+full pipeline re-run): 226 → 206 entities (Character 62→53, Place 65→55), 1584 →
+1307 Tier-1 edges. A real, verified improvement, not a full fix — the Stemma is
+still visually dense for a hub character like the protagonist (Sorrel has ~50+ real
+ties from the wide co-occurrence window), which is an authentic property of
+proximity-based Tier-1 extraction on a protagonist-heavy narrative, not noise;
+narrowing `window_chars` further to reduce that legitimately-earned density is a
+separate, unstarted tuning task (same category as the edge-volume limit above).
+
 ### B4. The citation gate
 
 **MEASURED**, `tests/test_ninth_house_citations.py`, reusing the project's own

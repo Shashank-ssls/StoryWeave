@@ -30,6 +30,42 @@ _GENERIC = {
     "house", "guild", "city", "the boy", "man", "woman",
 }
 
+# Mentions dropped OUTRIGHT before clustering, never becoming a node at all (measured
+# necessity: docs/INTEGRATION.md Part B.3 found this exact noise pattern on a real
+# GLiNER pass — closed-class pronouns/determiners a zero-shot NER model has no
+# antecedent-linking capability to resolve, plus the handful of bare generic-object
+# common nouns that dominated false positives). Standard NER post-processing, generic
+# to any work, not tuned to this book's specific text (nothing here is a proper noun
+# or a capitalized mid-sentence mention — those are left completely alone).
+_PRONOUNS = {
+    "i", "me", "my", "mine", "myself",
+    "you", "your", "yours", "yourself", "yourselves",
+    "he", "him", "his", "himself",
+    "she", "her", "hers", "herself",
+    "it", "its", "itself",
+    "we", "us", "our", "ours", "ourselves",
+    "they", "them", "their", "theirs", "themselves",
+    "who", "whom", "whose", "this", "that", "these", "those",
+    "someone", "somebody", "something",
+    "everyone", "everybody", "everything",
+    "anyone", "anybody", "anything",
+    "no one", "nobody", "nothing",
+    "both of them", "both", "one", "ones",
+}
+# Bare generic-object nouns: excluded only on an EXACT normalized match (a single
+# common word with no modifier/proper-noun context at all) — "the desk" is dropped,
+# "Sorrel's writing desk" or "the Ashcombe Blade" is not touched.
+_GENERIC_OBJECTS = {
+    "desk", "door", "doorway", "table", "hall", "room", "study", "home",
+    "street", "streets", "wall", "floor", "ceiling", "window", "chair",
+    "bed", "lamp", "lamps", "box", "thing", "things", "stall", "stalls",
+    "threshold", "location",
+}
+
+
+def _is_stopword(norm: str) -> bool:
+    return norm in _PRONOUNS or norm in _GENERIC_OBJECTS
+
 
 def normalize_surface(surface: str) -> str:
     """Case-fold, strip surrounding punctuation, drop a leading article, squeeze spaces."""
@@ -70,7 +106,7 @@ def cluster_mentions(mentions: list[Mention]) -> list[EntityCluster]:
     by_norm: dict[str, list[Mention]] = {}
     for m in mentions:
         norm = normalize_surface(m.surface)
-        if norm:
+        if norm and not _is_stopword(norm):
             by_norm.setdefault(norm, []).append(m)
 
     reps: list[_Rep] = []
