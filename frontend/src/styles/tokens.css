@@ -83,6 +83,20 @@ button, input, select { font-family: var(--font-ui); border-radius: var(--radius
 :focus-visible { outline: none; box-shadow: var(--focus-ring); }
 blockquote { font-style: italic; color: var(--dim); margin: 0; }
 
+/* Scrollbars stay fully functional (wheel, keyboard, drag, touch) everywhere — the
+   scrollable rails, the Chronicle's horizontal chart, the page itself — but never draw
+   their own chrome, so nothing competes with the manuscript aesthetic. Applies globally,
+   not per-component, so no scrollable region can be missed. */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge */
+}
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* Chrome/Safari/Edge (Chromium) */
+}
+
 /* ---- background layers ---- */
 .mural {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;

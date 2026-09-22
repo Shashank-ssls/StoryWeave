@@ -65,6 +65,12 @@ const FIT_PADDING_LARGE = 30;
 // R9: max ties framed by a focus fit before the camera prioritises by rank (see
 // fitFocusNow) instead of trying to fit every neighbour a hub principal has.
 const FIT_FOCUS_BUDGET = 12;
+// R9: below this many TOTAL nodes on canvas, there's no legibility pressure at all (the
+// budget above only matters for a hub with 13+ ties) — fit the whole connected web
+// instead of just the near+focus set, so a dimmed "far" context node never lands clipped
+// at the exact viewport edge (measured: Lady Veris half off the top edge on the 6-node
+// Hollow Crown demo, because far-tier nodes sit outside the near-cluster's fit box).
+const FIT_ALL_WHEN_SMALL = 20;
 const TRANSITION_MS = 420; // mirrors codexStyle's node transition-duration
 const FIT_MAX_ZOOM = 1.2; // a fit lands inside the default tier (0.5–1.5)
 const USER_MAX_ZOOM = 3;
@@ -386,6 +392,10 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     if (!cy || cy.nodes().length === 0) return;
     const { focusId, steps } = propsRef.current;
     if (focusId && cy.getElementById(focusId).length) {
+      if (cy.nodes().length <= FIT_ALL_WHEN_SMALL) {
+        animateFit(fitAllTargets());
+        return;
+      }
       const set = focusSet(propsRef.current.graph.edges, focusId, steps);
       let fitTarget = cy.nodes().filter((n) => set.has(n.id()));
       if (set.size > FIT_FOCUS_BUDGET + 1) {

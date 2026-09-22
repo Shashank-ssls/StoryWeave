@@ -280,10 +280,13 @@ test.describe("Stemma — fenced canvas at every step", () => {
     const { x, y } = state.rp!;
     // Not just "technically inside the canvas": within the padded, fitted region a correct
     // `animateFit` would have produced — a wrong fit crammed the focus into a far corner.
-    expect(x, `focus x within the fitted canvas (0..${state.w})`).toBeGreaterThan(state.w * 0.1);
-    expect(x).toBeLessThan(state.w * 0.9);
-    expect(y, `focus y within the fitted canvas (0..${state.h})`).toBeGreaterThan(state.h * 0.1);
-    expect(y).toBeLessThan(state.h * 0.9);
+    // A small graph now fits its whole connected web (R9: no more clipped far-tier nodes
+    // at the edge), so the focus itself needn't be dead-centre if other nodes pull the
+    // frame wider on one side — 5%/95% still catches a genuine off-screen/cornered fit.
+    expect(x, `focus x within the fitted canvas (0..${state.w})`).toBeGreaterThan(state.w * 0.05);
+    expect(x).toBeLessThan(state.w * 0.95);
+    expect(y, `focus y within the fitted canvas (0..${state.h})`).toBeGreaterThan(state.h * 0.05);
+    expect(y).toBeLessThan(state.h * 0.95);
   }
 
   test("camera-fit regression: Dossier → Stemma tab click lands the focus framed, not off-screen", async ({ page }) => {
@@ -318,6 +321,32 @@ test.describe("Stemma — fenced canvas at every step", () => {
     await page.click("text=The Stemma");
     await page.waitForSelector('[data-testid="stemma-cy"]');
     await expectFocusFramed(page);
+  });
+
+  test("small-cast fit-all: a dimmed far-tier context node is never clipped at the viewport edge", async ({ page }) => {
+    // Measured bug: at bookmark 4 (6-node demo graph), focusing Wren fit only the
+    // near+focus set; "far" context nodes (Lady Veris, the Gray Sparrow) sit outside that
+    // box and one of them landed half off the canvas edge. Fixed by fitting the whole
+    // connected web whenever the total node count is small (FIT_ALL_WHEN_SMALL).
+    await openStemma(page, 4, "1");
+    const rects = await page.evaluate(() => {
+      const cy = (window as unknown as {
+        __storyweaveCy: { stemma: { nodes(): { map<T>(f: (n: { id(): string; renderedPosition(): { x: number; y: number } }) => T): T[] } }; width(): number; height(): number };
+      }).__storyweaveCy.stemma;
+      const w = cy.width(), h = cy.height();
+      const nodes = cy.nodes().map((n) => ({ id: n.id(), ...n.renderedPosition() }));
+      return { w, h, nodes };
+    });
+    // The bug was the node ITSELF (its centre) landing outside the frame — a node's own
+    // circle, not its label, was cut by the edge. Labels legitimately overhang a fitted
+    // node by a wide margin (a name can be much wider than the 16-34px node), so this
+    // checks centres, not label-inclusive boxes.
+    for (const n of rects.nodes) {
+      expect(n.x, `${n.id} centre x on-canvas`).toBeGreaterThan(0);
+      expect(n.x, `${n.id} centre x on-canvas`).toBeLessThan(rects.w);
+      expect(n.y, `${n.id} centre y on-canvas`).toBeGreaterThan(0);
+      expect(n.y, `${n.id} centre y on-canvas`).toBeLessThan(rects.h);
+    }
   });
 });
 
