@@ -239,6 +239,70 @@ test.describe("Stemma — fenced canvas at every step", () => {
     expect(gone.i).toBe(1);
     expect(gone.l).toBe(0);
   });
+
+  // R9 regression: the camera fit landed off-screen after an in-app (SPA) navigation into
+  // the Stemma tab, because a fresh mount whose focus resolves one render after the initial
+  // (no-focus) graph triggers two cola bursts back-to-back, and cytoscape-cola's early
+  // "convergence" layoutstop (measured: as little as 11ms into a 950ms burst, for a small
+  // graph) was consuming the refit flag meant for the burst's real, later settle. Fixed in
+  // StemmaCanvas.tsx (suppressNextStop + a layoutSettleMs elapsed-time gate). A plain
+  // `page.goto`/reload always fit correctly (fresh mount, no double-burst race), so these
+  // three tests specifically drive the SPA click paths that reproduced it.
+  async function expectFocusFramed(page: Page): Promise<void> {
+    // Longer than the 950ms burst + its 100ms epsilon, so the real (not premature) fit has
+    // landed by the time this reads the camera.
+    await page.waitForTimeout(1300);
+    const state = await page.evaluate(() => {
+      const cy = (window as unknown as {
+        __storyweaveCy: { stemma: { nodes(sel: string): { [0]?: { renderedPosition(): { x: number; y: number } } }; width(): number; height(): number } };
+      }).__storyweaveCy.stemma;
+      const focus = cy.nodes(".focus")[0];
+      const rp = focus ? focus.renderedPosition() : null;
+      return { rp, w: cy.width(), h: cy.height() };
+    });
+    expect(state.rp, "a focused node is drawn").not.toBeNull();
+    const { x, y } = state.rp!;
+    // Not just "technically inside the canvas": within the padded, fitted region a correct
+    // `animateFit` would have produced — a wrong fit crammed the focus into a far corner.
+    expect(x, `focus x within the fitted canvas (0..${state.w})`).toBeGreaterThan(state.w * 0.1);
+    expect(x).toBeLessThan(state.w * 0.9);
+    expect(y, `focus y within the fitted canvas (0..${state.h})`).toBeGreaterThan(state.h * 0.1);
+    expect(y).toBeLessThan(state.h * 0.9);
+  }
+
+  test("camera-fit regression: Dossier → Stemma tab click lands the focus framed, not off-screen", async ({ page }) => {
+    await page.goto(`/#/work/${SLUG}/entity/1`);
+    await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "4"] as const);
+    await page.reload();
+    await page.waitForSelector('[data-testid="entity-main"]');
+    await page.click("text=The Stemma");
+    await page.waitForSelector('[data-testid="stemma-cy"]');
+    await expectFocusFramed(page);
+  });
+
+  test("camera-fit regression: Chronicle → Stemma tab click lands the focus framed, not off-screen", async ({ page }) => {
+    await page.goto(`/#/work/${SLUG}/entity/1`);
+    await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "4"] as const);
+    await page.reload();
+    await page.waitForSelector('[data-testid="entity-main"]');
+    await page.click("text=Chronicle");
+    await page.waitForSelector('[data-testid="stemma-footer"]', { state: "detached" }).catch(() => {});
+    await page.click("text=The Stemma");
+    await page.waitForSelector('[data-testid="stemma-cy"]');
+    await expectFocusFramed(page);
+  });
+
+  test("camera-fit regression: landing → Explore the full book → Stemma tab click lands the focus framed", async ({ page }) => {
+    await page.goto("/#/");
+    await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "4"] as const);
+    await page.reload();
+    await page.waitForSelector('[data-testid="landing-root"]');
+    await page.click('[data-testid="explore-full-book"]');
+    await page.waitForSelector('[data-testid="entity-main"]');
+    await page.click("text=The Stemma");
+    await page.waitForSelector('[data-testid="stemma-cy"]');
+    await expectFocusFramed(page);
+  });
 });
 
 test.describe("Stemma — synthetic-100 (test-only fixture via interception)", () => {
@@ -314,6 +378,33 @@ test.describe("Stemma — synthetic-100 (test-only fixture via interception)", (
       // demo: the Principal cast at ch4 is ~7 nodes, all labelled; synthetic: LABEL_BUDGET minus deferrals
       expect(overlaps.count).toBeGreaterThan(demo ? 4 : 12);
       expect(overlaps.overlaps, demo ? "demo" : "synthetic").toEqual([]);
+    }
+  });
+
+  test("R9 label legibility: principal-label effective size (font-size × zoom) ≥ 13px on the default (focused-on-principal) view at 1280×720", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    const results: Record<string, unknown> = {};
+    for (const demo of [false, true]) {
+      if (demo) await page.unroute(GRAPH_ROUTE_RE);
+      await openStemma(page, 4); // default view: focused on the principal, not cleared
+      const measured = await page.evaluate(() => {
+        const cy = (window as unknown as { __storyweaveCy: { stemma: { zoom(): number; nodes(sel: string): { filter(f: (n: never) => boolean): { map<T>(f: (n: never) => T): T[] } } } } }).__storyweaveCy.stemma;
+        type N = { id(): string; data(k: string): unknown; style(k: string): string };
+        const z = cy.zoom();
+        // "Principal labels" = the base EB Garamond node label (§7.2, 17px), not the focus
+        // node's own Pirata-One name overlay — measured on a labelled non-focus node so the
+        // number reflects what §7.5 calls "all principal labels" at the default tier.
+        const labelled = (cy.nodes(".near, .far") as unknown as { filter(f: (n: N) => boolean): { map<T>(f: (n: N) => T): T[] } })
+          .filter((n) => n.style("label") !== "")
+          .map((n) => ({ id: n.id(), label: n.data("display") as string, fontSize: parseFloat(n.style("font-size")) }));
+        return { zoom: z, labelled };
+      });
+      const fontSize = measured.labelled[0]?.fontSize ?? 17;
+      const effective = fontSize * measured.zoom;
+      results[demo ? "demo" : "synthetic"] = { zoom: measured.zoom, fontSize, effective, sampleCount: measured.labelled.length };
+      await test.info().attach("label-legibility", { body: JSON.stringify(results, null, 2), contentType: "application/json" });
+      expect(measured.labelled.length, `${demo ? "demo" : "synthetic"}: at least one principal label drawn`).toBeGreaterThan(0);
+      expect(effective, `${demo ? "demo" : "synthetic"}: effective principal-label size ≥ 13px`).toBeGreaterThanOrEqual(13);
     }
   });
 

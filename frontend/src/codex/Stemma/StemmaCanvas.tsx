@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import cytoscape, { type Core, type ElementDefinition, type Layouts } from "cytoscape";
 import cola from "cytoscape-cola";
-import { codexStyle, colaOptions } from "../../graph/codexStyle";
+import { codexStyle, colaOptions, SETTLE_MS } from "../../graph/codexStyle";
 import { cyRegistry } from "../../graph/cyRegistry";
 import { declutterLabels, focusSet, labelRank, minorLabelIds, nodeSize, zoomTier, type VisibleGraph } from "../../graph/stemmaModel";
 
@@ -62,6 +62,9 @@ interface Props {
 
 const FIT_PADDING = 60;
 const FIT_PADDING_LARGE = 30;
+// R9: max ties framed by a focus fit before the camera prioritises by rank (see
+// fitFocusNow) instead of trying to fit every neighbour a hub principal has.
+const FIT_FOCUS_BUDGET = 12;
 const TRANSITION_MS = 420; // mirrors codexStyle's node transition-duration
 const FIT_MAX_ZOOM = 1.2; // a fit lands inside the default tier (0.5–1.5)
 const USER_MAX_ZOOM = 3;
@@ -101,6 +104,26 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
   propsRef.current = props;
   const refitOnStop = useRef(false); // data-driven bursts refit; drag-end bursts don't
   const settledRef = useRef(false); // true once this instance's first layout has stopped
+  // Cytoscape/cola fire 'layoutstop' both on a natural settle AND when `.stop()` is called
+  // to supersede a still-running layout with a newer one (runPhysics below does this on
+  // every graph update). Without this guard, superseding a layout that's still mid-burst
+  // spuriously consumes `refitOnStop`/`settledRef` meant for the NEW layout's real settle,
+  // so the camera never gets its correct final fit — measured as the R6/R9 off-screen-focus
+  // bug: a fresh Stemma mount whose focus resolves one render after the initial (no-focus)
+  // graph triggers exactly this double-burst, and the wrong (mid-flight) fit is the one
+  // that sticks. One flag per `.stop()` call, consumed by that stop alone.
+  const suppressNextStop = useRef(false);
+  // cytoscape-cola fires 'layoutstop' twice per burst for graphs small enough to hit its
+  // internal convergenceThreshold early (measured, R9: 11ms into a run whose
+  // maxSimulationTime is 950ms) — once on that early "convergence" stop, using positions
+  // barely moved from the seed ring, and again when maxSimulationTime itself elapses, using
+  // the actually-relaxed layout. The old code treated the FIRST stop as the real settle,
+  // consuming refitOnStop/settledRef before the burst had visually finished — this is the
+  // root cause of the camera-fit bug (a small post-navigation graph converges early, so the
+  // "final" fit is computed from near-seed positions). Only the stop at/after the run's own
+  // declared duration counts as the real settle; an earlier one is ignored outright.
+  const layoutStartedAt = useRef(0);
+  const layoutSettleMs = useRef(SETTLE_MS);
 
   // ---- lifecycle: one instance per mount, destroyed on unmount ----
   useEffect(() => {
@@ -122,6 +145,10 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     cy.on("layoutstart", () => { cyRegistry.layouts += 1; });
     cy.on("layoutstop", () => {
       cyRegistry.layouts -= 1;
+      if (suppressNextStop.current) { suppressNextStop.current = false; return; }
+      // A premature convergence-triggered stop (see layoutSettleMs above): ignore it, the
+      // burst is still running and will report again at its real duration.
+      if (performance.now() - layoutStartedAt.current < layoutSettleMs.current - 100) return;
       settledRef.current = true;
       declutter();
       if (refitOnStop.current) { refitOnStop.current = false; fitFocusNow(); }
@@ -317,8 +344,14 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
   function runPhysics(): void {
     const cy = cyRef.current;
     if (!cy) return;
-    layoutRef.current?.stop();
-    const layout = cy.layout(colaOptions(propsRef.current.reducedMotion, cy.nodes().length) as unknown as cytoscape.LayoutOptions);
+    if (layoutRef.current) {
+      suppressNextStop.current = true;
+      layoutRef.current.stop();
+    }
+    const reducedMotion = propsRef.current.reducedMotion;
+    layoutStartedAt.current = performance.now();
+    layoutSettleMs.current = reducedMotion ? 800 : SETTLE_MS;
+    const layout = cy.layout(colaOptions(reducedMotion, cy.nodes().length) as unknown as cytoscape.LayoutOptions);
     layoutRef.current = layout;
     layout.run();
   }
@@ -354,7 +387,35 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     const { focusId, steps } = propsRef.current;
     if (focusId && cy.getElementById(focusId).length) {
       const set = focusSet(propsRef.current.graph.edges, focusId, steps);
-      animateFit(cy.nodes().filter((n) => set.has(n.id())));
+      let fitTarget = cy.nodes().filter((n) => set.has(n.id()));
+      if (set.size > FIT_FOCUS_BUDGET + 1) {
+        // A large focus set (a hub's many ties) still DRAWS and LABELS every tie —
+        // labelVisible's inFocusSet rule never hides them — but framing the camera to all
+        // of them at once can't keep labels legible in a fixed viewport (measured, R9:
+        // synthetic-100's hub principal, 22 near nodes, effective label size 8.7px at
+        // 1280×720, under the 13px floor). Ranking by graph importance (degree/identity,
+        // as the label budget does) does NOT shrink the frame here — a high-degree
+        // neighbour's OTHER ties pull cola to place it far from the focus regardless of
+        // its rank (measured: near-zero zoom change when tried). Distance in the settled
+        // layout is what actually determines the frame size, so the camera fits the focus
+        // node plus its FIT_FOCUS_BUDGET nearest (not most "important") ties; the rest
+        // still draw, label and position normally, just possibly past the tight frame,
+        // reachable by zooming out or panning.
+        const focusPos = cy.getElementById(focusId).position();
+        type Positioned = { id(): string; position(): { x: number; y: number } };
+        const dist = (n: Positioned): number => {
+          const p = n.position();
+          return Math.hypot(p.x - focusPos.x, p.y - focusPos.y);
+        };
+        const nearestIds = (cy.nodes() as unknown as { toArray(): Positioned[] }).toArray()
+          .filter((n) => set.has(n.id()) && n.id() !== focusId)
+          .sort((a, b) => dist(a) - dist(b))
+          .slice(0, FIT_FOCUS_BUDGET)
+          .map((n) => n.id());
+        const nearestSet = new Set([focusId, ...nearestIds]);
+        fitTarget = cy.nodes().filter((n) => nearestSet.has(n.id()));
+      }
+      animateFit(fitTarget);
     } else {
       animateFit(fitAllTargets());
     }
