@@ -48,7 +48,7 @@ select = ["E", "F", "I", "B", "UP", "W"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["storyweave", "tests"]
+files = ["storyweave", "tests", "tools"]
 
 [[tool.mypy.overrides]]
 # ML libraries (GLiNER, torch, sentence-transformers) ship no stubs; ignored here

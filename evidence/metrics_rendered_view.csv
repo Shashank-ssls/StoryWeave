@@ -1,0 +1,5 @@
+label,config,slug,chapter,nodes,edges,distinct_pairs,parallel_edges,self_loops,mean_degree,median_degree,max_degree,edge_density,isolated_nodes,degree1_nodes
+rendered_view,rendered_view,the-ninth-house,10,74,369,369,0,0,9.973,8.0,48,0.136616,0,0
+rendered_view,rendered_view,the-ninth-house,20,108,569,569,0,0,10.537,8.0,69,0.098477,0,0
+rendered_view,rendered_view,the-ninth-house,30,127,709,709,0,0,11.1654,8.0,77,0.088614,0,0
+rendered_view,rendered_view,the-ninth-house,40,157,989,989,0,0,12.5987,8.0,99,0.080761,0,0

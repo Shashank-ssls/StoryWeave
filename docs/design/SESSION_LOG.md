@@ -792,3 +792,74 @@ A fresh session should read `docs/INTEGRATION.md` in full first (it's the
 authoritative progress record for this track), then this entry, confirm
 `integration/demo-scale` is clean and pushed, restart the dev stack (or use
 `run.ps1`), and continue from step 1 above.
+
+---
+
+## Session — measurement harness (`tools/`) + first evidence run
+
+**Track:** integration (`integration/demo-scale`). Not a UI change: this session added a
+measurement harness and produced evidence artifacts. No app behaviour was modified.
+
+### What the task asked for vs what this repo is
+The task was written as a "v1 vs v2" comparison: an archived `v1_ninth_house.db`, a
+separate v2 repo, and v2 filtering by "spoiler fence + salience rank + disparity filter".
+Recon before writing any code found none of that exists here:
+- there is no archived v1 database and no second repo (`data/storyweave.sqlite` is empty;
+  `storyweave-demo.sqlite` is the only populated one);
+- the API applies the **spoiler fence only** (`api/app.py` -> `graph_json` ->
+  `graph/serialize.py:build_graph` -> `query/fence.py`);
+- `salience|disparity` has **zero code hits** across `.py/.ts/.tsx/.toml` — only prose in
+  PROGRESS/README/SETUP_NOTES/FRONTEND_OVERHAUL.
+The user confirmed the harness should measure the CURRENT system only, with no "v1"/"v2"
+naming, and be label-agnostic (`--label`) so a future rebuilt DB can be measured with it.
+
+### The three measured configurations (same codebase, same DB)
+- `api_payload` — the fence and nothing else: exactly what `/graph` sends.
+- `rendered_view` — that payload after the frontend's real client-side filters
+  (`viewModel.ts` `buildViewModel` + `stemmaModel.ts` `visibleGraph`, cast `principal`).
+- `rendered_everyone` — same, cast `everyone`. Added because `api_payload` has **no
+  renderable view**, so it cannot be screenshotted without inventing a screen.
+
+### Two real bugs the harness surfaced (NOT fixed — measurement phase)
+1. **`nx.DiGraph` silently drops same-direction parallel edges.** `build_graph` projects
+   into a DiGraph, so a second edge on the same ordered pair overwrites the first.
+   MEASURED: 1326 fenced edge rows at ch40 collapse to the **1316** the API serves.
+   The harness replicates this collapse, so it measures what is actually sent.
+2. **That collapse can relabel a Tier-3 identity reveal.** MEASURED at ch40: edge 1325
+   `SECRET_IDENTITY (14->150)` is overwritten by edge 1327 `REINCARNATION` on the same
+   ordered pair. This is why `SECRET_IDENTITY` counts read 1, 2, 2, **1** across the four
+   chapters. Worth a decision next session (a MultiDiGraph, or merging before projection).
+
+### Measured finding: the `principal` cast filter is a no-op on this work
+No drawable node in The Ninth House has degree < 2 (`deg0=0, deg1=0` at ch10 and ch40),
+so `rendered_view` and `rendered_everyone` are identical at every chapter
+(74/369, 108/569, 127/709, 157/989). The 206 -> 157 node reduction comes entirely from
+`buildViewModel`'s type drops (Concept/Event -> "Also mentioned", Title dropped), not from
+cast reduction. Confirmed twice: in the CSVs and in the live browser DOM.
+
+### Verification (MEASURED)
+- `pytest`: **`152 passed, 6 skipped, 2 warnings in 3.13s`** (Hollow Crown untouched, I2 holds).
+- `ruff check .`: **`All checks passed!`**
+- `mypy`: **`Success: no issues found in 70 source files`** (`tools` added to the gate).
+- `api_payload` metrics cross-checked against the LIVE endpoint at all four chapters:
+  90/503, 138/774, 167/970, 206/1316 — exact match.
+- All **16** screenshots verified (dimensions 3200x1800, non-blank, ink ratio, bbox) and
+  all 16 live-DOM counts match the CSVs. Every plate and plot was opened and inspected.
+- Harness guards negative-tested: density stays <=1 under multi-edges, the DOM/CSV
+  cross-check catches a mismatch, and a synthetic blank image is rejected.
+
+### Notes
+- No OpenCV: PIL + numpy cover blank detection, ink ratio and the ink bbox, so it was not
+  added as a dependency (the task asked this to be checked before adding it).
+- Playwright uses `channel="chrome"` (system Chrome) — no browser downloaded, matching the
+  existing screenshot-gate workflow.
+- The chapter bookmark is seeded via `localStorage` in an init script, never a URL
+  (DESIGN_SPEC §5 holds).
+- `#/work/:slug/web` with no `?focus` auto-focuses the highest-degree person, so the
+  "full" shot clicks the app's own `clear-focus` (focusOn(null) + fitAll) first.
+- `evidence/shots/*.png` (~39MB) is gitignored as regenerable; plates, plots, CSVs and
+  REPORT.md are committed.
+
+### Next
+Decide what to do about the DiGraph edge collapse (bug 1/2 above) — it is a backend
+change, so it belongs to a deliberate phase, not this measurement one.

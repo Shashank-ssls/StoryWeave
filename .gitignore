@@ -57,7 +57,15 @@ playwright-report/
 
 # --- LLM runner + GGUF weights (Phase 7b; large, on F:, re-downloadable) ---
 .llm-cache/
-tools/
+# The llama.cpp runner drops large binaries in tools/; those stay ignored. The
+# measurement harness (tools/*.py, added for the evidence phase) is source and is tracked.
+tools/*
+!tools/*.py
+
+# --- Evidence artifacts (tools/run_evidence.py) ---
+# The raw screenshots are ~39MB of regenerable intermediates: re-run tools/capture.py.
+# The plates, plots, CSVs and REPORT.md ARE committed, so REPORT.md renders on GitHub.
+evidence/shots/*.png
 
 # --- Local scratch / planning notes (not project deliverables) ---
 SKILL.md
