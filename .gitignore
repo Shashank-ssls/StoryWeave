@@ -9,6 +9,9 @@
 *.sqlite
 *.sqlite3
 *.db
+# Exception: the frozen pre-rebuild baseline. NOT regenerable - recreating it needs v1's
+# extraction code, which the rebuild replaces. 847 KB. See evidence/BASELINE.md.
+!evidence/v1_ninth_house.db
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
