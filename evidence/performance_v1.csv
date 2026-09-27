@@ -1,0 +1,47 @@
+section,metric,value,unit,detail
+machine,os,Windows-11-10.0.26200-SP0,,
+machine,os_version,10.0.26200,,
+machine,cpu,"AMD Ryzen 5 4600H with Radeon Graphics          — 6 cores / 12 threads, max 3000 MHz",,
+machine,cpu_count_logical,12,threads,
+machine,ram_total,16505966592,bytes,15.37 GiB
+machine,gpu,"AMD Radeon(TM) Graphics [0.50 GiB (Win32_VideoController.AdapterRAM), driver 27.20.11028.5001]; NVIDIA GeForce GTX 1650 [4.00 GiB (Win32_VideoController.AdapterRAM), driver 32.0.15.9636]",,
+machine,python,3.12.13,,F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv-ml\Scripts\python.exe
+machine,torch,2.12.1+cpu,,
+machine,torch_cuda_available,False,,the configured extraction device is read from storyweave.config
+api,entities@n=10,5.227,ms,median of 10 calls; min 4.991 max 5.802; the-ninth-house
+api,entities@n=20,6.333,ms,median of 10 calls; min 5.496 max 7.575; the-ninth-house
+api,entities@n=30,5.954,ms,median of 10 calls; min 5.665 max 7.251; the-ninth-house
+api,entities@n=40,6.514,ms,median of 10 calls; min 6.104 max 7.703; the-ninth-house
+api,graph@n=10,12.816,ms,median of 10 calls; min 12.164 max 13.747; the-ninth-house
+api,graph@n=20,18.061,ms,median of 10 calls; min 17.145 max 21.982; the-ninth-house
+api,graph@n=30,25.05,ms,median of 10 calls; min 21.178 max 31.390; the-ninth-house
+api,graph@n=40,25.803,ms,median of 10 calls; min 25.003 max 93.563; the-ninth-house
+api,arcs@n=10,4.284,ms,median of 10 calls; min 4.018 max 5.483; the-ninth-house
+api,arcs@n=20,4.461,ms,median of 10 calls; min 4.140 max 5.306; the-ninth-house
+api,arcs@n=30,4.467,ms,median of 10 calls; min 3.982 max 4.839; the-ninth-house
+api,arcs@n=40,4.118,ms,median of 10 calls; min 3.998 max 4.750; the-ninth-house
+extraction,gliner_model,urchade/gliner_small-v2.1,,"device=cpu, threshold=0.4; per-work toml overrides: model=None, device=None, threshold=None"
+extraction,chapters_measured,5,chapters,"ch01.txt, ch02.txt, ch03.txt, ch04.txt, ch05.txt"
+extraction,ingest_total,0.0964,s,"work 'perf-ninth-house' (id=1): +5 chapters, ~0 updated, =0 unchanged, +21 chunks, 0 cruft lines removed"
+extraction,peak_rss_before_model_load,284041216,bytes,270.9 MiB
+extraction,model_load,10.3554,s,GlinerExtractor construction + first inference; Hugging Face cache was warm at the start of this run (a cold cache includes the download)
+extraction,peak_rss_after_model_load,1779683328,bytes,1697.2 MiB
+extraction,extract_chapter:ch01,0.9612,s,"5 chunks, 1710 chars, 31 raw spans"
+extraction,extract_chapter:ch02,0.7178,s,"4 chunks, 1718 chars, 30 raw spans"
+extraction,extract_chapter:ch03,0.7374,s,"4 chunks, 1504 chars, 33 raw spans"
+extraction,extract_chapter:ch04,0.6809,s,"4 chunks, 1499 chars, 22 raw spans"
+extraction,extract_chapter:ch05,0.7166,s,"4 chunks, 1436 chars, 23 raw spans"
+extraction,extract_chapter_median,0.7178,s,over 5 chapters
+extraction,extract_chapter_mean,0.7628,s,over 5 chapters
+extraction,extract_chapter_min,0.6809,s,
+extraction,extract_chapter_max,0.9612,s,
+extraction,extract_work_total,4.577,s,"work id=1: 117 mentions -> 47 entities (Ability:3, Character:16, Concept:2, Event:2, Item:10, Organization:3, Place:10, Title:1)"
+extraction,extract_work_per_chapter,0.9154,s,extract_work_total / 5 chapters (model already loaded)
+extraction,peak_rss_after_extraction,1779683328,bytes,1697.2 MiB — peak working set of the whole process
+extraction,scratch_db_size,163840,bytes,"5 chapters ingested + extracted (scratch DB, then deleted)"
+files,database:storyweave-demo.sqlite,847872,bytes,F:\Dev\Claude_folder_project_and_stuff\StoryWeave\storyweave-demo.sqlite
+files,database:v1_ninth_house.db,847872,bytes,F:\Dev\Claude_folder_project_and_stuff\StoryWeave\evidence\v1_ninth_house.db
+files,database:storyweave.sqlite,122880,bytes,F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\storyweave.sqlite
+files,model_cache_total,613124507,bytes,F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.hf-cache\hub
+files,model:microsoft/deberta-v3-small,2465286,bytes,F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.hf-cache\hub\models--microsoft--deberta-v3-small
+files,model:urchade/gliner_small-v2.1,610659026,bytes,F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.hf-cache\hub\models--urchade--gliner_small-v2.1

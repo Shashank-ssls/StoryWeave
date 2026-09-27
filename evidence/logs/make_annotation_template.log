@@ -1,0 +1,21 @@
+=== chapter selection evidence ===
+EARLY  candidates (chapters 2..13, ch1 excluded because every entity there is new by construction): ch2=13 new entities, ch3=14 new entities, ch4=3 new entities, ch5=2 new entities, ch6=7 new entities, ch7=9 new entities, ch8=6 new entities, ch9=15 new entities, ch10=5 new entities, ch11=8 new entities, ch12=5 new entities, ch13=5 new entities
+MIDDLE candidates (chapters 14..26), scored by edges whose BOTH endpoints were already revealed: ch14=3/22, ch15=1/6, ch16=4/15, ch17=27/43, ch18=4/69, ch19=2/15, ch20=3/11, ch21=7/18, ch22=11/11, ch23=2/24, ch24=2/31, ch25=2/10, ch26=13/13
+LATE   carries an identity reveal. All Tier-3/Killed edges in the work: ch5:ALIAS, ch10:SECRET_IDENTITY, ch16:ALIAS, ch20:SECRET_IDENTITY, ch28:REINCARNATION, ch34:REINCARNATION, ch37:TRANSMIGRATED_INTO. Chosen the latest one in the final third.
+
+=== CHOSEN CHAPTERS ===
+  chapter 9  [early — introduces several entities]
+      15 entities are first revealed here (106 new edges), the most of any chapter in the first third excluding ch1.
+  chapter 17  [middle — dense with established relations]
+      27 of its 43 newly revealed edges connect entities that were ALREADY revealed before this chapter — the highest such count in the middle third.
+  chapter 37  [late — identity reveal / death]
+      carries an identity reveal. All Tier-3/Killed edges in the work: ch5:ALIAS, ch10:SECRET_IDENTITY, ch16:ALIAS, ch20:SECRET_IDENTITY, ch28:REINCARNATION, ch34:REINCARNATION, ch37:TRANSMIGRATED_INTO. Chosen the latest one in the final third.
+
+CHOSEN CHAPTER NUMBERS: 9, 17, 37
+wrote evidence\annotation\ch09_text.txt (7 paragraphs, 1667 chars)
+wrote evidence\annotation\ch09_template.json (parses as JSON: ok)
+wrote evidence\annotation\ch17_text.txt (7 paragraphs, 1703 chars)
+wrote evidence\annotation\ch17_template.json (parses as JSON: ok)
+wrote evidence\annotation\ch37_text.txt (9 paragraphs, 1785 chars)
+wrote evidence\annotation\ch37_template.json (parses as JSON: ok)
+wrote evidence\annotation\GUIDELINES.md

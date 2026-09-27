@@ -863,3 +863,74 @@ cast reduction. Confirmed twice: in the CSVs and in the live browser DOM.
 ### Next
 Decide what to do about the DiGraph edge collapse (bug 1/2 above) — it is a backend
 change, so it belongs to a deliberate phase, not this measurement one.
+
+---
+
+## Session — v1 evaluation, phase 1 (ground-truth-free metrics + annotation scaffolding)
+
+Measurement only. No extraction, API or frontend code changed. Branch
+`integration/demo-scale`, measured at commit `f22f669`.
+
+### What landed
+Four new tools, all reusing `tools/swconfig.py`, the real `Repository` and the real
+`query/fence.py` (no SQL re-implemented anywhere):
+
+- `tools/eval_fence.py` — spoiler-fence leak rate over every reveal-stamped element on
+  every story surface, plus two negative controls. → `evidence/fence_leaks.csv`
+- `tools/eval_salience.py` — degree vs. mention-count ranking, Spearman, degree ties.
+  → `evidence/salience_v1.csv`
+- `tools/eval_performance.py` — machine, real extraction timing, peak RSS, model and DB
+  sizes, API medians. → `evidence/performance_v1.csv`
+- `tools/make_annotation_template.py` — chapter choice by computed criteria + the
+  phase-2 annotation pack. → `evidence/annotation/`
+
+Report: `evidence/EVAL_V1.md`. Runner stdout kept verbatim in `evidence/logs/`.
+
+### MEASURED
+- **Fence leak rate: 0 violations in 105,243 elements across 8,424 queries**, over 4
+  routes / 8 element kinds / both works / every chapter 1..max (Hollow Crown 1..4,
+  Ninth House 1..40). `/entity/{id}` was requested for *every* node id at *every*
+  chapter, so an unrevealed id 404-ing is part of the result.
+- **The detector was verified to fire.** Injected canary node/edge/property caught on
+  all six element kinds; a sabotaged (unfenced) Repository produced
+  `violations_detected=3556`. Both against a throwaway copy; the measured DB was never
+  written.
+- **Salience:** Spearman ρ = 0.7508 / 0.7378 / 0.7347 / 0.7166 at ch10/20/30/40, with
+  8–11 of the top 20 tied on degree. Agreement *decreases* as the graph grows.
+- **Performance (CPU, torch 2.12.1+cpu, CUDA unavailable):** per-chapter GLiNER stage
+  median **0.7178 s** over 5 real chapters; `extract_work` end-to-end 4.577 s for those
+  5; peak RSS **1697.2 MiB**; `gliner_small-v2.1` **610,659,026 bytes** on disk in
+  `<repo>/.hf-cache`; `/graph` median 12.816 → 25.803 ms from ch10 to ch40.
+- **Chapters chosen for the phase-2 annotation: 9, 17, 37** (computed, not hand-picked).
+
+### NOT MEASURED
+- The `/search` fence — no `.chroma` index exists in this checkout.
+- Entity/alias/relation P/R/F1 and P@k/MAP/AUC — they need the phase-2 annotation.
+- Node-property fence coverage is *thin* in the measurement run (7 elements): Ninth
+  House has zero `node_properties` rows; all 3 in the DB belong to Hollow Crown. The
+  property path is exercised properly only by the negative controls.
+
+### Note recorded, not a violation
+`GET /works/{slug}/status` returns an **unfenced** `node_count` (`count_nodes` takes no
+chapter). It serves no element and no name, so it is outside this metric — but it is a
+real side channel and is written down in `EVAL_V1.md` §7 rather than left implicit.
+
+### Verification
+- `pytest`: **`152 passed, 6 skipped, 2 warnings in 3.02s`** (Hollow Crown untouched, I2 holds).
+- `mypy`: **`Success: no issues found in 74 source files`**.
+- `ruff check` on the four new tools: **`All checks passed!`**. `ruff check .` over the
+  whole repo still reports 20 pre-existing E501/I001 findings in the older `tools/`
+  scripts; they predate this phase and were left alone.
+
+### Notes
+- The HF cache was **empty** at session start — no model weights were on disk. The
+  performance run downloaded `gliner_small-v2.1` (+ its `deberta-v3-small` backbone)
+  into `<repo>/.hf-cache`, inside the repo on F:, per the env discipline. Cold load
+  incl. download was 75.0108 s; the reported 10.3554 s is the warm load.
+- Peak RSS uses Win32 `K32GetProcessMemoryInfo` via ctypes — psutil is in neither venv
+  and was not added. Spearman is computed with numpy on tie-corrected average ranks —
+  scipy is in neither venv and was not added.
+
+### Next
+Phase 2: fill the three `evidence/annotation/ch*_template.json` files against
+`GUIDELINES.md`, then score v1 against them.

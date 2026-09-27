@@ -1,0 +1,602 @@
+slug,chapter,node_id,name,type,degree,mention_count,rank_degree,rank_mentions
+the-ninth-house,10,14,Sorrel,Character,57,32,1.0,1.0
+the-ninth-house,10,15,Chancery,Organization,24,7,7.0,6.0
+the-ninth-house,10,16,Ninth House,Place,8,4,58.5,14.5
+the-ninth-house,10,17,Council,Organization,18,5,10.5,11.5
+the-ninth-house,10,18,Denna,Character,21,7,8.0,6.0
+the-ninth-house,10,19,Master Vane,Character,15,3,17.5,20.5
+the-ninth-house,10,20,Thornmere,Place,9,2,46.0,31.5
+the-ninth-house,10,21,jewelry,Item,9,2,46.0,31.5
+the-ninth-house,10,22,King Aldric,Character,5,1,78.0,64.5
+the-ninth-house,10,23,Mourning Bell,Item,3,1,87.0,64.5
+the-ninth-house,10,24,Outside,Place,3,1,87.0,64.5
+the-ninth-house,10,25,Quickhand,Ability,5,1,78.0,64.5
+the-ninth-house,10,26,battles,Concept,5,1,78.0,64.5
+the-ninth-house,10,27,letter,Item,7,1,68.0,64.5
+the-ninth-house,10,28,palace walls,Place,3,1,87.0,64.5
+the-ninth-house,10,29,ring,Item,8,1,58.5,64.5
+the-ninth-house,10,30,Cassian,Character,37,9,2.0,2.5
+the-ninth-house,10,31,Meraude,Character,32,8,3.0,4.0
+the-ninth-house,10,32,Ione,Character,12,2,25.0,31.5
+the-ninth-house,10,33,Ser Robart Kell,Character,17,3,12.5,20.5
+the-ninth-house,10,34,Lord Fennick Oswald,Character,8,1,58.5,64.5
+the-ninth-house,10,35,funeral,Event,12,3,25.0,20.5
+the-ninth-house,10,36,Brenna Oswald,Character,8,1,58.5,64.5
+the-ninth-house,10,37,king,Character,6,1,73.0,64.5
+the-ninth-house,10,38,water-damaged ledger,Item,8,1,58.5,64.5
+the-ninth-house,10,39,Voice of Command,Item,5,1,78.0,64.5
+the-ninth-house,10,40,gift,Ability,4,1,82.5,64.5
+the-ninth-house,10,41,grain counts,Event,8,1,58.5,64.5
+the-ninth-house,10,42,smaller house,Place,7,1,68.0,64.5
+the-ninth-house,10,43,Undercroft,Place,19,4,9.0,14.5
+the-ninth-house,10,44,Bone Market,Place,30,7,4.0,6.0
+the-ninth-house,10,45,Juno Stray,Character,27,5,6.0,11.5
+the-ninth-house,10,46,ledger,Item,18,4,10.5,14.5
+the-ninth-house,10,47,Vey,Character,16,9,15.0,2.5
+the-ninth-house,10,48,Warden,Character,28,6,5.0,9.0
+the-ninth-house,10,49,Salt Quarter,Place,15,3,17.5,20.5
+the-ninth-house,10,50,upper city,Place,6,1,73.0,64.5
+the-ninth-house,10,51,badge,Item,9,1,46.0,64.5
+the-ninth-house,10,52,box of unplaceable seals,Item,9,1,46.0,64.5
+the-ninth-house,10,53,cuffs,Item,4,1,82.5,64.5
+the-ninth-house,10,54,quick-handed,Ability,8,1,58.5,64.5
+the-ninth-house,10,55,shopfront,Place,10,1,36.5,64.5
+the-ninth-house,10,56,soldier,Title,9,1,46.0,64.5
+the-ninth-house,10,57,Corwin,Character,14,3,19.5,20.5
+the-ninth-house,10,58,nonsense,Concept,3,1,87.0,64.5
+the-ninth-house,10,59,second lamp,Item,3,1,87.0,64.5
+the-ninth-house,10,60,Vesper,Character,10,6,36.5,9.0
+the-ninth-house,10,61,Choir,Organization,12,4,25.0,14.5
+the-ninth-house,10,62,Thessaly,Character,16,6,15.0,9.0
+the-ninth-house,10,63,Thorne,Character,11,3,30.5,20.5
+the-ninth-house,10,64,Aldenreach,Place,8,1,58.5,64.5
+the-ninth-house,10,65,House Ashcombe,Place,6,2,73.0,31.5
+the-ninth-house,10,66,household,Organization,8,1,58.5,64.5
+the-ninth-house,10,67,scribe,Character,7,2,68.0,31.5
+the-ninth-house,10,68,succession,Event,7,1,68.0,64.5
+the-ninth-house,10,69,Mira,Character,2,1,90.0,64.5
+the-ninth-house,10,70,realm,Place,14,2,19.5,31.5
+the-ninth-house,10,71,Council chamber,Place,16,2,15.0,31.5
+the-ninth-house,10,72,Oswin,Character,8,1,58.5,64.5
+the-ninth-house,10,73,Pello Ashcombe,Character,12,1,25.0,64.5
+the-ninth-house,10,74,Choosing,Concept,12,1,25.0,64.5
+the-ninth-house,10,75,argument,Concept,8,1,58.5,64.5
+the-ninth-house,10,76,market stalls,Place,9,1,46.0,64.5
+the-ninth-house,10,77,nursery,Place,8,1,58.5,64.5
+the-ninth-house,10,78,Tobin,Character,12,2,25.0,31.5
+the-ninth-house,10,79,chancery girl,Character,9,2,46.0,31.5
+the-ninth-house,10,80,The Regent's household,Organization,9,1,46.0,64.5
+the-ninth-house,10,81,guard-captain,Title,8,1,58.5,64.5
+the-ninth-house,10,82,marriage,Event,9,1,46.0,64.5
+the-ninth-house,10,83,water-stained ledger,Item,8,1,58.5,64.5
+the-ninth-house,10,84,Hask,Character,11,2,30.5,31.5
+the-ninth-house,10,85,Drask,Character,13,2,21.0,31.5
+the-ninth-house,10,86,House Vell,Place,11,2,30.5,31.5
+the-ninth-house,10,87,Pryn Voss,Character,10,1,36.5,64.5
+the-ninth-house,10,88,Ettie Marsh,Character,10,1,36.5,64.5
+the-ninth-house,10,89,Captain,Title,12,2,25.0,31.5
+the-ninth-house,10,90,Casimir Lowe,Character,10,1,36.5,64.5
+the-ninth-house,10,91,quiet,Concept,17,3,12.5,20.5
+the-ninth-house,10,92,trader,Character,11,3,30.5,20.5
+the-ninth-house,10,93,Across the Quarter,Place,9,1,46.0,64.5
+the-ninth-house,10,94,gilded rooms,Place,9,1,46.0,64.5
+the-ninth-house,10,95,Discipline,Concept,10,1,36.5,64.5
+the-ninth-house,10,96,eastern docks,Place,10,1,36.5,64.5
+the-ninth-house,10,97,intended outcome,Event,4,1,82.5,64.5
+the-ninth-house,10,98,market row,Place,10,1,36.5,64.5
+the-ninth-house,10,99,Sable Vell,Character,6,1,73.0,64.5
+the-ninth-house,10,100,The record,Item,4,2,82.5,31.5
+the-ninth-house,10,101,Rain,Concept,5,1,78.0,64.5
+the-ninth-house,10,102,S. Vell,Character,7,1,68.0,64.5
+the-ninth-house,10,103,downpour,Concept,6,1,73.0,64.5
+the-ninth-house,20,14,Sorrel,Character,83,63,1.0,1.0
+the-ninth-house,20,15,Chancery,Organization,37,10,4.5,6.5
+the-ninth-house,20,16,Ninth House,Place,16,7,25.0,14.0
+the-ninth-house,20,17,Council,Organization,23,6,13.0,16.5
+the-ninth-house,20,18,Denna,Character,22,8,14.0,12.0
+the-ninth-house,20,19,Master Vane,Character,15,3,30.0,31.0
+the-ninth-house,20,20,Thornmere,Place,9,2,64.5,50.0
+the-ninth-house,20,21,jewelry,Item,9,2,64.5,50.0
+the-ninth-house,20,22,King Aldric,Character,5,1,105.0,100.5
+the-ninth-house,20,23,Mourning Bell,Item,3,1,128.0,100.5
+the-ninth-house,20,24,Outside,Place,3,1,128.0,100.5
+the-ninth-house,20,25,Quickhand,Ability,5,1,105.0,100.5
+the-ninth-house,20,26,battles,Concept,5,1,105.0,100.5
+the-ninth-house,20,27,letter,Item,7,1,84.0,100.5
+the-ninth-house,20,28,palace walls,Place,3,1,128.0,100.5
+the-ninth-house,20,29,ring,Item,8,1,75.0,100.5
+the-ninth-house,20,30,Cassian,Character,37,9,4.5,9.0
+the-ninth-house,20,31,Meraude,Character,48,13,2.0,3.0
+the-ninth-house,20,32,Ione,Character,16,3,25.0,31.0
+the-ninth-house,20,33,Ser Robart Kell,Character,17,3,20.0,31.0
+the-ninth-house,20,34,Lord Fennick Oswald,Character,18,3,17.0,31.0
+the-ninth-house,20,35,funeral,Event,12,3,42.5,31.0
+the-ninth-house,20,36,Brenna Oswald,Character,13,2,38.0,50.0
+the-ninth-house,20,37,king,Character,6,1,93.5,100.5
+the-ninth-house,20,38,water-damaged ledger,Item,8,1,75.0,100.5
+the-ninth-house,20,39,Voice of Command,Item,5,1,105.0,100.5
+the-ninth-house,20,40,gift,Ability,4,1,116.5,100.5
+the-ninth-house,20,41,grain counts,Event,8,1,75.0,100.5
+the-ninth-house,20,42,smaller house,Place,7,1,84.0,100.5
+the-ninth-house,20,43,Undercroft,Place,31,10,7.5,6.5
+the-ninth-house,20,44,Bone Market,Place,42,9,3.0,9.0
+the-ninth-house,20,45,Juno Stray,Character,32,11,6.0,5.0
+the-ninth-house,20,46,ledger,Item,21,6,15.0,16.5
+the-ninth-house,20,47,Vey,Character,16,9,25.0,9.0
+the-ninth-house,20,48,Warden,Character,28,6,10.0,16.5
+the-ninth-house,20,49,Salt Quarter,Place,15,3,30.0,31.0
+the-ninth-house,20,50,upper city,Place,15,2,30.0,50.0
+the-ninth-house,20,51,badge,Item,9,1,64.5,100.5
+the-ninth-house,20,52,box of unplaceable seals,Item,9,1,64.5,100.5
+the-ninth-house,20,53,cuffs,Item,4,1,116.5,100.5
+the-ninth-house,20,54,quick-handed,Ability,8,1,75.0,100.5
+the-ninth-house,20,55,shopfront,Place,10,1,55.0,100.5
+the-ninth-house,20,56,soldier,Title,9,1,64.5,100.5
+the-ninth-house,20,57,Corwin,Character,31,8,7.5,12.0
+the-ninth-house,20,58,nonsense,Concept,3,1,128.0,100.5
+the-ninth-house,20,59,second lamp,Item,3,1,128.0,100.5
+the-ninth-house,20,60,Vesper,Character,30,18,9.0,2.0
+the-ninth-house,20,61,Choir,Organization,18,8,17.0,12.0
+the-ninth-house,20,62,Thessaly,Character,27,12,11.0,4.0
+the-ninth-house,20,63,Thorne,Character,13,4,38.0,22.5
+the-ninth-house,20,64,Aldenreach,Place,16,4,25.0,22.5
+the-ninth-house,20,65,House Ashcombe,Place,17,4,20.0,22.5
+the-ninth-house,20,66,household,Organization,11,2,47.5,50.0
+the-ninth-house,20,67,scribe,Character,10,3,55.0,31.0
+the-ninth-house,20,68,succession,Event,7,1,84.0,100.5
+the-ninth-house,20,69,Mira,Character,2,1,135.5,100.5
+the-ninth-house,20,70,realm,Place,14,2,33.5,50.0
+the-ninth-house,20,71,Council chamber,Place,16,2,25.0,50.0
+the-ninth-house,20,72,Oswin,Character,12,2,42.5,50.0
+the-ninth-house,20,73,Pello Ashcombe,Character,16,3,25.0,31.0
+the-ninth-house,20,74,Choosing,Concept,12,1,42.5,100.5
+the-ninth-house,20,75,argument,Concept,8,1,75.0,100.5
+the-ninth-house,20,76,market stalls,Place,9,1,64.5,100.5
+the-ninth-house,20,77,nursery,Place,8,1,75.0,100.5
+the-ninth-house,20,78,Tobin,Character,25,5,12.0,19.5
+the-ninth-house,20,79,chancery girl,Character,9,2,64.5,50.0
+the-ninth-house,20,80,The Regent's household,Organization,9,1,64.5,100.5
+the-ninth-house,20,81,guard-captain,Title,8,1,75.0,100.5
+the-ninth-house,20,82,marriage,Event,9,1,64.5,100.5
+the-ninth-house,20,83,water-stained ledger,Item,8,1,75.0,100.5
+the-ninth-house,20,84,Hask,Character,11,2,47.5,50.0
+the-ninth-house,20,85,Drask,Character,18,6,17.0,16.5
+the-ninth-house,20,86,House Vell,Place,14,3,33.5,31.0
+the-ninth-house,20,87,Pryn Voss,Character,13,2,38.0,50.0
+the-ninth-house,20,88,Ettie Marsh,Character,16,5,25.0,19.5
+the-ninth-house,20,89,Captain,Title,14,3,33.5,31.0
+the-ninth-house,20,90,Casimir Lowe,Character,13,2,38.0,50.0
+the-ninth-house,20,91,quiet,Concept,17,3,20.0,31.0
+the-ninth-house,20,92,trader,Character,11,3,47.5,31.0
+the-ninth-house,20,93,Across the Quarter,Place,12,2,42.5,50.0
+the-ninth-house,20,94,gilded rooms,Place,14,2,33.5,50.0
+the-ninth-house,20,95,Discipline,Concept,10,1,55.0,100.5
+the-ninth-house,20,96,eastern docks,Place,10,1,55.0,100.5
+the-ninth-house,20,97,intended outcome,Event,4,1,116.5,100.5
+the-ninth-house,20,98,market row,Place,10,1,55.0,100.5
+the-ninth-house,20,99,Sable Vell,Character,13,2,38.0,50.0
+the-ninth-house,20,100,The record,Item,4,2,116.5,50.0
+the-ninth-house,20,101,Rain,Concept,5,1,105.0,100.5
+the-ninth-house,20,102,S. Vell,Character,7,1,84.0,100.5
+the-ninth-house,20,103,downpour,Concept,6,1,93.5,100.5
+the-ninth-house,20,104,mother,Character,7,2,84.0,50.0
+the-ninth-house,20,105,crisis,Event,6,1,93.5,100.5
+the-ninth-house,20,106,disappearance,Event,1,1,138.0,100.5
+the-ninth-house,20,107,empty room,Place,7,1,84.0,100.5
+the-ninth-house,20,108,father,Character,6,1,93.5,100.5
+the-ninth-house,20,109,grief,Concept,6,1,93.5,100.5
+the-ninth-house,20,110,old room,Place,6,1,93.5,100.5
+the-ninth-house,20,111,patience,Concept,7,1,84.0,100.5
+the-ninth-house,20,112,afternoon crowd,Place,6,2,93.5,50.0
+the-ninth-house,20,113,crown,Organization,3,1,128.0,100.5
+the-ninth-house,20,114,note,Item,4,2,116.5,50.0
+the-ninth-house,20,115,Salt Tithe rolls,Item,3,1,128.0,100.5
+the-ninth-house,20,116,reign before last,Event,2,1,135.5,100.5
+the-ninth-house,20,117,raid,Event,8,1,75.0,100.5
+the-ninth-house,20,118,good officer,Title,4,2,116.5,50.0
+the-ninth-house,20,119,eastern stalls,Place,9,1,64.5,100.5
+the-ninth-house,20,120,smuggling ring,Organization,8,1,75.0,100.5
+the-ninth-house,20,121,untaxed salt,Item,5,1,105.0,100.5
+the-ninth-house,20,122,Alden,Character,8,4,75.0,22.5
+the-ninth-house,20,123,Keep,Place,4,1,116.5,100.5
+the-ninth-house,20,124,The founding houses,Organization,3,2,128.0,50.0
+the-ninth-house,20,125,boy,Character,5,1,105.0,100.5
+the-ninth-house,20,126,curiosity,Concept,5,1,105.0,100.5
+the-ninth-house,20,127,Chancery steps,Place,2,1,135.5,100.5
+the-ninth-house,20,128,private language,Concept,3,1,128.0,100.5
+the-ninth-house,20,129,Choirmaster,Title,6,2,93.5,50.0
+the-ninth-house,20,130,old woman,Character,4,2,116.5,50.0
+the-ninth-house,20,131,Undercroft itself,Place,3,1,128.0,100.5
+the-ninth-house,20,132,invitation,Item,6,2,93.5,50.0
+the-ninth-house,20,133,House Oswald,Place,6,1,93.5,100.5
+the-ninth-house,20,134,ambition,Concept,4,1,116.5,100.5
+the-ninth-house,20,135,Ysolde,Character,4,1,116.5,100.5
+the-ninth-house,20,136,Soul-sight migraine,Event,5,1,105.0,100.5
+the-ninth-house,20,137,overwhelming,Concept,10,2,55.0,50.0
+the-ninth-house,20,138,Vell Hall,Place,10,1,55.0,100.5
+the-ninth-house,20,139,borrowed gown,Item,11,1,47.5,100.5
+the-ninth-house,20,140,could manage it easily enough,Ability,11,1,47.5,100.5
+the-ninth-house,20,141,front doors,Place,10,1,55.0,100.5
+the-ninth-house,20,142,garden doors,Place,5,1,105.0,100.5
+the-ninth-house,20,143,major gathering,Event,4,1,116.5,100.5
+the-ninth-house,20,144,masked guest,Character,10,1,55.0,100.5
+the-ninth-house,20,145,service entrance,Place,11,1,47.5,100.5
+the-ninth-house,20,146,side room,Place,5,1,105.0,100.5
+the-ninth-house,20,147,Kaelen,Character,6,1,93.5,100.5
+the-ninth-house,20,148,Grimoire,Item,6,1,93.5,100.5
+the-ninth-house,20,149,Chancery archives,Organization,2,1,135.5,100.5
+the-ninth-house,20,150,Aurelia Marrow,Character,3,1,128.0,100.5
+the-ninth-house,20,151,Quill,Item,4,3,116.5,31.0
+the-ninth-house,30,14,Sorrel,Character,96,86,1.0,1.0
+the-ninth-house,30,15,Chancery,Organization,40,12,7.0,7.0
+the-ninth-house,30,16,Ninth House,Place,23,11,18.5,10.0
+the-ninth-house,30,17,Council,Organization,25,7,16.0,19.0
+the-ninth-house,30,18,Denna,Character,26,9,13.5,15.5
+the-ninth-house,30,19,Master Vane,Character,21,6,21.5,23.5
+the-ninth-house,30,20,Thornmere,Place,11,3,54.5,45.0
+the-ninth-house,30,21,jewelry,Item,9,2,73.0,64.5
+the-ninth-house,30,22,King Aldric,Character,5,1,125.5,123.0
+the-ninth-house,30,23,Mourning Bell,Item,3,1,156.5,123.0
+the-ninth-house,30,24,Outside,Place,3,1,156.5,123.0
+the-ninth-house,30,25,Quickhand,Ability,5,1,125.5,123.0
+the-ninth-house,30,26,battles,Concept,5,1,125.5,123.0
+the-ninth-house,30,27,letter,Item,7,1,98.0,123.0
+the-ninth-house,30,28,palace walls,Place,3,1,156.5,123.0
+the-ninth-house,30,29,ring,Item,8,1,85.5,123.0
+the-ninth-house,30,30,Cassian,Character,46,15,4.5,4.0
+the-ninth-house,30,31,Meraude,Character,48,13,3.0,5.0
+the-ninth-house,30,32,Ione,Character,23,9,18.5,15.5
+the-ninth-house,30,33,Ser Robart Kell,Character,26,7,13.5,19.0
+the-ninth-house,30,34,Lord Fennick Oswald,Character,18,3,26.5,45.0
+the-ninth-house,30,35,funeral,Event,14,4,41.0,35.0
+the-ninth-house,30,36,Brenna Oswald,Character,13,2,44.5,64.5
+the-ninth-house,30,37,king,Character,6,1,110.5,123.0
+the-ninth-house,30,38,water-damaged ledger,Item,11,2,54.5,64.5
+the-ninth-house,30,39,Voice of Command,Item,5,1,125.5,123.0
+the-ninth-house,30,40,gift,Ability,4,1,142.0,123.0
+the-ninth-house,30,41,grain counts,Event,8,1,85.5,123.0
+the-ninth-house,30,42,smaller house,Place,7,1,98.0,123.0
+the-ninth-house,30,43,Undercroft,Place,33,11,10.0,10.0
+the-ninth-house,30,44,Bone Market,Place,43,10,6.0,12.5
+the-ninth-house,30,45,Juno Stray,Character,34,12,9.0,7.0
+the-ninth-house,30,46,ledger,Item,21,6,21.5,23.5
+the-ninth-house,30,47,Vey,Character,16,9,34.0,15.5
+the-ninth-house,30,48,Warden,Character,28,6,12.0,23.5
+the-ninth-house,30,49,Salt Quarter,Place,20,4,23.0,35.0
+the-ninth-house,30,50,upper city,Place,15,2,38.5,64.5
+the-ninth-house,30,51,badge,Item,9,1,73.0,123.0
+the-ninth-house,30,52,box of unplaceable seals,Item,9,1,73.0,123.0
+the-ninth-house,30,53,cuffs,Item,4,1,142.0,123.0
+the-ninth-house,30,54,quick-handed,Ability,8,1,85.5,123.0
+the-ninth-house,30,55,shopfront,Place,10,1,62.5,123.0
+the-ninth-house,30,56,soldier,Title,9,1,73.0,123.0
+the-ninth-house,30,57,Corwin,Character,35,12,8.0,7.0
+the-ninth-house,30,58,nonsense,Concept,3,1,156.5,123.0
+the-ninth-house,30,59,second lamp,Item,3,1,156.5,123.0
+the-ninth-house,30,60,Vesper,Character,46,25,4.5,3.0
+the-ninth-house,30,61,Choir,Organization,25,10,16.0,12.5
+the-ninth-house,30,62,Thessaly,Character,54,27,2.0,2.0
+the-ninth-house,30,63,Thorne,Character,29,11,11.0,10.0
+the-ninth-house,30,64,Aldenreach,Place,18,5,26.5,28.5
+the-ninth-house,30,65,House Ashcombe,Place,17,4,29.5,35.0
+the-ninth-house,30,66,household,Organization,13,3,44.5,45.0
+the-ninth-house,30,67,scribe,Character,10,3,62.5,45.0
+the-ninth-house,30,68,succession,Event,7,1,98.0,123.0
+the-ninth-house,30,69,Mira,Character,6,2,110.5,64.5
+the-ninth-house,30,70,realm,Place,16,3,34.0,45.0
+the-ninth-house,30,71,Council chamber,Place,16,2,34.0,64.5
+the-ninth-house,30,72,Oswin,Character,12,2,49.0,64.5
+the-ninth-house,30,73,Pello Ashcombe,Character,16,3,34.0,45.0
+the-ninth-house,30,74,Choosing,Concept,12,1,49.0,123.0
+the-ninth-house,30,75,argument,Concept,8,1,85.5,123.0
+the-ninth-house,30,76,market stalls,Place,9,1,73.0,123.0
+the-ninth-house,30,77,nursery,Place,8,1,85.5,123.0
+the-ninth-house,30,78,Tobin,Character,25,5,16.0,28.5
+the-ninth-house,30,79,chancery girl,Character,9,2,73.0,64.5
+the-ninth-house,30,80,The Regent's household,Organization,9,1,73.0,123.0
+the-ninth-house,30,81,guard-captain,Title,8,1,85.5,123.0
+the-ninth-house,30,82,marriage,Event,9,1,73.0,123.0
+the-ninth-house,30,83,water-stained ledger,Item,8,1,85.5,123.0
+the-ninth-house,30,84,Hask,Character,16,5,34.0,28.5
+the-ninth-house,30,85,Drask,Character,22,9,20.0,15.5
+the-ninth-house,30,86,House Vell,Place,16,4,34.0,35.0
+the-ninth-house,30,87,Pryn Voss,Character,18,6,26.5,23.5
+the-ninth-house,30,88,Ettie Marsh,Character,16,5,34.0,28.5
+the-ninth-house,30,89,Captain,Title,18,4,26.5,35.0
+the-ninth-house,30,90,Casimir Lowe,Character,17,4,29.5,35.0
+the-ninth-house,30,91,quiet,Concept,19,4,24.0,35.0
+the-ninth-house,30,92,trader,Character,11,3,54.5,45.0
+the-ninth-house,30,93,Across the Quarter,Place,12,2,49.0,64.5
+the-ninth-house,30,94,gilded rooms,Place,14,2,41.0,64.5
+the-ninth-house,30,95,Discipline,Concept,10,1,62.5,123.0
+the-ninth-house,30,96,eastern docks,Place,10,1,62.5,123.0
+the-ninth-house,30,97,intended outcome,Event,4,1,142.0,123.0
+the-ninth-house,30,98,market row,Place,10,1,62.5,123.0
+the-ninth-house,30,99,Sable Vell,Character,13,2,44.5,64.5
+the-ninth-house,30,100,The record,Item,4,2,142.0,64.5
+the-ninth-house,30,101,Rain,Concept,5,1,125.5,123.0
+the-ninth-house,30,102,S. Vell,Character,7,1,98.0,123.0
+the-ninth-house,30,103,downpour,Concept,6,1,110.5,123.0
+the-ninth-house,30,104,mother,Character,7,2,98.0,64.5
+the-ninth-house,30,105,crisis,Event,6,1,110.5,123.0
+the-ninth-house,30,106,disappearance,Event,1,1,166.5,123.0
+the-ninth-house,30,107,empty room,Place,7,1,98.0,123.0
+the-ninth-house,30,108,father,Character,6,1,110.5,123.0
+the-ninth-house,30,109,grief,Concept,6,1,110.5,123.0
+the-ninth-house,30,110,old room,Place,6,1,110.5,123.0
+the-ninth-house,30,111,patience,Concept,7,1,98.0,123.0
+the-ninth-house,30,112,afternoon crowd,Place,6,2,110.5,64.5
+the-ninth-house,30,113,crown,Organization,3,1,156.5,123.0
+the-ninth-house,30,114,note,Item,4,2,142.0,64.5
+the-ninth-house,30,115,Salt Tithe rolls,Item,3,1,156.5,123.0
+the-ninth-house,30,116,reign before last,Event,2,1,164.0,123.0
+the-ninth-house,30,117,raid,Event,12,4,49.0,35.0
+the-ninth-house,30,118,good officer,Title,4,2,142.0,64.5
+the-ninth-house,30,119,eastern stalls,Place,9,1,73.0,123.0
+the-ninth-house,30,120,smuggling ring,Organization,8,1,85.5,123.0
+the-ninth-house,30,121,untaxed salt,Item,5,1,125.5,123.0
+the-ninth-house,30,122,Alden,Character,8,4,85.5,35.0
+the-ninth-house,30,123,Keep,Place,8,2,85.5,64.5
+the-ninth-house,30,124,The founding houses,Organization,3,2,156.5,64.5
+the-ninth-house,30,125,boy,Character,5,1,125.5,123.0
+the-ninth-house,30,126,curiosity,Concept,5,1,125.5,123.0
+the-ninth-house,30,127,Chancery steps,Place,2,1,164.0,123.0
+the-ninth-house,30,128,private language,Concept,3,1,156.5,123.0
+the-ninth-house,30,129,Choirmaster,Title,6,2,110.5,64.5
+the-ninth-house,30,130,old woman,Character,4,2,142.0,64.5
+the-ninth-house,30,131,Undercroft itself,Place,3,1,156.5,123.0
+the-ninth-house,30,132,invitation,Item,6,2,110.5,64.5
+the-ninth-house,30,133,House Oswald,Place,6,1,110.5,123.0
+the-ninth-house,30,134,ambition,Concept,4,1,142.0,123.0
+the-ninth-house,30,135,Ysolde,Character,14,7,41.0,19.0
+the-ninth-house,30,136,Soul-sight migraine,Event,8,2,85.5,64.5
+the-ninth-house,30,137,overwhelming,Concept,10,2,62.5,64.5
+the-ninth-house,30,138,Vell Hall,Place,10,1,62.5,123.0
+the-ninth-house,30,139,borrowed gown,Item,11,1,54.5,123.0
+the-ninth-house,30,140,could manage it easily enough,Ability,11,1,54.5,123.0
+the-ninth-house,30,141,front doors,Place,10,1,62.5,123.0
+the-ninth-house,30,142,garden doors,Place,5,1,125.5,123.0
+the-ninth-house,30,143,major gathering,Event,4,1,142.0,123.0
+the-ninth-house,30,144,masked guest,Character,10,1,62.5,123.0
+the-ninth-house,30,145,service entrance,Place,11,1,54.5,123.0
+the-ninth-house,30,146,side room,Place,5,1,125.5,123.0
+the-ninth-house,30,147,Kaelen,Character,15,6,38.5,23.5
+the-ninth-house,30,148,Grimoire,Item,12,3,49.0,45.0
+the-ninth-house,30,149,Chancery archives,Organization,2,1,164.0,123.0
+the-ninth-house,30,150,Aurelia Marrow,Character,3,1,156.5,123.0
+the-ninth-house,30,151,Quill,Item,4,3,142.0,45.0
+the-ninth-house,30,152,ciphers,Concept,5,2,125.5,64.5
+the-ninth-house,30,153,knowledge,Concept,5,2,125.5,64.5
+the-ninth-house,30,154,Memory-warding,Concept,4,1,142.0,123.0
+the-ninth-house,30,155,Wardens,Organization,6,1,110.5,123.0
+the-ninth-house,30,156,guardroom,Place,5,1,125.5,123.0
+the-ninth-house,30,157,second raid,Event,7,1,98.0,123.0
+the-ninth-house,30,158,smuggling crew,Organization,6,1,110.5,123.0
+the-ninth-house,30,159,seal,Item,8,6,85.5,23.5
+the-ninth-house,30,160,Marrowfall,Place,10,3,62.5,45.0
+the-ninth-house,30,161,fall,Event,9,2,73.0,64.5
+the-ninth-house,30,162,The Long Silence,Event,5,1,125.5,123.0
+the-ninth-house,30,163,cellar room,Place,6,1,110.5,123.0
+the-ninth-house,30,164,manor house,Place,7,1,98.0,123.0
+the-ninth-house,30,165,coin,Item,4,1,142.0,123.0
+the-ninth-house,30,166,stubborn piece of silver,Item,4,1,142.0,123.0
+the-ninth-house,30,167,Vell Masque,Place,9,2,73.0,64.5
+the-ninth-house,30,168,Tonight,Event,4,1,142.0,123.0
+the-ninth-house,30,169,writing desk,Place,4,1,142.0,123.0
+the-ninth-house,30,170,Regent,Character,13,3,44.5,45.0
+the-ninth-house,30,171,Conventional physic,Item,8,1,85.5,123.0
+the-ninth-house,30,172,Quarter apothecary,Organization,7,1,98.0,123.0
+the-ninth-house,30,173,servants,Organization,8,1,85.5,123.0
+the-ninth-house,30,174,woman,Character,7,1,98.0,123.0
+the-ninth-house,30,175,rebuilt archive,Place,5,1,125.5,123.0
+the-ninth-house,30,176,Undercroft collapse,Event,4,1,142.0,123.0
+the-ninth-house,30,177,fear,Concept,1,1,166.5,123.0
+the-ninth-house,30,178,loyalty,Concept,3,2,156.5,64.5
+the-ninth-house,30,179,my lord,Character,4,1,142.0,123.0
+the-ninth-house,30,180,familiar room,Place,5,1,125.5,123.0
+the-ninth-house,40,14,Sorrel,Character,121,108,1.0,1.0
+the-ninth-house,40,15,Chancery,Organization,55,16,6.0,8.0
+the-ninth-house,40,16,Ninth House,Place,26,12,20.5,13.0
+the-ninth-house,40,17,Council,Organization,42,11,11.0,15.5
+the-ninth-house,40,18,Denna,Character,26,9,20.5,19.5
+the-ninth-house,40,19,Master Vane,Character,26,7,20.5,26.5
+the-ninth-house,40,20,Thornmere,Place,18,5,40.5,35.0
+the-ninth-house,40,21,jewelry,Item,9,2,90.5,78.5
+the-ninth-house,40,22,King Aldric,Character,5,1,162.0,151.0
+the-ninth-house,40,23,Mourning Bell,Item,3,1,195.5,151.0
+the-ninth-house,40,24,Outside,Place,3,1,195.5,151.0
+the-ninth-house,40,25,Quickhand,Ability,5,1,162.0,151.0
+the-ninth-house,40,26,battles,Concept,5,1,162.0,151.0
+the-ninth-house,40,27,letter,Item,7,1,125.5,151.0
+the-ninth-house,40,28,palace walls,Place,3,1,195.5,151.0
+the-ninth-house,40,29,ring,Item,8,1,108.0,151.0
+the-ninth-house,40,30,Cassian,Character,68,27,2.0,4.0
+the-ninth-house,40,31,Meraude,Character,64,18,3.0,7.0
+the-ninth-house,40,32,Ione,Character,34,11,15.5,15.5
+the-ninth-house,40,33,Ser Robart Kell,Character,26,7,20.5,26.5
+the-ninth-house,40,34,Lord Fennick Oswald,Character,19,4,35.0,44.5
+the-ninth-house,40,35,funeral,Event,14,4,54.0,44.5
+the-ninth-house,40,36,Brenna Oswald,Character,16,3,47.0,56.0
+the-ninth-house,40,37,king,Character,11,2,68.0,78.5
+the-ninth-house,40,38,water-damaged ledger,Item,11,2,68.0,78.5
+the-ninth-house,40,39,Voice of Command,Item,5,1,162.0,151.0
+the-ninth-house,40,40,gift,Ability,4,1,181.5,151.0
+the-ninth-house,40,41,grain counts,Event,8,1,108.0,151.0
+the-ninth-house,40,42,smaller house,Place,7,1,125.5,151.0
+the-ninth-house,40,43,Undercroft,Place,45,19,9.5,6.0
+the-ninth-house,40,44,Bone Market,Place,46,12,8.0,13.0
+the-ninth-house,40,45,Juno Stray,Character,34,12,15.5,13.0
+the-ninth-house,40,46,ledger,Item,37,10,12.0,17.0
+the-ninth-house,40,47,Vey,Character,16,9,47.0,19.5
+the-ninth-house,40,48,Warden,Character,28,6,17.5,30.0
+the-ninth-house,40,49,Salt Quarter,Place,20,4,31.0,44.5
+the-ninth-house,40,50,upper city,Place,15,2,51.0,78.5
+the-ninth-house,40,51,badge,Item,9,1,90.5,151.0
+the-ninth-house,40,52,box of unplaceable seals,Item,9,1,90.5,151.0
+the-ninth-house,40,53,cuffs,Item,4,1,181.5,151.0
+the-ninth-house,40,54,quick-handed,Ability,8,1,108.0,151.0
+the-ninth-house,40,55,shopfront,Place,10,1,77.0,151.0
+the-ninth-house,40,56,soldier,Title,9,1,90.5,151.0
+the-ninth-house,40,57,Corwin,Character,48,23,7.0,5.0
+the-ninth-house,40,58,nonsense,Concept,3,1,195.5,151.0
+the-ninth-house,40,59,second lamp,Item,3,1,195.5,151.0
+the-ninth-house,40,60,Vesper,Character,60,29,5.0,3.0
+the-ninth-house,40,61,Choir,Organization,28,13,17.5,10.5
+the-ninth-house,40,62,Thessaly,Character,62,35,4.0,2.0
+the-ninth-house,40,63,Thorne,Character,45,13,9.5,10.5
+the-ninth-house,40,64,Aldenreach,Place,18,5,40.5,35.0
+the-ninth-house,40,65,House Ashcombe,Place,24,5,25.0,35.0
+the-ninth-house,40,66,household,Organization,13,3,57.0,56.0
+the-ninth-house,40,67,scribe,Character,10,3,77.0,56.0
+the-ninth-house,40,68,succession,Event,7,1,125.5,151.0
+the-ninth-house,40,69,Mira,Character,20,8,31.0,23.0
+the-ninth-house,40,70,realm,Place,21,4,28.5,44.5
+the-ninth-house,40,71,Council chamber,Place,18,3,40.5,56.0
+the-ninth-house,40,72,Oswin,Character,20,3,31.0,56.0
+the-ninth-house,40,73,Pello Ashcombe,Character,16,3,47.0,56.0
+the-ninth-house,40,74,Choosing,Concept,12,1,61.5,151.0
+the-ninth-house,40,75,argument,Concept,8,1,108.0,151.0
+the-ninth-house,40,76,market stalls,Place,9,1,90.5,151.0
+the-ninth-house,40,77,nursery,Place,8,1,108.0,151.0
+the-ninth-house,40,78,Tobin,Character,25,5,23.5,35.0
+the-ninth-house,40,79,chancery girl,Character,16,4,47.0,44.5
+the-ninth-house,40,80,The Regent's household,Organization,9,1,90.5,151.0
+the-ninth-house,40,81,guard-captain,Title,8,1,108.0,151.0
+the-ninth-house,40,82,marriage,Event,9,1,90.5,151.0
+the-ninth-house,40,83,water-stained ledger,Item,8,1,108.0,151.0
+the-ninth-house,40,84,Hask,Character,35,14,14.0,9.0
+the-ninth-house,40,85,Drask,Character,22,9,27.0,19.5
+the-ninth-house,40,86,House Vell,Place,25,8,23.5,23.0
+the-ninth-house,40,87,Pryn Voss,Character,18,6,40.5,30.0
+the-ninth-house,40,88,Ettie Marsh,Character,16,5,47.0,35.0
+the-ninth-house,40,89,Captain,Title,18,4,40.5,44.5
+the-ninth-house,40,90,Casimir Lowe,Character,17,4,44.0,44.5
+the-ninth-house,40,91,quiet,Concept,19,4,35.0,44.5
+the-ninth-house,40,92,trader,Character,11,3,68.0,56.0
+the-ninth-house,40,93,Across the Quarter,Place,12,2,61.5,78.5
+the-ninth-house,40,94,gilded rooms,Place,14,2,54.0,78.5
+the-ninth-house,40,95,Discipline,Concept,10,1,77.0,151.0
+the-ninth-house,40,96,eastern docks,Place,10,1,77.0,151.0
+the-ninth-house,40,97,intended outcome,Event,4,1,181.5,151.0
+the-ninth-house,40,98,market row,Place,10,1,77.0,151.0
+the-ninth-house,40,99,Sable Vell,Character,13,2,57.0,78.5
+the-ninth-house,40,100,The record,Item,4,2,181.5,78.5
+the-ninth-house,40,101,Rain,Concept,5,1,162.0,151.0
+the-ninth-house,40,102,S. Vell,Character,7,1,125.5,151.0
+the-ninth-house,40,103,downpour,Concept,6,1,142.0,151.0
+the-ninth-house,40,104,mother,Character,7,2,125.5,78.5
+the-ninth-house,40,105,crisis,Event,6,1,142.0,151.0
+the-ninth-house,40,106,disappearance,Event,1,1,206.0,151.0
+the-ninth-house,40,107,empty room,Place,7,1,125.5,151.0
+the-ninth-house,40,108,father,Character,6,1,142.0,151.0
+the-ninth-house,40,109,grief,Concept,6,1,142.0,151.0
+the-ninth-house,40,110,old room,Place,6,1,142.0,151.0
+the-ninth-house,40,111,patience,Concept,7,1,125.5,151.0
+the-ninth-house,40,112,afternoon crowd,Place,6,2,142.0,78.5
+the-ninth-house,40,113,crown,Organization,7,2,125.5,78.5
+the-ninth-house,40,114,note,Item,4,2,181.5,78.5
+the-ninth-house,40,115,Salt Tithe rolls,Item,3,1,195.5,151.0
+the-ninth-house,40,116,reign before last,Event,2,1,203.5,151.0
+the-ninth-house,40,117,raid,Event,12,4,61.5,44.5
+the-ninth-house,40,118,good officer,Title,4,2,181.5,78.5
+the-ninth-house,40,119,eastern stalls,Place,9,1,90.5,151.0
+the-ninth-house,40,120,smuggling ring,Organization,8,1,108.0,151.0
+the-ninth-house,40,121,untaxed salt,Item,5,1,162.0,151.0
+the-ninth-house,40,122,Alden,Character,8,4,108.0,44.5
+the-ninth-house,40,123,Keep,Place,19,4,35.0,44.5
+the-ninth-house,40,124,The founding houses,Organization,3,2,195.5,78.5
+the-ninth-house,40,125,boy,Character,5,1,162.0,151.0
+the-ninth-house,40,126,curiosity,Concept,5,1,162.0,151.0
+the-ninth-house,40,127,Chancery steps,Place,2,1,203.5,151.0
+the-ninth-house,40,128,private language,Concept,3,1,195.5,151.0
+the-ninth-house,40,129,Choirmaster,Title,6,2,142.0,78.5
+the-ninth-house,40,130,old woman,Character,4,2,181.5,78.5
+the-ninth-house,40,131,Undercroft itself,Place,3,1,195.5,151.0
+the-ninth-house,40,132,invitation,Item,6,2,142.0,78.5
+the-ninth-house,40,133,House Oswald,Place,6,1,142.0,151.0
+the-ninth-house,40,134,ambition,Concept,4,1,181.5,151.0
+the-ninth-house,40,135,Ysolde,Character,14,7,54.0,26.5
+the-ninth-house,40,136,Soul-sight migraine,Event,8,2,108.0,78.5
+the-ninth-house,40,137,overwhelming,Concept,10,2,77.0,78.5
+the-ninth-house,40,138,Vell Hall,Place,10,1,77.0,151.0
+the-ninth-house,40,139,borrowed gown,Item,11,1,68.0,151.0
+the-ninth-house,40,140,could manage it easily enough,Ability,11,1,68.0,151.0
+the-ninth-house,40,141,front doors,Place,10,1,77.0,151.0
+the-ninth-house,40,142,garden doors,Place,5,1,162.0,151.0
+the-ninth-house,40,143,major gathering,Event,4,1,181.5,151.0
+the-ninth-house,40,144,masked guest,Character,10,1,77.0,151.0
+the-ninth-house,40,145,service entrance,Place,11,1,68.0,151.0
+the-ninth-house,40,146,side room,Place,5,1,162.0,151.0
+the-ninth-house,40,147,Kaelen,Character,15,6,51.0,30.0
+the-ninth-house,40,148,Grimoire,Item,12,3,61.5,56.0
+the-ninth-house,40,149,Chancery archives,Organization,2,1,203.5,151.0
+the-ninth-house,40,150,Aurelia Marrow,Character,8,3,108.0,56.0
+the-ninth-house,40,151,Quill,Item,4,3,181.5,56.0
+the-ninth-house,40,152,ciphers,Concept,5,2,162.0,78.5
+the-ninth-house,40,153,knowledge,Concept,5,2,162.0,78.5
+the-ninth-house,40,154,Memory-warding,Concept,4,1,181.5,151.0
+the-ninth-house,40,155,Wardens,Organization,6,1,142.0,151.0
+the-ninth-house,40,156,guardroom,Place,5,1,162.0,151.0
+the-ninth-house,40,157,second raid,Event,7,1,125.5,151.0
+the-ninth-house,40,158,smuggling crew,Organization,6,1,142.0,151.0
+the-ninth-house,40,159,seal,Item,13,9,57.0,19.5
+the-ninth-house,40,160,Marrowfall,Place,10,3,77.0,56.0
+the-ninth-house,40,161,fall,Event,9,2,90.5,78.5
+the-ninth-house,40,162,The Long Silence,Event,5,1,162.0,151.0
+the-ninth-house,40,163,cellar room,Place,6,1,142.0,151.0
+the-ninth-house,40,164,manor house,Place,7,1,125.5,151.0
+the-ninth-house,40,165,coin,Item,4,1,181.5,151.0
+the-ninth-house,40,166,stubborn piece of silver,Item,4,1,181.5,151.0
+the-ninth-house,40,167,Vell Masque,Place,9,2,90.5,78.5
+the-ninth-house,40,168,Tonight,Event,4,1,181.5,151.0
+the-ninth-house,40,169,writing desk,Place,4,1,181.5,151.0
+the-ninth-house,40,170,Regent,Character,36,8,13.0,23.0
+the-ninth-house,40,171,Conventional physic,Item,8,1,108.0,151.0
+the-ninth-house,40,172,Quarter apothecary,Organization,7,1,125.5,151.0
+the-ninth-house,40,173,servants,Organization,8,1,108.0,151.0
+the-ninth-house,40,174,woman,Character,7,1,125.5,151.0
+the-ninth-house,40,175,rebuilt archive,Place,9,2,90.5,78.5
+the-ninth-house,40,176,Undercroft collapse,Event,9,2,90.5,78.5
+the-ninth-house,40,177,fear,Concept,6,2,142.0,78.5
+the-ninth-house,40,178,loyalty,Concept,3,2,195.5,78.5
+the-ninth-house,40,179,my lord,Character,8,2,108.0,78.5
+the-ninth-house,40,180,familiar room,Place,5,1,162.0,151.0
+the-ninth-house,40,181,The meeting,Event,2,2,203.5,78.5
+the-ninth-house,40,182,Mistress Quill,Character,7,1,125.5,151.0
+the-ninth-house,40,183,audit chamber,Place,9,1,90.5,151.0
+the-ninth-house,40,184,quarterly audit,Event,5,1,162.0,151.0
+the-ninth-house,40,185,quiet place,Place,3,1,195.5,151.0
+the-ninth-house,40,186,dark building,Place,5,1,162.0,151.0
+the-ninth-house,40,187,tax rolls,Item,7,1,125.5,151.0
+the-ninth-house,40,188,Stone,Item,9,1,90.5,151.0
+the-ninth-house,40,189,east wall,Place,8,1,108.0,151.0
+the-ninth-house,40,190,ledgers,Item,10,1,77.0,151.0
+the-ninth-house,40,191,old fault line,Place,9,1,90.5,151.0
+the-ninth-house,40,192,old stonework,Place,6,1,142.0,151.0
+the-ninth-house,40,193,side alcove,Place,8,1,108.0,151.0
+the-ninth-house,40,194,stranger,Character,5,1,162.0,151.0
+the-ninth-house,40,195,Ashen Court,Organization,23,7,26.0,26.5
+the-ninth-house,40,196,Sallowmere,Character,21,5,28.5,35.0
+the-ninth-house,40,197,Petra Hollis,Character,19,4,35.0,44.5
+the-ninth-house,40,198,Envoy Hollis,Character,15,2,51.0,78.5
+the-ninth-house,40,199,signing,Event,18,2,40.5,78.5
+the-ninth-house,40,200,Accord-related paperwork,Item,11,1,68.0,151.0
+the-ninth-house,40,201,guest quarters,Place,12,1,61.5,151.0
+the-ninth-house,40,202,mourning period,Event,8,1,108.0,151.0
+the-ninth-house,40,203,outer hall,Place,12,1,61.5,151.0
+the-ninth-house,40,204,shared coast,Place,6,1,142.0,151.0
+the-ninth-house,40,205,Magistrate Wyle,Character,19,5,35.0,35.0
+the-ninth-house,40,206,Magistrate,Title,4,1,181.5,151.0
+the-ninth-house,40,207,Sallow Concord,Organization,9,1,90.5,151.0
+the-ninth-house,40,208,The Sallow Accord,Event,3,1,195.5,151.0
+the-ninth-house,40,209,ability,Ability,7,1,125.5,151.0
+the-ninth-house,40,210,ceremony,Event,6,1,142.0,151.0
+the-ninth-house,40,211,southern circuit courts,Place,8,1,108.0,151.0
+the-ninth-house,40,212,Grey Road,Place,8,2,108.0,78.5
+the-ninth-house,40,213,Wanderer,Character,5,1,162.0,151.0
+the-ninth-house,40,214,mercy,Concept,5,2,162.0,78.5
+the-ninth-house,40,215,aunt,Character,5,1,162.0,151.0
+the-ninth-house,40,216,scandal,Concept,6,1,142.0,151.0
+the-ninth-house,40,217,child,Character,5,1,162.0,151.0
+the-ninth-house,40,218,gallery,Place,7,2,125.5,78.5
+the-ninth-house,40,219,Chancery scribes,Organization,5,1,162.0,151.0
