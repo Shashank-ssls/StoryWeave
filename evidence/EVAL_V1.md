@@ -1,15 +1,22 @@
-# StoryWeave v1 — evaluation, phase 1
+# StoryWeave v1 — evaluation, phases 1 and 2
 
-Metrics that need no ground truth, measured on the current system.
+Phase 1: metrics that need no reference annotation, measured on the current system.
+Phase 2: agreement against a reference annotation of three chapters.
 
-Every number below was produced by code run in this session and read off its stdout.
-Nothing is estimated, projected, interpolated or carried over from a previous run. Where
-something could not be measured it says **not measured** and why, in one line.
+Every number below was produced by code run in the session that measured it and read off
+its stdout. Nothing is estimated, projected, interpolated or carried over from a previous
+run. Where something could not be measured it says **not measured** and why, in one line.
 
 Section headers carry **[MEASURED]** or **[NOT MEASURED]**.
 
 Runner logs, kept verbatim: `evidence/logs/eval_fence.log`, `eval_salience.log`,
-`eval_performance.log`, `make_annotation_template.log`.
+`eval_performance.log`, `make_annotation_template.log`, `eval_score.log`,
+`eval_errors.log`.
+
+**Sections 1–7 and 16 are phase 1** — metrics that need no reference annotation.
+**Sections 8–15 are phase 2** — agreement against a MODEL-GENERATED reference
+annotation (GPT-5) with human-verified indices. Phase-2 figures are not accuracy
+against human ground truth; §8 and §15 state exactly what they are.
 
 ---
 
@@ -58,9 +65,11 @@ Counts in the measured database, `the-ninth-house` (`work_id = 2`), 40 chapters:
 
 | item | value |
 | --- | --- |
-| date | 2026-09-27 |
+| date | 2026-09-27 (both phases) |
 | branch | `integration/demo-scale` |
-| commit at measurement time | `f22f669b57b085d578e0f73d62c3d4921d1371ae` (the four `tools/eval_*.py` scripts were uncommitted working-tree files when run; they land in the commit that adds this report) |
+| commit, phase 1 (§1–§7, §16) | `f22f669b57b085d578e0f73d62c3d4921d1371ae`; the phase-1 tools were uncommitted working-tree files when run and landed in the commit that first added this report |
+| commit, phase 2 (§8–§15) | `e928ca5dea485980bc4ff6dae0bef5cd6f465add`; `tools/eval_score.py` and `tools/eval_errors.py` were uncommitted working-tree files when run and land in the commit that adds §8–§15 |
+| reference annotation | `evidence/annotation/ch{09,17,37}.json` — MODEL-GENERATED (GPT-5), see §8 and `evidence/annotation/PROVENANCE.md` |
 | measured database | `storyweave-demo.sqlite`, 847,872 bytes, SHA-256 `c7264c16dbd9223bbdb0eeceb4699e0243ba8a93130b544d351fdfe5fdd946ff` |
 | frozen baseline | `evidence/v1_ninth_house.db`, 847,872 bytes, same SHA-256 — byte-identical to the measured file, opened `mode=ro` where touched |
 | OS | `Windows-11-10.0.26200-SP0` (version `10.0.26200`) |
@@ -312,7 +321,7 @@ entities that appear in crowded scenes, mention count rewards entities named oft
 Also note `ledger` (a lowercase common noun) sits in both top 20s.
 
 **Not computed here, deliberately:** P@k, MAP and AUC. They require a reference
-annotation of which entities are actually significant. See §8.
+annotation of which entities are actually significant. They ARE computed in §13, against the model-generated reference annotation described in §8.
 
 ---
 
@@ -470,54 +479,413 @@ channel this metric does not cover.
 
 ---
 
-## 8. Not yet measured — [NOT MEASURED]
+## 8. The reference annotation — provenance [MEASURED]
 
-Every metric below requires the reference annotation that phase 2 will produce. None of
-them can be computed from the system alone, and none is estimated anywhere in this
-report:
+Sections 9–14 score v1 against the reference annotation in
+`evidence/annotation/ch{09,17,37}.json`. **That annotation is model-generated**, and
+every figure in those sections must be read in that light:
 
-- **entity precision / recall / F1** — needs a human-marked list of the entities that
-  are actually present in a chapter.
-- **alias F1** — needs marked coreferent surface forms.
-- **relation precision / recall / F1** (per tier) — needs marked relations.
-- **P@k, MAP, AUC** for the salience ranking — needs a marked notion of which entities
-  are significant; §5 reports rank agreement only, which needs no ground truth.
-- **spoiler-fence recall over the search surface** — needs a built vector index
-  (`.chroma`), which does not exist in this checkout.
+- **Produced by GPT-5**, one fresh session per chapter, single run each. No second
+  model, no ensembling, no multi-pass self-review.
+- **Human verification was partial**: paragraph indices, alias positions and evidence
+  spans were checked against the source text and corrected by hand. The content
+  judgements — which strings are entities, what type they are, which relations hold —
+  were not independently re-derived by a human.
+- **`ch09.json` was emitted 0-indexed** and was reindexed to match the 1-indexed
+  paragraph numbering of `ch09_text.txt`.
 
-The scaffolding for the annotation is complete:
+Consequently every score in §9–§14 is **agreement between two systems**, StoryWeave v1
+and GPT-5. It is **not accuracy against human ground truth**, and the unqualified phrase
+"ground truth" is not used for it anywhere. All figures are given **per chapter** as
+well as pooled. Full record: `evidence/annotation/PROVENANCE.md`.
 
-- `tools/make_annotation_template.py` — chooses the chapters by computed criteria and
-  emits the artefacts.
-- `evidence/annotation/GUIDELINES.md` — generated from v1's own code and this database,
-  describing the schema **v1 actually emits** (8 node types, the 14 GLiNER label prompts,
-  the verbatim Tier-1 type-pair table, the three relation tiers, and which schema
-  relations v1 produced **zero** of for this work).
-- `evidence/annotation/ch09_text.txt`, `ch17_text.txt`, `ch37_text.txt` — the exact
-  `chapters.clean_text` the pipeline saw, paragraphs numbered `[1]`, `[2]`, …
-- `evidence/annotation/ch09_template.json`, `ch17_template.json`, `ch37_template.json` —
-  empty arrays for `entities`, `aliases`, `rejected_mentions`, `relations`, `events`,
-  `uncertain`; each verified to parse as JSON at generation time.
+Tools: `tools/eval_score.py` → `evidence/scores_v1.csv` (1,837 rows);
+`tools/eval_errors.py` → `evidence/errors_v1.md`. Runner stdout verbatim in
+`evidence/logs/eval_score.log` and `evidence/logs/eval_errors.log`.
 
-### Chosen chapters: **9, 17, 37**
+### Validation of the reference files
 
-Chosen by computed criteria, not by hand. Reasoning, quoted from
+Every check in the phase-2 brief was run: JSON parse; every relation endpoint present in
+`entities[]`; every `evidence` string verbatim in the matching `ch<NN>_text.txt`; every
+`type` one of v1's eight node types; every `relation` one of v1's 31 relation names;
+every paragraph number in range. Quoted from `evidence/logs/eval_score.log`:
+
+```
+ch09.json — 22 entities, 21 relations, 7 paragraphs
+  parses as JSON: yes
+  all checks passed
+  excluded from scoring: 0 entities, 0 relations, 0 aliases, 0 rejected_mentions
+  uncertain records (excluded from all scoring): 4
+
+ch17.json — 15 entities, 18 relations, 7 paragraphs
+  parses as JSON: yes
+  all checks passed
+  excluded from scoring: 0 entities, 0 relations, 0 aliases, 0 rejected_mentions
+  uncertain records (excluded from all scoring): 11
+
+ch37.json — 9 entities, 12 relations, 9 paragraphs
+  parses as JSON: yes
+  all checks passed
+  excluded from scoring: 0 entities, 0 relations, 0 aliases, 0 rejected_mentions
+  uncertain records (excluded from all scoring): 8
+```
+
+**Zero validation failures, so zero records were excluded by validation.** Nothing was
+repaired: the scorer opens these files read-only and has no repair path.
+
+`uncertain` records — 4 / 11 / 8, 23 in total — are excluded from all scoring. They hold
+free-text `item` / `paragraph` / `question` notes, not entity or relation records, so
+the exclusion removes nothing from the scored sets; no score below draws on them.
+
+### Match rules, stated verbatim
+
+```
+normalise(s): Unicode NFKC; replace the curly apostrophe U+2019 with '; casefold; strip
+surrounding whitespace and the characters "'`.,;:!?()[]{}<>; collapse every internal
+whitespace run to one space; drop a leading article 'the ', 'a ' or 'an '; drop a
+trailing possessive "'s".
+```
+
+```
+PRIMARY (strict): a v1 entity matches a reference entity iff normalise(v1.name) ==
+normalise(reference.name) AND v1.type == reference.type. One-to-one: each reference
+entity is consumed by at most one v1 entity. SECONDARY (alias-aware, reported
+alongside, never instead): additionally allow a match when normalise(v1.name) equals the
+normalisation of ANY of the reference entity's surface_forms, with the type still
+required to be equal.
+```
+
+```
+A v1 edge matches a reference relation iff their source entities matched, their target
+entities matched, and the relation string is equal. Reference relations with
+directed=true are matched on the ORDERED pair; with directed=false, either order is
+accepted. Endpoints that could not be matched to a v1 entity make the relation
+unmatchable, and it is counted as a reference-side miss.
+```
+
+**v1's side of the comparison.** A chapter's v1 entity set is every canonical node with
+at least one row in `mentions` for that chapter (`repository.list_mentions`). The
+relation set is reported **two ways**, neither privileged:
+
+- `chapter_local` — edges with `first_seen_chapter == N`. Strict; it penalises v1 for
+  relations it recorded in an earlier chapter.
+- `cumulative` — every edge whose both endpoints are mentioned in chapter N, regardless
+  of when v1 first recorded it. Generous; it credits v1 for relations this chapter's
+  text may not support.
+
+---
+
+## 9. Entity detection — agreement [MEASURED]
+
+Strict (name, type) match. Pooled and per chapter:
+
+| chapter | v1 entities | reference entities | TP | FP | FN | P | R | F1 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 9 | 21 | 22 | 11 | 10 | 11 | 0.5238 | 0.5000 | 0.5116 |
+| 17 | 18 | 15 | 8 | 10 | 7 | 0.4444 | 0.5333 | 0.4848 |
+| 37 | 9 | 9 | 6 | 3 | 3 | 0.6667 | 0.6667 | 0.6667 |
+| **pooled** | 48 | 46 | 25 | 23 | 21 | **0.5208** | **0.5435** | **0.5319** |
+
+Alias-aware variant (the secondary rule above), reported alongside:
+
+| chapter | TP | FP | FN | P | R | F1 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 9 | 12 | 9 | 10 | 0.5714 | 0.5455 | 0.5581 |
+| 17 | 8 | 10 | 7 | 0.4444 | 0.5333 | 0.4848 |
+| 37 | 7 | 2 | 2 | 0.7778 | 0.7778 | 0.7778 |
+| **pooled** | 27 | 21 | 19 | **0.5625** | **0.5870** | **0.5745** |
+
+Per node type, strict, pooled over the three chapters:
+
+| node type | TP | FP | FN | P | R | F1 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Character | 14 | 7 | 4 | 0.667 | 0.778 | 0.718 |
+| Place | 9 | 8 | 3 | 0.529 | 0.750 | 0.621 |
+| Organization | 2 | 1 | 5 | 0.667 | 0.286 | 0.400 |
+| Ability | 0 | 0 | 1 | 0.000 | 0.000 | 0.000 |
+| Concept | 0 | 3 | 3 | 0.000 | 0.000 | 0.000 |
+| Event | 0 | 2 | 1 | 0.000 | 0.000 | 0.000 |
+| Item | 0 | 1 | 1 | 0.000 | 0.000 | 0.000 |
+| Title | 0 | 1 | 3 | 0.000 | 0.000 | 0.000 |
+
+Per-chapter per-type figures are in `evidence/scores_v1.csv`. Sample sizes per type are
+in the single digits — see §14.
+
+---
+
+## 10. Alias clustering — agreement [MEASURED]
+
+Pairwise: over the surface strings **both** sides know (v1 saw them as mentions in that
+chapter; the reference lists them as a name, surface form or alias), did the two systems
+place each pair in the same cluster?
+
+| chapter | shared surface strings | pairs | TP | FP | FN | TN | P | R | F1 | over-merges | under-merges |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 9 | 17 | 136 | 1 | 0 | 2 | 133 | 1.0000 | 0.3333 | 0.5000 | 0 | 2 |
+| 17 | 14 | 91 | 1 | 0 | 1 | 89 | 1.0000 | 0.5000 | 0.6667 | 0 | 1 |
+| 37 | 9 | 36 | 1 | 0 | 0 | 35 | 1.0000 | 1.0000 | 1.0000 | 0 | 0 |
+| **pooled** | — | 263 | 3 | 0 | 3 | 257 | **1.0000** | **0.5000** | **0.6667** | **0** | **3** |
+
+Over-merges and under-merges reported separately, as required: **0 over-merges, 3
+under-merges**, all three listed in full:
+
+- ch9 `captain` + `drask` — reference groups both under `Orin Drask`; v1 keeps `Captain`
+  and `Drask` apart.
+- ch9 `captain` + `orin drask` — same pair of clusters.
+- ch17 `scribe` + `sorrel` — reference groups both under `Sorrel`; v1 keeps `scribe` and
+  `Sorrel` apart.
+
+The positive class is small (3 same-cluster pairs pooled), so these rates rest on very
+few observations — see §14.
+
+---
+
+## 11. Relations — agreement [MEASURED]
+
+### `chapter_local` (v1 edges with `first_seen_chapter == N`)
+
+| chapter | v1 edges | reference relations | TP | FP | FN | micro-P | micro-R | micro-F1 | macro-F1 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 9 | 106 | 21 | 4 | 102 | 17 | 0.0377 | 0.1905 | 0.0630 | 0.0212 (9 types) |
+| 17 | 43 | 18 | 1 | 42 | 17 | 0.0233 | 0.0556 | 0.0328 | 0.0087 (11 types) |
+| 37 | 18 | 12 | 0 | 18 | 12 | 0.0000 | 0.0000 | 0.0000 | 0.0000 (7 types) |
+| **pooled** | 167 | 51 | 5 | 162 | 46 | **0.0299** | **0.0980** | **0.0459** | **0.0087** (15 types) |
+
+### `cumulative` (every edge whose both endpoints are mentioned in chapter N)
+
+| chapter | v1 edges | TP | FP | FN | micro-P | micro-R | micro-F1 | macro-F1 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 9 | 123 | 5 | 118 | 16 | 0.0407 | 0.2381 | 0.0694 | 0.0214 (9 types) |
+| 17 | 84 | 3 | 81 | 15 | 0.0357 | 0.1667 | 0.0588 | 0.0118 (13 types) |
+| 37 | 31 | 1 | 30 | 11 | 0.0323 | 0.0833 | 0.0465 | 0.0156 (8 types) |
+| **pooled** | 238 | 9 | 229 | 42 | **0.0378** | **0.1765** | **0.0623** | **0.0099** (17 types) |
+
+**`FN` includes reference relations whose endpoints v1 never found** (38 of the 46
+pooled `chapter_local` misses). Excluding them would score v1 only on the relations it
+had already half-solved; the narrower figure is reported alongside in the CSV as
+`micro_*_matchable_only` and in the log — pooled `chapter_local`, it would be FN=8
+instead of FN=46.
+
+### Per relation type, pooled, `chapter_local`
+
+| relation | TP | FP | FN | F1 |
+| --- | ---: | ---: | ---: | ---: |
+| LocatedIn | 4 | 58 | 7 | 0.110 |
+| RelatedTo | 1 | 81 | 15 | 0.020 |
+| MemberOf | 0 | 2 | 9 | 0.000 |
+| ParticipatedIn | 0 | 8 | 3 | 0.000 |
+| HasTitle | 0 | 5 | 2 | 0.000 |
+| LeaderOf | 0 | 3 | 1 | 0.000 |
+| OwnsItem | 0 | 3 | 0 | 0.000 |
+| Respects | 0 | 1 | 3 | 0.000 |
+| TRANSMIGRATED_INTO | 0 | 1 | 0 | 0.000 |
+| AffiliatedWith, Fears, HasAbility, Protects, Serves, Sibling | 0 | 0 | 1 each | 0.000 |
+
+### Per tier
+
+| tier | variant | TP | FP | FN | P | R | F1 |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | chapter_local, pooled | 5 | 160 | 39 | 0.030 | 0.114 | 0.048 |
+| 2 | chapter_local, pooled | 0 | 1 | 7 | 0.000 | 0.000 | 0.000 |
+| 3 | chapter_local, pooled | 0 | 1 | 0 | 0.000 | 0.000 | 0.000 |
+| 1 | cumulative, pooled | 9 | 223 | 35 | 0.039 | 0.205 | 0.065 |
+| 2 | cumulative, pooled | 0 | 5 | 7 | 0.000 | 0.000 | 0.000 |
+| 3 | cumulative, pooled | 0 | 1 | 0 | 0.000 | 0.000 | 0.000 |
+
+Per-chapter tier figures are in `evidence/scores_v1.csv`.
+
+---
+
+## 12. Tier-3 identity — counts, not F1 [MEASURED]
+
+Reported as counts, per the phase-2 brief.
+
+| chapter | reference Tier-3 records | v1 Tier-3, `first_seen` here | v1 Tier-3, cumulative | matched |
+| ---: | ---: | ---: | ---: | ---: |
+| 9 | 0 | 0 | 0 | 0 |
+| 17 | 0 | 0 | 0 | 0 |
+| 37 | 0 | 1 | 1 | 0 |
+| **pooled** | **0** | **1** | **1** | **0** |
+
+**The required statement.** v1 **does** hold a `TRANSMIGRATED_INTO` edge at chapter 37 —
+`Mira -TRANSMIGRATED_INTO-> Wanderer`, provenance `curated`, `revealed_chapter = 37`.
+**The reference annotation for ch37 contains 0 Tier-3 records, so there is no matching
+Tier-3 record in the reference.** The same is true of chapters 9 and 17: the reference
+contains **no Tier-3 record of any kind, in any of the three chapters**. Its relations
+are Tier 1 and Tier 2 only.
+
+An F1 over Tier 3 is therefore undefined on the reference side (zero positives), which
+is why the brief's instruction to report counts rather than F1 is the only thing that
+can be reported here.
+
+---
+
+## 13. Significance ranking, and rejected mentions [MEASURED]
+
+### Significance ranking
+
+The reference marks each entity `significant: true/false`; that is the positive class,
+transferred onto the v1 entity it matched under the strict rule. A v1 entity with no
+reference counterpart is a negative. v1's entities are ranked by fenced degree at that
+chapter.
+
+| chapter | v1 entities ranked | positive | P@10 | P@20 | Recall@20 | MAP | AUC |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 9 | 21 | 5 | 0.4000 | 0.2500 | 1.0000 | 0.7014 | 0.7875 |
+| 17 | 18 | 8 | 0.6000 | not measured | not measured | 0.6008 | 0.6500 |
+| 37 | 9 | 6 | not measured | not measured | not measured | 0.9306 | 0.8333 |
+| pooled | 48 | 19 | 0.4000 | 0.2500 | 0.2632 | 0.4414 | 0.3975 |
+
+**"not measured" above means the chapter has fewer ranked entities than the cutoff** —
+18 entities at ch17 and 9 at ch37 — and nothing was padded to reach it.
+
+The pooled row is the three ranked lists **concatenated in chapter order**, which is not
+a single ranking; its P@10 and P@20 are ch9's alone, and its AUC is depressed by the
+concatenation rather than by any property of the ranking. It is reported because the
+brief asks for a pooled figure, and it describes the concatenation and nothing more.
+
+### Rejected mentions — a direct precision measure
+
+The reference lists strings that should **not** become entities. v1 emitted **6 of 49**
+pooled (rate 0.1224), either as an entity's canonical name or as a mention surface it
+clustered into an entity.
+
+| chapter | rejected strings scored | v1 emitted | rate |
+| ---: | ---: | ---: | ---: |
+| 9 | 14 | 2 | 0.1429 |
+| 17 | 19 | 3 | 0.1579 |
+| 37 | 16 | 1 | 0.0625 |
+| **pooled** | **49** | **6** | **0.1224** |
+
+All six, in full: `quiet` (ch9, v1 `Concept`), `gilded rooms` (ch9, v1 `Place`),
+`ambition` (ch17, v1 `Concept`), `rooms` (ch17, surface folded into v1's `gilded rooms`),
+`doors` (ch17, surface folded into v1's `Undercroft`), `Undercroft collapse` (ch37, v1
+`Event`). Every one is a common noun or common-noun phrase; none is a proper noun.
+
+---
+
+## 14. Error analysis — summary [MEASURED]
+
+Full analysis with the classification rules and examples: `evidence/errors_v1.md`,
+generated by `tools/eval_errors.py`. Categories were read off the actual cases and then
+written down as rules; each case is assigned to the first rule it satisfies, so the
+categories partition the errors and the counts sum to the total.
+
+**Entity false positives — 23** (v1 produced, reference did not):
+
+| cause | count | ch9 | ch17 | ch37 |
+| --- | ---: | ---: | ---: | ---: |
+| `type_disagreement` — same name, different node type | 8 | 2 | 5 | 1 |
+| `not_in_reference` — the string appears nowhere in the reference | 8 | 4 | 4 | 0 |
+| `reference_rejected_string` — explicitly in `rejected_mentions` | 4 | 2 | 1 | 1 |
+| `reference_alias_kept_separate` — the reference folds it into another entity | 3 | 2 | 0 | 1 |
+
+**Entity false negatives — 21** (reference has, v1 does not):
+
+| cause | count | ch9 | ch17 | ch37 |
+| --- | ---: | ---: | ---: | ---: |
+| `type_disagreement` — the mirror of the above | 8 | 2 | 5 | 1 |
+| `partial_span_only` — v1 split or extended the span | 6 | 4 | 1 | 1 |
+| `absent_from_v1_chapter` — no overlapping mention at all | 4 | 3 | 1 | 0 |
+| `canonical_name_choice` — v1 clustered the string but named the entity differently | 3 | 2 | 0 | 1 |
+
+**Relation false positives — 162** (`chapter_local`):
+
+| cause | count | ch9 | ch17 | ch37 |
+| --- | ---: | ---: | ---: | ---: |
+| `cooccurrence_fallback_RelatedTo` | 81 | 60 | 15 | 6 |
+| `cooccurrence_type_pair_rule` | 79 | 41 | 27 | 11 |
+| `curated_tier2_or_tier3` | 2 | 1 | 0 | 1 |
+
+**Relation false negatives — 46** (`chapter_local`):
+
+| cause | count | ch9 | ch17 | ch37 |
+| --- | ---: | ---: | ---: | ---: |
+| `endpoint_not_found_by_v1` | 38 | 16 | 12 | 10 |
+| `tier1_not_produced` | 5 | 1 | 2 | 2 |
+| `tier2_social_not_produced` | 3 | 0 | 3 | 0 |
+
+Two named cases from each category, and every case's full record, are in
+`evidence/errors_v1.md` and `evidence/scores_v1.csv`.
+
+---
+
+## 15. Threats to validity — [MEASURED]
+
+These apply to every figure in §8–§14. Every count cited below is one already reported in §8–§14 and produced by this session's runs; the limits they describe are properties of the measurement setup, not new measurements.
+
+1. **The reference annotation is model-generated, not human-authored.** It was produced
+   by GPT-5, one fresh session per chapter, single run each. Human involvement was
+   limited to verifying and correcting paragraph indices, alias positions and evidence
+   spans, and to reindexing `ch09.json` from 0- to 1-indexed. The content judgements —
+   which strings are entities, what type each is, which relations hold — were not
+   independently re-derived by a human.
+2. **The scores measure agreement between two systems**, StoryWeave v1 and GPT-5. Where
+   they disagree, nothing in this evaluation establishes which of the two is right. A
+   disagreement is not by itself an error on v1's part, and these are not accuracy
+   figures.
+3. **Three chapters, one work, a single reference source.** Chapters 9, 17 and 37 of
+   `the-ninth-house` only, annotated once, by one model. There is no second annotator,
+   so no inter-annotator agreement can be computed and none is reported.
+4. **The chapters are short** — 7, 7 and 9 paragraphs, 46 reference entities and 51
+   reference relations in total. **Per-type sample sizes are very small**: five of the
+   eight node types have fewer than 4 reference instances pooled, the alias metric rests
+   on 3 same-cluster pairs pooled, and seven relation types (`LeaderOf`,
+   `AffiliatedWith`, `Fears`, `HasAbility`, `Protects`, `Serves`, `Sibling`) have
+   exactly one reference instance each. Single-digit denominators move these rates by large amounts, so
+   per-type F1 values should not be compared with each other.
+5. **Records in `uncertain` were excluded from scoring** — 4, 11 and 8, 23 in total.
+   They are free-text notes rather than entity or relation records, so the exclusion
+   removed nothing from the scored sets, but the questions they raise (for example
+   whether `Warden's Discipline` is an ability or a professional quality) are exactly
+   the cases where the two systems are most likely to disagree, and they are absent
+   from the measurement.
+6. **The relation comparison depends on a choice of chapter scope** with no neutral
+   option. `chapter_local` penalises v1 for relations it first recorded in an earlier
+   chapter; `cumulative` credits v1 for relations this chapter's text may not support.
+   Both are reported; neither is the right answer.
+7. **Relation scoring is bounded by entity matching.** 38 of the 46 pooled
+   `chapter_local` relation misses are reference relations with an endpoint v1 never
+   produced, so the relation figures largely restate the entity figures rather than
+   measuring relation extraction independently.
+8. **The reference contains no Tier-3 records at all**, so the identity layer — the
+   feature this project treats as its showcase — is not exercised by this comparison in
+   either direction.
+
+---
+
+## 16. Still not measured — [NOT MEASURED]
+
+- **Spoiler-fence leak rate over the search surface** — needs a built vector index
+  (`.chroma`), which does not exist in this checkout. Its fence key is chunk
+  `chapter_ordinal <= n`.
+- **Inter-annotator agreement on the reference** — there is only one reference source
+  (§15.3), so none can be computed.
+- **Any score against a human-authored reference** — the reference is model-generated
+  (§8). Nothing in this report measures agreement with a human annotator.
+- **Chapters other than 9, 17 and 37, and works other than `the-ninth-house`** — not
+  annotated, so not scored.
+
+### How chapters 9, 17 and 37 were chosen
+
+By computed criteria, not by hand, in phase 1. Quoted from
 `evidence/logs/make_annotation_template.log`:
 
 - **Chapter 9 — early, introduces several entities.** *"15 entities are first revealed
   here (106 new edges), the most of any chapter in the first third excluding ch1."*
-  Chapter 1 was excluded because every entity there is new by construction, so it tests
-  nothing about introducing entities into an established cast.
+  Chapter 1 was excluded because every entity there is new by construction.
 - **Chapter 17 — middle, dense with established relations.** *"27 of its 43 newly
   revealed edges connect entities that were ALREADY revealed before this chapter — the
   highest such count in the middle third."*
 - **Chapter 37 — late, identity reveal.** *"carries an identity reveal. All Tier-3/Killed
   edges in the work: ch5:ALIAS, ch10:SECRET_IDENTITY, ch16:ALIAS, ch20:SECRET_IDENTITY,
   ch28:REINCARNATION, ch34:REINCARNATION, ch37:TRANSMIGRATED_INTO. Chosen the latest one
-  in the final third."* Chapter 37 carries the `TRANSMIGRATED_INTO` reveal and is also
-  tied (with ch11) for the most death-related vocabulary in the work. The database contains
-  **no** `Killed` edges, so "a death" is represented only by the text, not by a graph
-  element.
+  in the final third."* The database contains **no** `Killed` edges, so "a death" is
+  represented only by the text, not by a graph element.
+
+The annotation pack itself — `GUIDELINES.md` (generated from v1's own code and
+database), the three numbered chapter texts and the three empty templates — is in
+`evidence/annotation/`.
 
 ---
 
@@ -526,23 +894,28 @@ Chosen by computed criteria, not by hand. Reasoning, quoted from
 Never run these in parallel.
 
 ```
+# phase 1
 .venv/Scripts/python     tools/eval_fence.py               # → evidence/fence_leaks.csv
 .venv/Scripts/python     tools/eval_salience.py            # → evidence/salience_v1.csv
 .venv-ml/Scripts/python  tools/eval_performance.py         # → evidence/performance_v1.csv
 .venv/Scripts/python     tools/make_annotation_template.py # → evidence/annotation/
+
+# phase 2 (eval_errors reads the same inputs, not the CSV, so order does not matter)
+.venv/Scripts/python     tools/eval_score.py               # → evidence/scores_v1.csv
+.venv/Scripts/python     tools/eval_errors.py              # → evidence/errors_v1.md
 ```
 
 **Set `STORYWEAVE_HF_HOME=F:\Dev\shared\hf-cache` before re-running the performance
 tool.** Without it, `storyweave/config.py` falls back to `<repo>/.hf-cache` and silently
 re-downloads 613 MB of weights back into the repo.
 
-Gates at the end of this phase, run in `.venv`:
+Gates at the end of phase 2, run in `.venv`:
 
-- `ruff check` on the four new tools — `All checks passed!`
-- `mypy` (strict, covers `tools/`) — `Success: no issues found in 74 source files`
-- `pytest` — `152 passed, 6 skipped, 2 warnings in 3.02s`
+- `ruff check` on the six evaluation tools — `All checks passed!`
+- `mypy` (strict, covers `tools/`) — `Success: no issues found in 76 source files`
+- `pytest` — `152 passed, 6 skipped, 2 warnings in 3.38s`
 
-`ruff check .` over the whole repo still reports 20 pre-existing `E501`/`I001` findings
-in the older `tools/` scripts (`capture.py`, `graph_metrics.py`, `plot_growth.py`,
-`run_evidence.py`, `verify_shots.py`). Those predate this phase and were left alone;
-the four tools added here are clean.
+`ruff check .` over the whole repo still reports **20** pre-existing `E501`/`I001`
+findings in the older `tools/` scripts (`capture.py`, `graph_metrics.py`,
+`plot_growth.py`, `run_evidence.py`, `verify_shots.py`). Those predate this evaluation
+and were left alone; the six tools added by it are clean.

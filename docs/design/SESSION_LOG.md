@@ -944,3 +944,80 @@ real side channel and is written down in `EVAL_V1.md` §7 rather than left impli
 ### Next
 Phase 2: fill the three `evidence/annotation/ch*_template.json` files against
 `GUIDELINES.md`, then score v1 against them.
+
+---
+
+## Session — v1 evaluation, phase 2 (scoring against the reference annotation)
+
+Measurement only. No extraction, API or frontend code changed. Branch
+`integration/demo-scale`, measured at commit `e928ca5`.
+
+### Reference provenance — the thing that governs every number here
+The reference annotation (`evidence/annotation/ch{09,17,37}.json`) is **model-generated
+(GPT-5)**, one fresh session per chapter, single run each, with paragraph indices, alias
+positions and evidence spans verified and corrected by hand; `ch09.json` was reindexed
+from 0- to 1-indexed. Every score is therefore **agreement between two systems**, not
+accuracy against human ground truth, and is reported per chapter as well as pooled.
+Recorded in `evidence/annotation/PROVENANCE.md` and restated in `EVAL_V1.md` §8 and §15.
+
+### What landed
+- `tools/eval_score.py` — validation + entity / alias / relation / Tier-3 / ranking /
+  rejected-mention scoring. → `evidence/scores_v1.csv` (1,837 rows)
+- `tools/eval_errors.py` — FP/FN grouped by cause, rules derived from the actual cases.
+  → `evidence/errors_v1.md`
+- `evidence/annotation/PROVENANCE.md`; `EVAL_V1.md` rewritten: §8–§15 added, the
+  phase-2 metrics moved out of "not yet measured", threats to validity added.
+
+### MEASURED (agreement, model-generated reference)
+- **Validation: zero failures.** All three files parse, every relation endpoint is in
+  `entities[]`, every evidence string is verbatim in the chapter text, every type and
+  relation is in v1's vocabulary, every paragraph number is in range. **0 records
+  excluded.** 23 `uncertain` records excluded from scoring (4/11/8) — they are free-text
+  notes, so nothing left the scored sets.
+- **Entities** (strict name+type): pooled **P=0.5208 R=0.5435 F1=0.5319** (TP25 FP23
+  FN21); per chapter F1 0.5116 / 0.4848 / 0.6667. Alias-aware variant pooled F1 0.5745.
+- **Alias clustering** (pairwise): pooled **P=1.0000 R=0.5000 F1=0.6667** —
+  **0 over-merges, 3 under-merges**, all three listed.
+- **Relations**: pooled `chapter_local` **micro-F1 0.0459** (TP5 FP162 FN46, macro-F1
+  0.0087); `cumulative` micro-F1 0.0623. Both variants reported; neither privileged.
+  38 of the 46 misses are reference relations with an endpoint v1 never produced, so the
+  relation figures largely restate the entity figures.
+- **Tier 3, as counts:** v1 holds `TRANSMIGRATED_INTO (Mira -> Wanderer)` at ch37. **The
+  reference contains ZERO Tier-3 records in any of the three chapters**, so there is no
+  matching record and the identity layer is not exercised in either direction.
+- **Ranking** (degree vs `significant`): MAP 0.7014 / 0.6008 / 0.9306, AUC 0.7875 /
+  0.6500 / 0.8333. P@20 and Recall@20 are **not measured** at ch17 and ch37 — 18 and 9
+  entities, fewer than the cutoff; nothing was padded.
+- **Rejected mentions:** v1 emitted **6 of 49** (rate 0.1224). All six are common nouns
+  or common-noun phrases; none is a proper noun.
+- **Error analysis:** entity FP 23 (type_disagreement 8, not_in_reference 8,
+  reference_rejected_string 4, alias_kept_separate 3); entity FN 21
+  (type_disagreement 8, partial_span_only 6, absent 4, canonical_name_choice 3);
+  relation FP 162 (RelatedTo fallback 81, type-pair rule 79, curated 2); relation FN 46
+  (endpoint_not_found 38, tier1_not_produced 5, tier2 3). Counts partition the totals.
+
+### Decisions worth recording
+- **Unmatchable reference relations are counted as FN**, not excluded. Excluding them
+  gave pooled `chapter_local` FN=8 instead of 46 and a recall of 0.80 at ch9 — scoring
+  v1 only on the relations it had already half-solved. The narrower figure is still
+  reported alongside as `*_matchable_only`, never instead.
+- **Two relation-scope variants**, because there is no neutral one: `chapter_local`
+  (`first_seen_chapter == N`) penalises v1 for relations first recorded earlier;
+  `cumulative` credits v1 for relations this chapter may not support.
+- **Error categories were derived from the cases, then written down as rules** in
+  `tools/eval_errors.py` so the counts are reproducible rather than asserted; first
+  matching rule wins, so the categories partition the errors.
+
+### Verification
+- `pytest`: **`152 passed, 6 skipped, 2 warnings in 3.38s`** (Hollow Crown untouched, I2 holds).
+- `mypy`: **`Success: no issues found in 76 source files`**.
+- `ruff check` on the six evaluation tools: **`All checks passed!`**. `ruff check .`
+  still reports the same 20 pre-existing E501/I001 findings in the older `tools/`
+  scripts; untouched.
+- Both tools re-run clean end to end after the last code change; the numbers in
+  `EVAL_V1.md` were read off `evidence/logs/eval_score.log` and `eval_errors.log`.
+
+### Next
+Nothing is scheduled. The open threads are the two BASELINE.md defects (DiGraph edge
+collapse and identity relabelling), which are backend changes and belong to a deliberate
+phase, and the `/search` fence, which cannot be measured until a `.chroma` index exists.
