@@ -923,10 +923,20 @@ real side channel and is written down in `EVAL_V1.md` §7 rather than left impli
   scripts; they predate this phase and were left alone.
 
 ### Notes
-- The HF cache was **empty** at session start — no model weights were on disk. The
-  performance run downloaded `gliner_small-v2.1` (+ its `deberta-v3-small` backbone)
-  into `<repo>/.hf-cache`, inside the repo on F:, per the env discipline. Cold load
-  incl. download was 75.0108 s; the reported 10.3554 s is the warm load.
+- **Model weights: a redundant download into the repo, since undone.** `<repo>/.hf-cache`
+  was empty at session start, so the performance run downloaded `gliner_small-v2.1`
+  (+ its `deberta-v3-small` backbone, 613 MB) into it. That was unnecessary: a populated
+  machine-wide cache already existed at `F:\Dev\shared\hf-cache` with the same models,
+  and the run missed it only because `storyweave/config.py` defaults `hf_home` to
+  `<repo>/.hf-cache`. The repo cache has been moved out and deleted; `gliner_small-v2.1`
+  is **610,659,026 bytes** in both locations (identical), and the shared copy was
+  verified to load and extract under `HF_HUB_OFFLINE=1`. `.hf-cache/` is in
+  `.gitignore:59` and no weight was ever committed (checked against the full history).
+  Cold load incl. download was 75.0108 s; the reported 10.3554 s is the warm load.
+- **Open item:** `STORYWEAVE_HF_HOME=F:\Dev\shared\hf-cache` must be set before
+  re-running `tools/eval_performance.py`, or the config default will silently pull the
+  613 MB back into the repo. A durable fix (changing the `hf_home` default, or an
+  `.env` entry) is a config change and was not made unasked.
 - Peak RSS uses Win32 `K32GetProcessMemoryInfo` via ctypes — psutil is in neither venv
   and was not added. Spearman is computed with numpy on tie-corrected average ranks —
   scipy is in neither venv and was not added.

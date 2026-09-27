@@ -33,13 +33,16 @@ Models and their provenance, as loaded in the measured run:
 
 | model | provenance | role |
 | --- | --- | --- |
-| `urchade/gliner_small-v2.1` | Hugging Face Hub, third-party pre-trained, downloaded to `<repo>/.hf-cache` | the extraction floor |
+| `urchade/gliner_small-v2.1` | Hugging Face Hub, third-party pre-trained | the extraction floor |
 | `microsoft/deberta-v3-small` | Hugging Face Hub, pulled in as GLiNER-small's encoder/tokenizer backbone | dependency of the above |
 
-`knowledgator/gliner-relex-base-v1.0` (Tier-2 RelEx) and
-`sentence-transformers/all-MiniLM-L6-v2` (search embeddings) are configured in
-`storyweave/config.py` but **were not loaded in this measurement and are not on disk**;
-neither was exercised, so neither appears in the performance numbers.
+Both now live in the machine-wide cache at `F:\Dev\shared\hf-cache`, outside the repo
+(see §6).
+
+`knowledgator/gliner-relex-base-v1.0` (Tier-2 RelEx) is present in that shared cache but
+**was not loaded in this measurement**. `sentence-transformers/all-MiniLM-L6-v2` (search
+embeddings) is configured in `storyweave/config.py` and is **not on disk anywhere**.
+Neither was exercised, so neither appears in the performance numbers.
 
 Counts in the measured database, `the-ninth-house` (`work_id = 2`), 40 chapters:
 
@@ -360,7 +363,9 @@ extraction.scratch_db_size              163840 bytes   (5 chapters ingested + ex
   40-chapter total is stated anywhere in this report, extrapolated or otherwise.
 - `model_load` was 10.3554 s with a **warm** Hugging Face cache. The first run of this
   session, on a cold cache, measured 75.0108 s including the download — that number is
-  a download, not a load time, and is recorded only here.
+  a download, not a load time, and is recorded only here. The cache was cold only
+  because the config default points at `<repo>/.hf-cache`; see the correction under
+  "Model size on disk".
 
 **Peak RSS during extraction: 1,779,683,328 bytes (1697.2 MiB)** — the process's peak
 working set (Win32 `GetProcessMemoryInfo` → `PeakWorkingSetSize`, via ctypes; no
@@ -370,15 +375,32 @@ extraction itself.
 
 ### Model size on disk
 
-| model | bytes | location |
+| model | bytes | location at measurement time |
 | --- | ---: | --- |
 | `urchade/gliner_small-v2.1` | 610,659,026 | `<repo>/.hf-cache/hub/models--urchade--gliner_small-v2.1` |
 | `microsoft/deberta-v3-small` | 2,465,286 | `<repo>/.hf-cache/hub/models--microsoft--deberta-v3-small` |
 | **total cache** | **613,124,507** | `<repo>/.hf-cache/hub` |
 
-The cache was empty at the start of this session and these weights were downloaded into
-it by the measured run. It sits inside the repo on F:, per the project's env discipline.
-The RelEx and embedding models are **not on disk** and are not included.
+**Correction, and where the weights actually live now.** `<repo>/.hf-cache` was empty at
+the start of this session, so the measured run downloaded these weights into it — that
+is what the table above measured. But the repo path was never the right home for them: a
+populated machine-wide cache already existed at `F:\Dev\shared\hf-cache` holding the
+same two models (plus RelEx), and the run did not use it only because
+`storyweave/config.py` defaults `hf_home` to `<repo>/.hf-cache`. The 613 MB download was
+therefore redundant. After the measurement the repo cache was moved out and deleted; the
+weights now live at:
+
+| model | bytes | location now |
+| --- | ---: | --- |
+| `urchade/gliner_small-v2.1` | 610,659,026 | `F:\Dev\shared\hf-cache\hub\models--urchade--gliner_small-v2.1` |
+| `microsoft/deberta-v3-small` | 2,465,286 | `F:\Dev\shared\hf-cache\hub\models--microsoft--deberta-v3-small` |
+| `knowledgator/gliner-relex-base-v1.0` (not loaded) | 911,510,271 | `F:\Dev\shared\hf-cache\hub\models--knowledgator--gliner-relex-base-v1.0` |
+
+The `gliner_small-v2.1` byte count is identical in both locations, and the shared copy
+was verified to load and extract with `HF_HUB_OFFLINE=1`, so the measured sizes stand
+and no re-download is needed. `.hf-cache/` is in `.gitignore:59`; no model weight was
+ever committed (verified against the full history). `sentence-transformers/all-MiniLM-L6-v2`
+is not on disk in either location.
 
 ### Database size
 
@@ -509,6 +531,10 @@ Never run these in parallel.
 .venv-ml/Scripts/python  tools/eval_performance.py         # → evidence/performance_v1.csv
 .venv/Scripts/python     tools/make_annotation_template.py # → evidence/annotation/
 ```
+
+**Set `STORYWEAVE_HF_HOME=F:\Dev\shared\hf-cache` before re-running the performance
+tool.** Without it, `storyweave/config.py` falls back to `<repo>/.hf-cache` and silently
+re-downloads 613 MB of weights back into the repo.
 
 Gates at the end of this phase, run in `.venv`:
 
