@@ -11,7 +11,7 @@ No phase starts until the previous one is green, committed and pushed.
 
 | phase | what | status | commit | key measured numbers | date |
 | --- | --- | --- | --- | --- | --- |
-| R0 | branch, rules, baseline rerun | **green** | `fe16415` | [MEASURED] frozen-DB SHA-256 match · ch40 206 nodes / 1316 edges served · fence 0 violations / 105,243 elements · relation micro-F1 0.0459 · entity F1 0.5319 · D1 = 1326 fenced rows → 1316 served (10 lost) · 1307 of 1326 edges are `rule` · 160 of 162 relation FPs are Tier-1 · env gate 10/10 in both venvs | 2026-09-28 |
+| R0 | branch, rules, baseline rerun | **green** | `4ba8f80` | [MEASURED] frozen-DB SHA-256 match · ch40 206 nodes / 1316 edges served · fence 0 violations / 105,243 elements · relation micro-F1 0.0459 · entity F1 0.5319 · D1 = 1326 fenced rows → 1316 served (10 lost) · 1307 of 1326 edges are `rule` · 160 of 162 relation FPs are Tier-1 · env gate 10/10 in both venvs | 2026-09-28 |
 | R1 | co-occurrence off + rescore on the v1 key | not started | — | — | — |
 | R2 | Stage 0 cleaner | not started | — | — | — |
 | R3 | 4 node types + `entity_labels` | not started | — | — | — |
