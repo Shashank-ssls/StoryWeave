@@ -34,7 +34,8 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-from PIL.ImageFont import FreeTypeFont, ImageFont as BitmapFont
+from PIL.ImageFont import FreeTypeFont
+from PIL.ImageFont import ImageFont as BitmapFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -158,7 +159,9 @@ def _font(size: int) -> FreeTypeFont | BitmapFont:
     return ImageFont.load_default()
 
 
-def build_plate(left: Path, right: Path, left_label: str, right_label: str, chapter: int, out: Path) -> Path:
+def build_plate(
+    left: Path, right: Path, left_label: str, right_label: str, chapter: int, out: Path
+) -> Path:
     """Compose a captioned side-by-side plate. Both panels are scaled identically."""
     with Image.open(left) as lh, Image.open(right) as rh:
         limg = lh.convert("RGB")
@@ -183,7 +186,8 @@ def build_plate(left: Path, right: Path, left_label: str, right_label: str, chap
     draw.text((16, 58), left_label, font=small, fill=PLATE_INK)
     draw.text((panel[0] + gap + 16, 58), right_label, font=small, fill=PLATE_INK)
     draw.line([(0, CAPTION_H - 1), (plate.width, CAPTION_H - 1)], fill=PLATE_LINE, width=2)
-    draw.line([(panel[0] + gap // 2, CAPTION_H), (panel[0] + gap // 2, plate.height)], fill=PLATE_LINE, width=2)
+    mid = panel[0] + gap // 2
+    draw.line([(mid, CAPTION_H), (mid, plate.height)], fill=PLATE_LINE, width=2)
 
     out.parent.mkdir(parents=True, exist_ok=True)
     plate.save(out)
@@ -194,7 +198,9 @@ def build_plate(left: Path, right: Path, left_label: str, right_label: str, chap
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--shots", required=True, type=Path, help="directory of captured PNGs")
     ap.add_argument("--out", required=True, type=Path, help="directory for the plates")
     ap.add_argument("--left", required=True, help="label shown on the left of each plate")

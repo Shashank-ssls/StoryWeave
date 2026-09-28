@@ -75,7 +75,9 @@ def read_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(fh))
 
 
-def cross_check(shots: list[dict[str, Any]], rows_by_label: dict[str, list[dict[str, str]]]) -> list[str]:
+def cross_check(
+    shots: list[dict[str, Any]], rows_by_label: dict[str, list[dict[str, str]]]
+) -> list[str]:
     """Compare every shot's live DOM counts against the computed metrics.
 
     A disagreement is a bug in the harness or in the app, so it is returned as a problem
@@ -232,7 +234,12 @@ def write_report(
         row = next((r for r in rows if int(r["chapter"]) == int(shot["chapter"])), None)
         csv_nodes = row["nodes"] if row else NOT_MEASURED
         csv_edges = row["edges"] if row else NOT_MEASURED
-        match = "yes" if row and int(csv_nodes) == shot["dom_nodes"] and int(csv_edges) == shot["dom_edges"] else "NO"
+        counts_agree = (
+            bool(row)
+            and int(csv_nodes) == shot["dom_nodes"]
+            and int(csv_edges) == shot["dom_edges"]
+        )
+        match = "yes" if counts_agree else "NO"
         add(
             f"| {shot['label']} | {shot['chapter']} | {shot['view']} | {shot['dom_nodes']} | "
             f"{shot['dom_edges']} | {csv_nodes} | {csv_edges} | {match} | {shot['zoom']:.4f} |"
@@ -252,7 +259,10 @@ def write_report(
     add(f"- Viewport: {capture_mod.VIEWPORT['width']}x{capture_mod.VIEWPORT['height']} CSS px "
         f"at deviceScaleFactor {capture_mod.DEVICE_SCALE_FACTOR} "
         f"(PNG {verify_shots.EXPECTED_SIZE[0]}x{verify_shots.EXPECTED_SIZE[1]})")
-    add(f"- Browser: Chromium via Playwright `channel=\"chrome\"` (system Chrome; no browser downloaded)")
+    add(
+        '- Browser: Chromium via Playwright `channel="chrome"` '
+        "(system Chrome; no browser downloaded)"
+    )
     add(f"- Ego-view focus node: `{focus}`")
     add("")
     add("### Filters active per configuration")
@@ -285,7 +295,9 @@ def write_report(
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--db", default="storyweave-demo.sqlite", type=Path)
     ap.add_argument("--url", default="http://127.0.0.1:8000")
     ap.add_argument("--slug", default="the-ninth-house")
@@ -312,8 +324,12 @@ def main(argv: list[str] | None = None) -> int:
         )
         graph_metrics.write_csv(rows, out)
         stem = out.with_suffix("")
-        graph_metrics.write_breakdown_csv(by_type, "node_type", config, config, Path(f"{stem}_by_node_type.csv"))
-        graph_metrics.write_breakdown_csv(by_relation, "relation", config, config, Path(f"{stem}_by_relation.csv"))
+        graph_metrics.write_breakdown_csv(
+            by_type, "node_type", config, config, Path(f"{stem}_by_node_type.csv")
+        )
+        graph_metrics.write_breakdown_csv(
+            by_relation, "relation", config, config, Path(f"{stem}_by_relation.csv")
+        )
         rows_by_label[config] = read_rows(out)
         print(f"  {config}: {len(rows)} rows -> {out}")
 

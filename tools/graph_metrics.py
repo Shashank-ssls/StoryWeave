@@ -33,7 +33,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from storyweave.query import fence  # noqa: E402
-
 from tools import swconfig  # noqa: E402
 from tools.swconfig import (  # noqa: E402
     API_PAYLOAD,
@@ -347,10 +346,16 @@ def print_table(rows: list[dict[str, object]]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--db", required=True, help="SQLite database (opened read-only)")
-    ap.add_argument("--config", required=True, choices=sorted(VISIBLE_FN), help="which filter set to apply")
-    ap.add_argument("--label", default=None, help="label for the CSV rows (default: the config name)")
+    ap.add_argument(
+        "--config", required=True, choices=sorted(VISIBLE_FN), help="which filter set to apply"
+    )
+    ap.add_argument(
+        "--label", default=None, help="label for the CSV rows (default: the config name)"
+    )
     ap.add_argument("--slug", default="the-ninth-house", help="work slug to measure")
     ap.add_argument("--chapters", default="10,20,30,40", help="comma-separated chapter numbers")
     ap.add_argument("--out", required=True, type=Path, help="output CSV path")
@@ -363,7 +368,9 @@ def main(argv: list[str] | None = None) -> int:
     write_csv(rows, args.out)
     stem = args.out.with_suffix("")
     write_breakdown_csv(by_type, "node_type", label, args.config, Path(f"{stem}_by_node_type.csv"))
-    write_breakdown_csv(by_relation, "relation", label, args.config, Path(f"{stem}_by_relation.csv"))
+    write_breakdown_csv(
+        by_relation, "relation", label, args.config, Path(f"{stem}_by_relation.csv")
+    )
 
     print(f"\n=== {label} ({args.config}) — {args.slug} ===")
     print_table(rows)

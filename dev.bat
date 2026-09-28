@@ -6,11 +6,24 @@ REM   dev.bat        -> activates the light .venv (app/CLI/tests/serving the API
 REM   dev.bat ml      -> activates .venv-ml (GLiNER/torch pipeline: ingest/extract/relate/...)
 
 set "REPO_ROOT=%~dp0"
-set "PIP_CACHE_DIR=%REPO_ROOT%.local\pip_cache"
-set "TORCH_HOME=%REPO_ROOT%.local\torch_cache"
-set "PLAYWRIGHT_BROWSERS_PATH=%REPO_ROOT%.local\ms-playwright"
-REM HF_HOME intentionally not set here - see dev.ps1 for why (app already defaults it to
-REM <repo>\.hf-cache and the models are already downloaded there).
+set "LOCAL_ROOT=%REPO_ROOT%.local"
+
+REM --- Caches routed to the project drive, never C: (session-only; no setx anywhere) ---
+set "PIP_CACHE_DIR=%LOCAL_ROOT%\pip_cache"
+set "TORCH_HOME=%LOCAL_ROOT%\torch_cache"
+set "PLAYWRIGHT_BROWSERS_PATH=%LOCAL_ROOT%\ms-playwright"
+set "npm_config_cache=%LOCAL_ROOT%\npm_cache"
+set "OLLAMA_MODELS=%LOCAL_ROOT%\ollama_models"
+set "TEMP=%LOCAL_ROOT%\tmp"
+set "TMP=%LOCAL_ROOT%\tmp"
+REM HF_HOME deliberately points OUTSIDE the repo at the machine-wide cache on F:,
+REM where the GLiNER/deberta/relex weights already live - see dev.ps1 for the full
+REM reasoning and the cache table in CLAUDE.md (retrofit block).
+set "HF_HOME=F:\Dev\shared\hf-cache"
+
+for %%D in ("%PIP_CACHE_DIR%" "%TORCH_HOME%" "%PLAYWRIGHT_BROWSERS_PATH%" "%npm_config_cache%" "%OLLAMA_MODELS%" "%TEMP%") do (
+    if not exist "%%~D" mkdir "%%~D"
+)
 
 if /i "%~1"=="ml" (
     set "VENV_DIR=%REPO_ROOT%.venv-ml"

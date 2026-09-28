@@ -122,8 +122,12 @@ def draw(
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--csv", action="append", required=True, type=Path, help="a metrics CSV (repeatable)")
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--csv", action="append", required=True, type=Path, help="a metrics CSV (repeatable)"
+    )
     ap.add_argument("--out", required=True, type=Path, help="output directory for the plots")
     args = ap.parse_args(argv)
 

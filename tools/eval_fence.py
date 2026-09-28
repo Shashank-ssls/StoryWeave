@@ -38,6 +38,7 @@ import argparse
 import csv
 import shutil
 import sqlite3
+import stat
 import sys
 import tempfile
 from collections import Counter
@@ -436,6 +437,11 @@ INJECT_CHAPTER = 5  # the bound `n` the negative controls assert against
 def _copy_db(src: Path, dest_dir: Path) -> Path:
     dest = dest_dir / "fence_negative_control.db"
     shutil.copy2(src, dest)
+    # copy2 preserves the mode bits, so a copy of a read-only source (the frozen
+    # baseline DB is chmod'd read-only on purpose) is itself read-only and the
+    # injection below fails with "attempt to write a readonly database". The copy
+    # is a throwaway in TEMP; make it writable. The source is never touched.
+    dest.chmod(stat.S_IWRITE | stat.S_IREAD)
     return dest
 
 

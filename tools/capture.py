@@ -202,7 +202,8 @@ def capture_one(
 
     # Seed the bookmark before any app code runs (never in the URL, per DESIGN_SPEC §5).
     page.add_init_script(
-        f"try {{ window.localStorage.setItem('storyweave:bookmark:{slug}', '{chapter}'); }} catch (e) {{}}"
+        f"try {{ window.localStorage.setItem('storyweave:bookmark:{slug}', "
+        f"'{chapter}'); }} catch (e) {{}}"
     )
     page.goto(url, wait_until="load")
     page.wait_for_selector('[data-testid="stemma-root"]', state="visible", timeout=30_000)
@@ -299,7 +300,9 @@ def capture(
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     ap.add_argument("--url", required=True, help="base URL of the running app")
     ap.add_argument("--label", required=True, help="label used in output filenames")
     ap.add_argument("--slug", default="the-ninth-house")

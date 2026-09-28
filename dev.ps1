@@ -14,15 +14,33 @@ param(
 $RepoRoot = $PSScriptRoot
 
 # --- Caches routed to the project drive, never C: ---
-$env:PIP_CACHE_DIR = Join-Path $RepoRoot ".local\pip_cache"
-$env:TORCH_HOME = Join-Path $RepoRoot ".local\torch_cache"
-$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $RepoRoot ".local\ms-playwright"
-# HF_HOME is intentionally NOT set here: storyweave.config.Settings already defaults it to
-# <repo>\.hf-cache (storyweave/nlp/extractor.py:configure_hf_cache, applied via
-# os.environ.setdefault before any HuggingFace import) and the models are already downloaded
-# there. Overriding it to .local\hf_cache here would just split the cache and force a
-# re-download. Set $env:HF_HOME yourself before running this script if you want a different
-# location.
+# Session-only ($env: scope). Nothing below writes a system or user environment
+# variable. tools/check_local_env.py asserts every one of these resolves off C:.
+$LocalRoot = Join-Path $RepoRoot ".local"
+
+$env:PIP_CACHE_DIR = Join-Path $LocalRoot "pip_cache"
+$env:TORCH_HOME = Join-Path $LocalRoot "torch_cache"
+$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $LocalRoot "ms-playwright"
+$env:npm_config_cache = Join-Path $LocalRoot "npm_cache"
+$env:OLLAMA_MODELS = Join-Path $LocalRoot "ollama_models"
+# pip/torch/HF unpack their archives into TEMP; on C: by default, so redirect it.
+$env:TEMP = Join-Path $LocalRoot "tmp"
+$env:TMP = $env:TEMP
+
+# HF_HOME is the one cache that lives OUTSIDE the repo, by decision: the GLiNER,
+# deberta and relex weights are already downloaded to the machine-wide cache
+# F:\Dev\shared\hf-cache (still on F:, never C:). Pointing it at <repo>\.hf-cache
+# would split the cache and force a ~1 GB re-download. See the cache table in
+# CLAUDE.md (retrofit block). storyweave.config defaults hf_home to
+# <repo>\.hf-cache, but configure_hf_cache() uses os.environ.setdefault, so this
+# explicit value wins for any process started from this shell.
+$env:HF_HOME = "F:\Dev\shared\hf-cache"
+
+foreach ($dir in @(
+        $env:PIP_CACHE_DIR, $env:TORCH_HOME, $env:PLAYWRIGHT_BROWSERS_PATH,
+        $env:npm_config_cache, $env:OLLAMA_MODELS, $env:TEMP)) {
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+}
 
 if ($Ml) {
     $VenvPath = Join-Path $RepoRoot ".venv-ml"
