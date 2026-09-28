@@ -28,6 +28,27 @@ class CleaningConfig(BaseModel):
     # silently. Applied case-insensitively to each stripped line.
     cruft_patterns: list[str] = Field(default_factory=list)
 
+    # --- Stage-0 watermark removal (retrofit R2). Knobs are DATA, per work. ---
+    # Fold Greek/Cyrillic look-alike letters to Latin before the watermark patterns
+    # run, so one regex catches every obfuscated spelling of the same watermark.
+    # See storyweave/ingest/homoglyphs.py for the table and its limits.
+    fold_homoglyphs: bool = True
+    # Watermark wrapper tag NAMES (not regexes). Both the opening and closing tag are
+    # removed and the text between them is KEPT: these sites wrap real story prose,
+    # which is exactly what defeats a cleaner that deletes the whole block.
+    watermark_tags: list[str] = Field(
+        default_factory=lambda: ["novelsnext", "novelnext", "novelbin", "novelfire"]
+    )
+    # Domain-like tokens removed AFTER folding. The default requires a real TLD, so a
+    # sentence that merely contains the word "novel" is never touched.
+    watermark_token_patterns: list[str] = Field(
+        default_factory=lambda: [r"\b\w*(?:novel|novels)\w*\.(?:com|net|org)\b"]
+    )
+    # Curly quotes -> straight, PRESERVING KIND: " " -> ", ' ' -> '. A single quote is
+    # never promoted to a double one, and brackets are never stripped, because both
+    # carry meaning in this corpus (dialogue vs. thought; [system messages]).
+    straighten_quotes: bool = True
+
 
 class SplittingConfig(BaseModel):
     # "auto": dir -> one file per chapter; single file -> try headings, else whole

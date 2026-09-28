@@ -13,7 +13,7 @@ No phase starts until the previous one is green, committed and pushed.
 | --- | --- | --- | --- | --- | --- |
 | R0 | branch, rules, baseline rerun | **green** | `4ba8f80` | [MEASURED] frozen-DB SHA-256 match · ch40 206 nodes / 1316 edges served · fence 0 violations / 105,243 elements · relation micro-F1 0.0459 · entity F1 0.5319 · D1 = 1326 fenced rows → 1316 served (10 lost) · 1307 of 1326 edges are `rule` · 160 of 162 relation FPs are Tier-1 · env gate 10/10 in both venvs | 2026-09-28 |
 | R1 | co-occurrence off + rescore on the v1 key | **green** | `8319c46` | [MEASURED] relation micro-F1 **0.0459 → 0.0000** (worse: all 5 v1 TPs were rule edges) · FP **162 → 2** (Tier-1 160 → 0) · FN 46 → 51 · ch40 edges served **1316 → 18** · isolated nodes at ch40 **0 → 186 of 206** · entity F1 unchanged at 0.5319 · D2 is now 100% of the projection loss (19 rows → 18 served) · fence 0 / 17,471 | 2026-09-28 |
-| R2 | Stage 0 cleaner | not started | — | — | — |
+| R2 | Stage 0 cleaner | **green** | (this phase) | [MEASURED] 0 watermark hits / 0 homoglyphs over 44 committed chapters · clean text byte-identical to pre-R2 in **0 of 44 chapters changed** · residual Greek/Cyrillic **0** · injection round-trip **1,063 hits removed, 0 failures** · Shadow Slave **[NOT MEASURED]**, text absent from this machine | 2026-09-28 |
 | R3 | 4 node types + `entity_labels` | not started | — | — | — |
 | R4 | 12 relations + validator + weight (fixes D1/D2) | not started | — | — | — |
 | R5 | LLM recall pass (optional) | not started | — | — | — |
@@ -173,3 +173,85 @@ answers, so there was no real relation extraction in v1 to improve on. Removing 
 false positives while losing 5 true positives is the right trade only because R4 follows:
 precision is now recoverable by construction (every edge cited), whereas under
 co-occurrence it was capped at 0.030 no matter what was added on top.
+
+---
+
+## R2 — Stage-0 cleaner · green, 2026-09-28
+
+Full evidence: `evidence/retrofit/R2_cleaner_audit.md`. Log:
+`evidence/retrofit/logs/R2_cleaner_audit.log`.
+
+### Ordering note (decision recorded, then superseded)
+
+R2 was first **deferred** on the grounds that the measured corpus (The Ninth House) is
+clean text and R2 affects only Shadow Slave, with the constraint that it must run before
+any Shadow Slave re-extraction and **never between R3 and R4**. It was then run
+immediately instead. No R3 work had begun — the R3 session had only read source files, made
+no edits — so R2 sits cleanly **after R1 and before R3**, which satisfies the constraint
+rather than violating it. The deferral rationale turned out to be correct and is now
+measured rather than assumed (see below), so nothing was lost by running it early, and R3
+gains a guarantee it would otherwise have lacked: its re-extraction cannot be confounded by
+cleaner changes.
+
+### Acceptance
+
+- [x] All tests pass; watermark hit counts logged to `R2_cleaner_audit.md`.
+      **Ninth House 40 chapters: 0 hits. Hollow Crown 4 chapters: 0 hits.
+      Shadow Slave: [NOT MEASURED]** — its text is gitignored and absent from this
+      machine (`data/raw/` holds only `.gitkeep`), so the count is not estimated. Re-run
+      `tools/cleaner_audit.py --corpus data/samples/shadow-slave` once the text is
+      restored; **R2 must be re-audited before Shadow Slave is re-extracted.**
+- [x] Unicode audit: **zero Greek/Cyrillic code points** left in clean text, all corpora.
+- [x] Green gates: `ruff` clean · `mypy` `no issues found in 81 source files` ·
+      `pytest` `185 passed, 6 skipped` (169 → 185, 16 new cleaner tests).
+- [x] Commit `feat(retrofit): R2 stage-0 cleaner`, pushed.
+
+### The measured result
+
+**R2 changes nothing on the measured corpus, and that is proved rather than assumed.** The
+audit cleans every chapter twice — once with all four R2 steps on, once with them off — and
+compares: **0 of 44 chapters differ.** The only non-ASCII character in the Ninth House
+source is U+2014 EM DASH (117 occurrences). So:
+
+- R3's re-extraction is **not** confounded by R2: clean text is unchanged, therefore
+  character offsets are unchanged, therefore post-R2 entity offsets remain directly
+  comparable to the frozen v1 baseline.
+- Hollow Crown cleans identically (rule I2 holds).
+
+Because a no-op audit cannot show the cleaner *works*, and the corpus that would show it is
+absent, `--inject-check` splices the four real watermark forms into every paragraph of all
+44 committed chapters and requires byte-identical round-trip: **1,063 watermark hits
+removed, 0 failures.** Pinned by a test, so a future regression fails the suite instead of
+the audit printing a cheerful `OK`.
+
+### Decisions
+
+- **Watermark tags strip markup, keep inner text.** These wrappers enclose real story
+  prose — deleting the block would delete part of the chapter. Tag names are per-work data
+  (`cleaner.watermark_tags`).
+- **Quote kind is preserved and brackets are never touched.** `'` is never promoted to `"`
+  (it is also the apostrophe in `don't`, and singles mark thought vs. doubles for speech);
+  `[Can you hear me?]` keeps its brackets because they are content.
+- **Folding is confusables-only.** 54 table entries, each annotated with code point and
+  Unicode name. Greek/Cyrillic letters with no Latin twin (`π`, `λ`, `ς`) are left alone and
+  *reported*, so a genuine Greek quotation surfaces as a decision, never as silent
+  corruption.
+- **Order is load-bearing and tested both ways:** with folding off, the same real watermark
+  yields 0 hits. The failure mode is demonstrated, not described.
+
+### Verified, not rebuilt
+
+Offsets already indexed into clean text in v1; confirmed against the frozen DB read-only:
+**163/163 chunks and 887/887 mentions** satisfy `clean_text[start:end] == text/surface`, 0
+violations. Raw source files are read and never written.
+
+### Viva defense
+
+R2's honest result is that it removes nothing from the corpus being measured — so the phase
+is justified by what it *prevents* rather than what it fixes, and the report leads with
+that instead of hiding a row of zeros. The engineering content is the ordering argument:
+these watermarks are obfuscated with Greek homoglyphs specifically so that a
+regex-first cleaner misses them, which is why folding precedes pattern matching, and the
+test suite proves the wrong order fails. The 1,063-hit injection round-trip is what lets me
+claim the cleaner works without the corpus that motivated it, and the zero-diff audit is
+what lets R3 attribute its entity delta to the ontology change alone.
