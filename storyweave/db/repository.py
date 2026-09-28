@@ -536,8 +536,25 @@ class Repository:
         return int(row["n"])
 
     def clear_edges(self, work_id: int) -> None:
-        """Drop all edges for a work (relations are derived + idempotently rebuilt)."""
+        """Drop ALL edges for a work, every tier and every provenance.
+
+        Blunt: it removes relex (Tier-2) and identity (Tier-3) edges too, so a rebuild of
+        one producer must NOT use it — use ``clear_edges_by_method`` or
+        ``clear_edges_by_tier``, which scope the delete to the edges that producer owns.
+        """
         self.conn.execute("DELETE FROM edges WHERE work_id = ?", (work_id,))
+        self.conn.commit()
+
+    def clear_edges_by_method(self, work_id: int, method: ExtractionMethod) -> None:
+        """Drop only the edges one producer owns, keyed on provenance.
+
+        The Tier-1 co-occurrence builder rebuilds with this so toggling it off (or
+        re-running it) can never delete a relex, LLM or hand-curated edge.
+        """
+        self.conn.execute(
+            "DELETE FROM edges WHERE work_id = ? AND extraction_method = ?",
+            (work_id, method.value),
+        )
         self.conn.commit()
 
     def clear_edges_by_tier(self, work_id: int, tier: RelationTier) -> None:

@@ -57,6 +57,13 @@ class ExtractionConfig(BaseModel):
 
 class RelationConfig(BaseModel):
     # --- Tier-1 structural (Phase 3): co-occurrence rules, zero ML. ---
+    # OFF BY DEFAULT (retrofit rule 5). Co-occurrence is proximity, not a relationship:
+    # the v1 evaluation measured 160 of 162 relation false positives coming from this
+    # builder, at micro-precision 0.030 (evidence/EVAL_V1.md §11, re-confirmed in
+    # evidence/retrofit/R0_baseline_rerun.md §2.3). The builder stays in the tree, behind
+    # this flag, so the before/after comparison can be re-measured on demand — it is
+    # evidence, not dead code. Turn it on only to reproduce a v1-shaped graph.
+    cooccurrence_enabled: bool = False
     # Two entities co-occurring within this many characters (gap between their
     # mention spans, same chapter) become a candidate Tier-1 edge.
     window_chars: int = 250

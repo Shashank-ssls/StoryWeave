@@ -7,6 +7,12 @@ relation is chosen by a small, explainable type-pair rule table (+ a lexical cue
 promotes membership to leadership), with ``RelatedTo`` as the never-drop fallback so
 no co-occurring pair is lost (Tier-1 list, SPEC §5.3).
 
+**OFF BY DEFAULT since the retrofit (rule 5).** Co-occurrence measures proximity, not
+relationship: on the measured v1 graph it produced 1307 of 1326 edges and 160 of 162
+relation false positives, at micro-precision 0.030 (``evidence/retrofit/R1_RESULT.md``).
+It is kept behind ``relations.cooccurrence_enabled`` so the before/after comparison stays
+reproducible — the flag makes it evidence rather than dead code.
+
 Every edge is stamped with provenance (method=rule, an evidence quote) and the
 universal reveal stamps. For a rule-derived structural edge the relationship is known
 to the reader exactly when both entities have co-occurred, so
@@ -89,10 +95,20 @@ def _evidence(text: str, a: Mention, b: Mention, pad: int = 30) -> str:
 def build_relationships(
     work_id: int, repo: Repository, config: WorkConfig | None = None
 ) -> RelationReport:
-    """Extract + persist Tier-1 edges from entity co-occurrence. Idempotent."""
+    """Extract + persist Tier-1 edges from entity co-occurrence. Idempotent.
+
+    Disabled by default (``relations.cooccurrence_enabled``); see the module docstring.
+    """
     cfg: RelationConfig = (config or WorkConfig()).relations
-    repo.clear_edges(work_id)
+    # Scoped to this producer's own provenance, so a rebuild — in either state of the
+    # flag — cannot delete a relex (Tier-2), LLM or hand-curated edge. The builder owns
+    # exactly the `rule` edges and nothing else.
+    repo.clear_edges_by_method(work_id, ExtractionMethod.RULE)
     report = RelationReport(work_id=work_id)
+    if not cfg.cooccurrence_enabled:
+        # Inert, but still idempotent: the rule edges this builder owns are gone and the
+        # report is empty. Every other tier is untouched.
+        return report
 
     nodes = {n.id: n for n in repo.list_nodes(work_id) if n.id is not None}
     chapter_text = {c.id: c.clean_text for c in repo.list_chapters(work_id)}

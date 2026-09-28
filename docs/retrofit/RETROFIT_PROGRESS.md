@@ -12,7 +12,7 @@ No phase starts until the previous one is green, committed and pushed.
 | phase | what | status | commit | key measured numbers | date |
 | --- | --- | --- | --- | --- | --- |
 | R0 | branch, rules, baseline rerun | **green** | `4ba8f80` | [MEASURED] frozen-DB SHA-256 match · ch40 206 nodes / 1316 edges served · fence 0 violations / 105,243 elements · relation micro-F1 0.0459 · entity F1 0.5319 · D1 = 1326 fenced rows → 1316 served (10 lost) · 1307 of 1326 edges are `rule` · 160 of 162 relation FPs are Tier-1 · env gate 10/10 in both venvs | 2026-09-28 |
-| R1 | co-occurrence off + rescore on the v1 key | not started | — | — | — |
+| R1 | co-occurrence off + rescore on the v1 key | **green** | (this phase) | [MEASURED] relation micro-F1 **0.0459 → 0.0000** (worse: all 5 v1 TPs were rule edges) · FP **162 → 2** (Tier-1 160 → 0) · FN 46 → 51 · ch40 edges served **1316 → 18** · isolated nodes at ch40 **0 → 186 of 206** · entity F1 unchanged at 0.5319 · D2 is now 100% of the projection loss (19 rows → 18 served) · fence 0 / 17,471 | 2026-09-28 |
 | R2 | Stage 0 cleaner | not started | — | — | — |
 | R3 | 4 node types + `entity_labels` | not started | — | — | — |
 | R4 | 12 relations + validator + weight (fixes D1/D2) | not started | — | — | — |
@@ -107,3 +107,69 @@ leaking was `TEMP`, which no cache setting would have caught. The rerun confirms
 retrofit's premise at the source rather than on trust: 1307 of 1326 edges come from the
 co-occurrence rule, and 160 of 162 relation false positives are Tier-1, so R1 — switching
 one flag off — is aimed at the whole of the measured error, not a slice of it.
+
+---
+
+## R1 — co-occurrence off + rescore · green, 2026-09-28
+
+Full evidence: `evidence/retrofit/R1_RESULT.md`. Logs: `evidence/retrofit/logs/R1_*.log`.
+
+### Acceptance
+
+- [x] Unit test: config flag off → zero rule edges created
+      (`test_cooccurrence_disabled_by_default_creates_no_edges`).
+- [x] Unit test: rule rebuild does not delete other producers' edges
+      (`test_rule_rebuild_does_not_delete_other_producers_edges`) — covers rule ON, a
+      re-run, and rule OFF, against `gliner`/`llm`/`curated` edges on the same pair.
+- [x] `R1_RESULT.md` written with the v1 vs rule-off table, **both** scopes
+      (`chapter_local` and `cumulative`), per relation with counts, per tier, and density.
+- [x] Green gates: `ruff check .` clean · `mypy` `no issues found in 78 source files` ·
+      `pytest` `169 passed, 6 skipped` (167 + 2 new).
+- [x] Commit `feat(retrofit): R1 co-occurrence off by default + rescore`, pushed.
+
+### The measured micro-F1, stated plainly
+
+**Relation micro-F1 pooled `chapter_local`: 0.0459 → 0.0000.** `cumulative`:
+0.0623 → 0.0000. **The number got worse.** All five of v1's true positives (4 `LocatedIn`,
+1 `RelatedTo`) were themselves co-occurrence edges, so deleting the rule deleted them:
+TP 5 → 0, FP 162 → 2, FN 46 → 51. The retrofit's projection that removing co-occurrence
+raises relation F1 is **not supported** by this measurement.
+
+What it did buy: **160 of 162 false positives removed** (Tier-1 FP 160 → 0; the 2 that
+remain are hand-curated, one `Respects` and one `TRANSMIGRATED_INTO`), and an honest
+statement of the hole — **51 missing relations and 186 of 206 nodes isolated at ch40**,
+median degree 0. That is R4's and R5's work order, now sized. Nothing in the rule-off
+graph is shippable as a reader experience; R7 must not be run against it.
+
+Controls held: entity F1 (0.5319 strict / 0.5745 alias-aware), alias clustering
+(P=1.0000, 0 over-merges), entities per chapter and nodes served are all **identical** to
+v1, which is what makes this like-for-like.
+
+### Two findings for later phases
+
+1. **D2 is now the entire projection loss.** 19 curated rows at ch40 serve as 18, and the
+   one lost row is `SECRET_IDENTITY` (edge 1325, pair 14 → 150, overwritten by
+   `REINCARNATION`). In R0 it hid among nine junk collapses; now it is 100% of the loss and
+   the element it destroys is an identity reveal. R4's multigraph fix is load-bearing.
+2. **Do not build R6's salience on degree.** The scorer's ranking metric fell (P@10
+   0.4000 → 0.3000, MAP 0.4414 → 0.3668) purely because it ranks by fenced payload degree
+   (`tools/eval_score.py:293`). After R1 there is almost no degree left to rank on, so R6
+   must rank on mentions up to chapter *n* (plus cited-edge degree once R4 supplies edges).
+
+### One latent bug fixed
+
+`repo.clear_edges(work_id)` deleted **every edge of every tier** on each Tier-1 rebuild, so
+re-running `relate` on the seeded Ninth House would have silently wiped its 19 hand-curated
+Tier-2/Tier-3 edges. The builder now uses a new `clear_edges_by_method` (all SQL still in
+`db/repository.py`) scoped to `extraction_method='rule'`, and a test pins it.
+
+### Viva defense
+
+R1 is the phase that proves the project measures rather than asserts: it was run expecting
+the F1 to rise, it fell to zero, and the report says so in its first line. The finding is
+sharper than the projection was — v1's relation score was not merely noisy, it was
+*entirely* an artifact of the co-occurrence rule, including all five of its correct
+answers, so there was no real relation extraction in v1 to improve on. Removing 160 of 162
+false positives while losing 5 true positives is the right trade only because R4 follows:
+precision is now recoverable by construction (every edge cited), whereas under
+co-occurrence it was capped at 0.030 no matter what was added on top.

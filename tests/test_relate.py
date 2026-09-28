@@ -4,14 +4,23 @@ from __future__ import annotations
 
 from storyweave.db.models import (
     Chapter,
+    Edge,
     ExtractionMethod,
     Mention,
     Node,
     NodeType,
+    RelationTier,
     Work,
 )
 from storyweave.db.repository import Repository
 from storyweave.graph.builder import build_relationships, classify_relation
+from storyweave.ingest.work_config import RelationConfig, WorkConfig
+
+
+def rule_enabled() -> WorkConfig:
+    """The co-occurrence builder is off by default (retrofit rule 5); these tests are
+    about the rule itself, so they switch it on explicitly."""
+    return WorkConfig(relations=RelationConfig(cooccurrence_enabled=True))
 
 
 def _node(name: str, typ: NodeType) -> Node:
@@ -94,7 +103,7 @@ def test_build_relationships_from_cooccurrence() -> None:
                 ("Aldercross", NodeType.PLACE, 24, 34),
             ],
         )
-        report = build_relationships(wid, repo)
+        report = build_relationships(wid, repo, rule_enabled())
 
         relations = {e.relation for e in repo.list_edges(wid)}
         assert report.edges_added == 3
@@ -119,7 +128,7 @@ def test_window_excludes_far_pairs() -> None:
                 ("Aldercross", NodeType.PLACE, 404, 414),
             ],
         )
-        report = build_relationships(wid, repo)
+        report = build_relationships(wid, repo, rule_enabled())
         assert report.edges_added == 0
 
 
@@ -135,7 +144,96 @@ def test_build_relationships_is_idempotent() -> None:
                 ("the Coil", NodeType.ORGANIZATION, 12, 20),
             ],
         )
-        first = build_relationships(wid, repo)
-        second = build_relationships(wid, repo)
+        first = build_relationships(wid, repo, rule_enabled())
+        second = build_relationships(wid, repo, rule_enabled())
         assert first.edges_added == second.edges_added
         assert repo.count_edges(wid) == second.edges_added
+
+
+# --------------------------------------------------------------------------- #
+# Retrofit R1: co-occurrence is off by default, and a rule rebuild is scoped to
+# the edges the rule builder owns.
+# --------------------------------------------------------------------------- #
+
+
+def test_cooccurrence_disabled_by_default_creates_no_edges() -> None:
+    """The shipped default must produce zero rule edges (retrofit rule 5)."""
+    text = "Wren joined the Coil in Aldercross."
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid = _setup(
+            repo,
+            text,
+            [
+                ("Wren", NodeType.CHARACTER, 0, 4),
+                ("the Coil", NodeType.ORGANIZATION, 12, 20),
+                ("Aldercross", NodeType.PLACE, 24, 34),
+            ],
+        )
+        # No config at all, and an explicitly-default config: both must be inert.
+        assert build_relationships(wid, repo).edges_added == 0
+        assert build_relationships(wid, repo, WorkConfig()).edges_added == 0
+        assert repo.count_edges(wid) == 0
+        assert RelationConfig().cooccurrence_enabled is False
+
+        # Switching the flag on is the only way to get them, and it still works —
+        # the builder is evidence, not dead code.
+        assert build_relationships(wid, repo, rule_enabled()).edges_added == 3
+
+
+def test_rule_rebuild_does_not_delete_other_producers_edges() -> None:
+    """Toggling or re-running the rule builder must not touch relex/llm/curated edges."""
+    text = "Wren joined the Coil."
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid = _setup(
+            repo,
+            text,
+            [
+                ("Wren", NodeType.CHARACTER, 0, 4),
+                ("the Coil", NodeType.ORGANIZATION, 12, 20),
+            ],
+        )
+        ids = [n.id for n in repo.list_nodes(wid)]
+        assert ids[0] is not None and ids[1] is not None
+
+        # One edge from each of the other three producers (relex edges are stamped
+        # `gliner`, being a GLiNER model), all on the same pair.
+        for method, tier, relation in (
+            (ExtractionMethod.GLINER, RelationTier.SOCIAL, "Serves"),
+            (ExtractionMethod.LLM, RelationTier.IDENTITY, "SAME_AS"),
+            (ExtractionMethod.CURATED, RelationTier.SOCIAL, "Mentor"),
+        ):
+            repo.add_edge(
+                Edge(
+                    work_id=wid,
+                    source_id=ids[0],
+                    target_id=ids[1],
+                    relation=relation,
+                    tier=tier,
+                    first_seen_chapter=1,
+                    revealed_chapter=1,
+                    extraction_method=method,
+                    evidence_span="ev",
+                )
+            )
+        survivors = {(e.extraction_method, e.relation) for e in repo.list_edges(wid)}
+        assert len(survivors) == 3
+
+        # Rule ON: adds its own edge, keeps the other three.
+        build_relationships(wid, repo, rule_enabled())
+        after_on = [e for e in repo.list_edges(wid)]
+        assert sum(1 for e in after_on if e.extraction_method is ExtractionMethod.RULE) == 1
+        assert survivors <= {(e.extraction_method, e.relation) for e in after_on}
+
+        # Rule re-run: still exactly one rule edge, others still there (idempotent).
+        build_relationships(wid, repo, rule_enabled())
+        assert sum(
+            1 for e in repo.list_edges(wid) if e.extraction_method is ExtractionMethod.RULE
+        ) == 1
+
+        # Rule OFF: its own edges go, every other producer's edge survives untouched.
+        build_relationships(wid, repo)
+        remaining = repo.list_edges(wid)
+        assert all(e.extraction_method is not ExtractionMethod.RULE for e in remaining)
+        assert {(e.extraction_method, e.relation) for e in remaining} == survivors
