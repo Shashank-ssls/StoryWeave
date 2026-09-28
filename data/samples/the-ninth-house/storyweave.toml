@@ -50,3 +50,16 @@ end_chapter = 34
 name = "The Choosing"
 start_chapter = 35
 end_chapter = 40
+
+[clustering]
+# Abbreviation-merge window (retrofit R3). The default 6 chapters was measured on this
+# work and refused 16 correct shortenings - 'juno'->'juno stray', 'fennick'->'lord
+# fennick oswald', 'ione'->'ione ashcombe', 'robart kell'->'ser robart kell' and so on -
+# because this book introduces a character's full name once, early, and then uses the
+# bare surname for the rest of the book. Over 40 chapters that gap routinely exceeds 6.
+# Widened to the length of the work, which costs nothing: the ordering rule (rule 2), the
+# same-type rule, the stop-word rule and the ambiguity guard are all independent of the
+# window, and the measured over-merge count stays 0. Alias recall matters doubly here
+# because R4's validator has to find BOTH participants' names inside a quote.
+# Knob is DATA, per work (evidence/retrofit/R3_RESULT.md records the sweep).
+abbreviation_chapter_window = 40

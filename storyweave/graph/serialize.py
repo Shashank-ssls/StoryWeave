@@ -4,6 +4,11 @@ The fence is applied here via ``query/fence.py`` (the sole sanctioned caller of 
 revealed-chapter SQL), so the projected graph only ever contains what the reader may
 see at N — including the both-endpoints rule for edges. Output is valid Cytoscape.js
 ``elements`` JSON carrying type, subtype, and reveal stamps for the frontend (Phase 8).
+
+Retrofit R3: node selection goes through ``fence.visible_graph_nodes``, which fences
+first and then narrows to the four drawable types, so Ability/Concept/Event/Title rows in
+a legacy database are never served even though they still load. Each node also carries
+its fenced display name and the labels the reader has been given so far.
 """
 
 from __future__ import annotations
@@ -26,11 +31,31 @@ def build_graph(repo: Repository, work_id: int, chapter: int) -> nx.DiGraph:
     for prop in fence.visible_node_properties(repo, work_id, chapter):
         props_by_node.setdefault(prop.node_id, {})[prop.key] = prop.value
 
+    # Fenced names: the display name at N, plus every label revealed by N. Both come
+    # from the fence, never from node.name directly - node.name is the extraction-time
+    # canonical string and carries no reveal stamp of its own.
+    display_names = fence.visible_display_names(repo, work_id, chapter)
+    labels_by_node: dict[int, list[dict[str, object]]] = {}
+    for lab in fence.visible_entity_labels(repo, work_id, chapter):
+        labels_by_node.setdefault(lab.entity_id, []).append(
+            {
+                "label": lab.label,
+                "kind": lab.kind.value,
+                "revealed_chapter": lab.revealed_chapter,
+                "is_primary": lab.is_primary,
+                "quote": lab.quote,
+            }
+        )
+
     graph: nx.DiGraph = nx.DiGraph()
-    for node in fence.visible_nodes(repo, work_id, chapter):
+    for node in fence.visible_graph_nodes(repo, work_id, chapter):
         graph.add_node(
             node.id,
-            label=node.name,
+            # Fall back to node.name only when the work has no labels at all (a legacy
+            # database predating R3): never invent a name, and never show one the fence
+            # has not released.
+            label=display_names.get(node.id or 0, node.name),
+            labels=labels_by_node.get(node.id or 0, []),
             type=node.type.value,
             subtype=node.subtype,
             importance=node.importance,
@@ -41,6 +66,13 @@ def build_graph(repo: Repository, work_id: int, chapter: int) -> nx.DiGraph:
             properties=props_by_node.get(node.id, {}),
         )
     for edge in fence.visible_edges(repo, work_id, chapter):
+        # An edge whose endpoint is not DRAWN must be dropped, not added: nx.add_edge
+        # silently creates any missing node, so without this a legacy Ability/Concept/
+        # Event/Title endpoint reappears as an attribute-less phantom node and the
+        # payload fails validation. This narrows the payload and can never widen it -
+        # the fence has already decided what is visible; this only decides what is drawn.
+        if edge.source_id not in graph or edge.target_id not in graph:
+            continue
         graph.add_edge(
             edge.source_id,
             edge.target_id,

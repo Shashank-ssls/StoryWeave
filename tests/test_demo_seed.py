@@ -20,6 +20,7 @@ from storyweave.api.app import app
 from storyweave.api.deps import get_repository
 from storyweave.db.repository import Repository
 from storyweave.demo.seed import DEMO_SLUG, seed_hollow_crown
+from storyweave.query import fence
 
 
 @pytest.fixture
@@ -85,10 +86,36 @@ def test_layered_and_alias_reveals_bloom_at_their_chapters(client: TestClient) -
     assert "TRANSMIGRATED_INTO" in _relations(_graph(client, 4))  # layered Wren==Caelum at ch4
 
 
-def test_all_eight_node_types_present_by_final_chapter(client: TestClient) -> None:
-    nodes = _graph(client, 4)["nodes"]
-    types = {node["data"]["type"] for node in nodes}
-    assert types == {
-        "Character", "Place", "Organization", "Item",
-        "Ability", "Concept", "Event", "Title",
-    }
+def test_all_eight_node_types_stored_but_only_four_are_drawn(
+    client: TestClient, tmp_path: Path
+) -> None:
+    """Retrofit R3 changed this test's contract, deliberately. Both halves are asserted.
+
+    BEFORE R3 this asserted that the graph payload contained all eight v1 types. R3's
+    decision (c) is that the payload serves only the four drawable ones, so that
+    assertion now states the opposite of the intended behaviour and could not be kept.
+
+    What the test was really protecting is preserved and strengthened: the Hollow Crown
+    fixture still STORES one node of each of the eight types, and those rows still fence
+    correctly - so the fixture continues to exercise the whole ontology. What changed is
+    only what is DRAWN. The fixture's own rows are byte-identical (rule I2); no seeded
+    data was touched to make this pass.
+    """
+    # 1. All eight types are still stored and still pass the fence, unchanged.
+    # pytest hands the fixture and the test the same tmp_path, so this is the same file
+    # the client is serving - no app state plumbing needed.
+    with Repository(str(tmp_path / "demo.sqlite")) as repo:
+        work = repo.get_work_by_slug(DEMO_SLUG)
+        assert work is not None and work.id is not None
+        stored = {n.type.value for n in fence.visible_nodes(repo, work.id, 4)}
+        assert stored == {
+            "Character", "Place", "Organization", "Item",
+            "Ability", "Concept", "Event", "Title",
+        }
+        # 2. The graph read narrows the same fenced set to the four drawable types.
+        drawn = {n.type.value for n in fence.visible_graph_nodes(repo, work.id, 4)}
+        assert drawn == {"Character", "Place", "Organization", "Item"}
+
+    # 3. And that is exactly what reaches the client.
+    payload_types = {node["data"]["type"] for node in _graph(client, 4)["nodes"]}
+    assert payload_types == {"Character", "Place", "Organization", "Item"}

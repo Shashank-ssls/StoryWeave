@@ -53,7 +53,14 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from storyweave.api.app import API_PREFIX, create_app  # noqa: E402
 from storyweave.api.deps import get_repository  # noqa: E402
-from storyweave.db.models import Edge, Node, NodeProperty, RelationTier  # noqa: E402
+from storyweave.db.models import (  # noqa: E402
+    Edge,
+    EntityLabel,
+    LabelKind,
+    Node,
+    NodeProperty,
+    RelationTier,
+)
 from storyweave.db.repository import Repository  # noqa: E402
 from tools import swconfig  # noqa: E402
 
@@ -259,6 +266,41 @@ def check_graph(
                     f"node {data['label']!r} revealed at {data['revealed_chapter']}",
                 )
             )
+        # entity_labels (retrofit R3) are a FENCE SURFACE: every label the payload
+        # carries must be revealed at or before n, and so must the node holding it.
+        for label in data.get("labels") or []:
+            tally.count("graph_node_label")
+            label_reveal = int(label["revealed_chapter"])
+            if label_reveal > n:
+                out.append(
+                    Violation(
+                        slug, n, endpoint, "graph_node_label",
+                        f"{data['id']}:{label['label']}", label_reveal,
+                        f"label {label['label']!r} ({label['kind']}) on node "
+                        f"{data['id']} is revealed at {label_reveal}",
+                    )
+                )
+            if data["revealed_chapter"] > n:
+                out.append(
+                    Violation(
+                        slug, n, endpoint, "graph_node_label",
+                        f"{data['id']}:{label['label']}", data["revealed_chapter"],
+                        f"label {label['label']!r} rides an unrevealed node "
+                        f"{data['id']} (both-rule)",
+                    )
+                )
+        # The displayed name must itself be a revealed label (or the node's own name in a
+        # pre-R3 database, which carries no separate label reveal).
+        visible_labels = {str(x["label"]) for x in (data.get("labels") or [])}
+        if visible_labels and str(data["label"]) not in visible_labels:
+            out.append(
+                Violation(
+                    slug, n, endpoint, "graph_node_label",
+                    f"{data['id']}:display", "unmatched",
+                    f"display name {data['label']!r} is not among the revealed labels "
+                    f"{sorted(visible_labels)} -- reveal stamp unverifiable",
+                )
+            )
         for key, value in (data.get("properties") or {}).items():
             tally.count("graph_node_property")
             earliest = resolver.min_reveal(int(data["id"]), key, str(value))
@@ -449,6 +491,11 @@ def negative_injected(db: Path, slug: str, tmp: Path) -> tuple[list[Violation], 
     """Inject node + edge + property revealed at n+1; fetch at n+1; check against n."""
     copy = _copy_db(db, tmp)
     with Repository(copy) as repo:
+        # A pre-R3 database has no entity_labels table, and the frozen baseline is one.
+        # This is the throwaway copy, so adding the table here costs nothing and lets the
+        # label canaries run against a legacy database too - which is exactly the case
+        # most likely to have a gap. CREATE TABLE IF NOT EXISTS: nothing else changes.
+        repo.initialize_schema()
         work = repo.get_work_by_slug(slug)
         assert work is not None and work.id is not None
         anchor = repo.list_nodes_revealed(work.id, 1)[0]
@@ -486,6 +533,30 @@ def negative_injected(db: Path, slug: str, tmp: Path) -> tuple[list[Violation], 
                 revealed_chapter=INJECT_CHAPTER + 1,
                 extraction_method=anchor.extraction_method,
                 evidence_span="synthetic negative control",
+            )
+        )
+        # entity_labels canaries (retrofit R3). TWO of them, because the label surface
+        # has two independent ways to leak and each needs its own control:
+        #   1. a late label on an EARLY node - the label's own reveal must gate it;
+        #   2. an early label on a LATE node - the node's reveal must gate it (both-rule).
+        repo.add_entity_label(
+            EntityLabel(
+                entity_id=anchor.id,
+                label="SYNTHETIC LABEL CANARY",
+                kind=LabelKind.EPITHET,
+                revealed_chapter=INJECT_CHAPTER + 1,
+                is_primary=False,
+                quote="synthetic negative control",
+            )
+        )
+        repo.add_entity_label(
+            EntityLabel(
+                entity_id=leak_id,
+                label="SYNTHETIC LABEL ON A HIDDEN NODE",
+                kind=LabelKind.SHORT,
+                revealed_chapter=1,
+                is_primary=False,
+                quote="synthetic negative control",
             )
         )
 

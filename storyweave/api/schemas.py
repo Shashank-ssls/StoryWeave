@@ -195,8 +195,24 @@ class ArcsResponse(BaseModel):
 # --- graph (Cytoscape, but fully typed) ------------------------------------ #
 
 
+class GraphLabelModel(BaseModel):
+    """One chapter-gated name the reader has been given (retrofit R3).
+
+    Reveal-stamped, so it is part of the payload the fence harness audits: a label in
+    here must be revealed at or before the requested chapter, and so must its node.
+    """
+
+    label: str
+    kind: str
+    revealed_chapter: int
+    is_primary: bool = False
+    quote: str | None = None
+
+
 class GraphNodeData(BaseModel):
     id: str
+    #: the display name AT THIS CHAPTER - the most recently revealed naming label, not
+    #: the extraction-time canonical string (which carries no reveal stamp of its own).
     label: str
     type: str
     subtype: str | None = None
@@ -206,6 +222,9 @@ class GraphNodeData(BaseModel):
     extraction_method: str
     evidence_span: str | None = None
     properties: dict[str, str] = {}
+    #: every label revealed by this chapter. Empty for a pre-R3 database, which has no
+    #: entity_labels table; `label` then falls back to the node's stored name.
+    labels: list[GraphLabelModel] = []
 
 
 class GraphEdgeData(BaseModel):

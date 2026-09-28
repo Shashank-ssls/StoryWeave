@@ -38,7 +38,11 @@ import numpy as np
 # Make the repo root importable when run as `python tools/eval_score.py`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from storyweave.db.models import ALL_RELATIONS, NodeType  # noqa: E402
+from storyweave.db.models import (  # noqa: E402
+    ALL_RELATIONS,
+    NodeType,
+    is_graph_type,
+)
 from storyweave.db.repository import Repository  # noqa: E402
 from tools import swconfig  # noqa: E402
 from tools.graph_metrics import payload_edges  # noqa: E402
@@ -633,12 +637,53 @@ class Report:
         })
 
 
+def project_to_graph_types(ann: Annotation, chapter: int) -> None:
+    """Drop reference entities whose type the retrofit no longer draws (R3).
+
+    Implemented by EXCLUDING indices rather than by rewriting the annotation: the
+    annotation file is a frozen artifact and the match rule is untouched, so the same
+    code scores both keys and the only difference is which reference entities are in
+    play. Everything downstream (per-type P/R/F1, aliases, the ranking metric, the
+    rejected-mention rate) then operates on the projected key automatically.
+
+    This makes a DIFFERENT ANSWER KEY. Its entity F1 is not comparable with the 8-type
+    figure and must not be reported as a delta against it.
+    """
+    dropped: list[tuple[str, str]] = []
+    for i, entity in enumerate(ann.data.get("entities", [])):
+        if i in ann.excluded_entities:
+            continue
+        raw = str(entity.get("type", ""))
+        try:
+            stored = NodeType(raw)
+        except ValueError:
+            continue  # validation already flagged it
+        if not is_graph_type(stored):
+            ann.excluded_entities.add(i)
+            dropped.append((str(entity.get("name", "")), raw))
+    if dropped:
+        print(
+            f"  4-TYPE PROJECTION ch{chapter:02d}: dropped {len(dropped)} reference "
+            f"entities whose type is not drawable: "
+            + ", ".join(f"{name!r} ({t})" for name, t in dropped)
+        )
+
+
 def main(argv: list[str] | None = None) -> int:  # noqa: PLR0915 - a report, read top to bottom
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     ap.add_argument("--db", default="storyweave-demo.sqlite", type=Path)
     ap.add_argument("--annotations", default=ANNOTATION_DIR, type=Path)
+    ap.add_argument(
+        "--four-type-projection",
+        action="store_true",
+        help="score against a 4-type PROJECTION of the annotation (retrofit R3): drop "
+        "reference entities whose type is not drawable, per LEGACY_TYPE_MAP. This is a "
+        "DIFFERENT answer key - its numbers are not comparable with the 8-type ones and "
+        "must never be reported as a delta against them. Off by default: without this "
+        "flag the scorer behaves exactly as it did for the v1 measurement.",
+    )
     ap.add_argument("--slug", default=SLUG)
     ap.add_argument("--out", default=Path("evidence/scores_v1.csv"), type=Path)
     args = ap.parse_args(argv)
@@ -655,6 +700,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: PLR0915 - a report, rea
     fatal = False
     for chapter in CHAPTERS:
         ann = validate(chapter, args.annotations)
+        if args.four_type_projection:
+            project_to_graph_types(ann, chapter)
         annotations[chapter] = ann
         fatals = [f for f in ann.failures if f.fatal]
         soft = [f for f in ann.failures if not f.fatal]

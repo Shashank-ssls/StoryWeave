@@ -66,6 +66,20 @@ class ChunkingConfig(BaseModel):
     overlap_sentences: int = 1
 
 
+class ClusteringConfig(BaseModel):
+    """Alias clustering knobs (retrofit R3). DATA, per work, never hardcoded."""
+
+    # How many chapters after the full form's first appearance a shortening may still be
+    # folded into it. A shortening that turns up much later is more likely a different
+    # person who happens to share a name token, so the merge is refused instead. 40
+    # chapters of a serial with a large cast wants this narrow; a short novella can
+    # widen it.
+    abbreviation_chapter_window: int = 6
+    # Enable the contiguous-subsequence abbreviation merge at all. Off means every
+    # surface variant stays its own entity (maximum precision, minimum alias recall).
+    merge_abbreviations: bool = True
+
+
 class ExtractionConfig(BaseModel):
     # Override the global GLiNER model/threshold per work if needed (knobs are data).
     model: str | None = None
@@ -149,6 +163,7 @@ class WorkConfig(BaseModel):
     cleaning: CleaningConfig = Field(default_factory=CleaningConfig)
     splitting: SplittingConfig = Field(default_factory=SplittingConfig)
     chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
+    clustering: ClusteringConfig = Field(default_factory=ClusteringConfig)
     extraction: ExtractionConfig = Field(default_factory=ExtractionConfig)
     relations: RelationConfig = Field(default_factory=RelationConfig)
     identity: IdentityConfig = Field(default_factory=IdentityConfig)

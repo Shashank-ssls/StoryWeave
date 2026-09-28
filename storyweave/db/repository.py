@@ -18,17 +18,22 @@ from types import TracebackType
 
 from storyweave.db.models import (
     ALL_RELATIONS,
+    GRAPH_NODE_TYPES,
+    LEGACY_TYPE_MAP,
     Arc,
     Chapter,
     Chunk,
     Edge,
+    EntityLabel,
     ExtractionMethod,
+    LabelKind,
     Mention,
     Node,
     NodeProperty,
     NodeType,
     RelationTier,
     Work,
+    is_graph_type,
 )
 
 # Controlled-vocabulary fragments for CHECK constraints, derived from the ontology
@@ -37,6 +42,11 @@ _NODE_TYPE_LIST = ", ".join(f"'{t.value}'" for t in NodeType)
 _RELATION_LIST = ", ".join(f"'{r}'" for r in ALL_RELATIONS)
 _TIER_LIST = ", ".join(str(t.value) for t in RelationTier)
 _METHOD_LIST = ", ".join(f"'{m.value}'" for m in ExtractionMethod)
+_LABEL_KIND_LIST = ", ".join(f"'{k.value}'" for k in LabelKind)
+# The graph's four display types (retrofit R3). Used ONLY in the display clause of
+# list_graph_nodes_revealed, never in a fence clause - they are different filters with
+# different purposes and must stay visibly separate.
+_GRAPH_TYPE_LIST = ", ".join(f"'{t.value}'" for t in GRAPH_NODE_TYPES)
 
 SCHEMA: str = f"""
 PRAGMA foreign_keys = ON;
@@ -144,6 +154,24 @@ CREATE TABLE IF NOT EXISTS arcs (
     UNIQUE (work_id, ordinal)
 );
 
+-- Entity labels (retrofit R3): the chapter-gated names of an entity. A FENCE
+-- SURFACE - a label revealed at chapter k must not appear in any payload at k-1.
+-- Carries revealed_chapter like every other reveal-stamped element; no
+-- first_seen_chapter, because a label has no existence separate from the chapter the
+-- reader is given it (unlike a node, which exists in the text before it is explained).
+CREATE TABLE IF NOT EXISTS entity_labels (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    entity_id         INTEGER NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    label             TEXT NOT NULL,
+    kind              TEXT NOT NULL CHECK (kind IN ({_LABEL_KIND_LIST})),
+    revealed_chapter  INTEGER NOT NULL,
+    is_primary        INTEGER NOT NULL DEFAULT 0 CHECK (is_primary IN (0, 1)),
+    quote             TEXT,
+    UNIQUE (entity_id, label, kind)
+);
+
+CREATE INDEX IF NOT EXISTS idx_labels_entity      ON entity_labels(entity_id);
+CREATE INDEX IF NOT EXISTS idx_labels_revealed    ON entity_labels(revealed_chapter);
 CREATE INDEX IF NOT EXISTS idx_arcs_work         ON arcs(work_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_work        ON nodes(work_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_revealed    ON nodes(revealed_chapter);
@@ -161,6 +189,13 @@ CREATE INDEX IF NOT EXISTS idx_mentions_node     ON mentions(node_id);
 """
 
 
+def _label_from_row(row: sqlite3.Row) -> EntityLabel:
+    """SQLite stores is_primary as 0/1; pydantic wants a bool."""
+    data = dict(row)
+    data["is_primary"] = bool(data["is_primary"])
+    return EntityLabel(**data)
+
+
 class Repository:
     """Thin, fully-typed wrapper over the SQLite connection. The sole SQL surface."""
 
@@ -175,6 +210,8 @@ class Repository:
         self.conn = sqlite3.connect(path_arg, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA foreign_keys = ON;")
+        #: cache for has_entity_labels_table(); None = not yet probed
+        self._has_labels: bool | None = None
 
     # --- lifecycle ------------------------------------------------------- #
 
@@ -182,6 +219,7 @@ class Repository:
         """Create the full 8-type schema if it does not yet exist (idempotent)."""
         self.conn.executescript(SCHEMA)
         self.conn.commit()
+        self._has_labels = None  # the schema may have just added entity_labels
 
     def close(self) -> None:
         self.conn.close()
@@ -359,7 +397,25 @@ class Repository:
 
     # --- nodes ----------------------------------------------------------- #
 
-    def add_node(self, node: Node) -> int:
+    def add_node(self, node: Node, *, allow_legacy_type: bool = False) -> int:
+        """Insert a node. Rejects a non-graph type unless explicitly allowed.
+
+        Enforcement point (b) of retrofit R3: new extraction may only create the four
+        GraphNodeType values, so nothing new is ever *stored* as Ability/Concept/Event/
+        Title. Historical rows are untouched — this guards writes, not reads.
+
+        ``allow_legacy_type=True`` is the one sanctioned exception, for the seeded
+        Hollow Crown demo, whose fixture data predates the retrofit and must stay
+        byte-identical (rule I2). It is opt-in on purpose: a new code path that forgets
+        about the four types is rejected by default rather than silently admitted.
+        """
+        if not allow_legacy_type and not is_graph_type(node.type):
+            raise ValueError(
+                f"node type {node.type.value!r} is not drawable (retrofit R3): new nodes "
+                f"must be one of {[t.value for t in GRAPH_NODE_TYPES]}. Its documented "
+                f"fate is {LEGACY_TYPE_MAP[node.type].value!r} — see LEGACY_TYPE_MAP in "
+                "db/models.py. Pass allow_legacy_type=True only to seed legacy fixtures."
+            )
         cur = self.conn.execute(
             """INSERT INTO nodes
                  (work_id, type, name, subtype, importance,
@@ -572,6 +628,62 @@ class Repository:
         ).fetchall()
         return [Edge(**dict(r)) for r in rows]
 
+    # --- entity labels (retrofit R3) -------------------------------------- #
+
+    def add_entity_label(self, label: EntityLabel) -> int:
+        """Insert one chapter-gated name for an entity (idempotent on the UNIQUE key)."""
+        cur = self.conn.execute(
+            """INSERT OR IGNORE INTO entity_labels
+                 (entity_id, label, kind, revealed_chapter, is_primary, quote)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                label.entity_id,
+                label.label,
+                label.kind.value,
+                label.revealed_chapter,
+                1 if label.is_primary else 0,
+                label.quote,
+            ),
+        )
+        self.conn.commit()
+        return int(cur.lastrowid or 0)
+
+    def clear_entity_labels(self, work_id: int) -> None:
+        """Drop a work's labels (derived data; extraction rebuilds them)."""
+        if not self.has_entity_labels_table():
+            return
+        self.conn.execute(
+            "DELETE FROM entity_labels WHERE entity_id IN "
+            "(SELECT id FROM nodes WHERE work_id = ?)",
+            (work_id,),
+        )
+        self.conn.commit()
+
+    def has_entity_labels_table(self) -> bool:
+        """Whether this database has the R3 `entity_labels` table.
+
+        A database written before R3 does not, and must still open and SERVE — the frozen
+        v1 baseline is exactly such a database and is opened read-only, so it cannot be
+        migrated on the fly. The label reads below therefore return empty for it and the
+        graph falls back to ``nodes.name``. Probed once and cached: the answer cannot
+        change for a live connection except via ``initialize_schema``, which resets it.
+        """
+        if self._has_labels is None:
+            row = self.conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'entity_labels'"
+            ).fetchone()
+            self._has_labels = row is not None
+        return self._has_labels
+
+    def list_entity_labels(self, entity_id: int) -> list[EntityLabel]:
+        """Every label of one entity, UNFENCED — for rebuilds and eval, not clients."""
+        if not self.has_entity_labels_table():
+            return []
+        rows = self.conn.execute(
+            "SELECT * FROM entity_labels WHERE entity_id = ? ORDER BY id", (entity_id,)
+        ).fetchall()
+        return [_label_from_row(r) for r in rows]
+
     # --- fenced reads (the spoiler fence enforced at the SQL level) ------- #
     # These are the SANCTIONED queries that query/fence.py wraps. Visibility keys on
     # revealed_chapter; edges additionally require BOTH endpoints to be revealed.
@@ -582,6 +694,91 @@ class Repository:
             (work_id, chapter),
         ).fetchall()
         return [Node(**dict(r)) for r in rows]
+
+    def list_graph_nodes_revealed(self, work_id: int, chapter: int) -> list[Node]:
+        """Nodes for the GRAPH payload: fenced first, then filtered to drawable types.
+
+        The two WHERE clauses are deliberately separate and separately commented, per
+        retrofit rule 1. The first is the SAFETY fence (``revealed_chapter <= :n``) and
+        must come first; the second is a DISPLAY filter (retrofit R3's four drawable
+        types) and is applied after it. Merging them would make it impossible to tell,
+        reading the SQL, whether a missing node was hidden for spoiler reasons or for
+        presentation reasons — and would put a display concern inside the fence.
+        """
+        rows = self.conn.execute(
+            f"""SELECT * FROM nodes
+                 WHERE work_id = ?
+                   -- FENCE (safety): the reader may not see beyond chapter :n.
+                   AND revealed_chapter <= ?
+                   -- DISPLAY (presentation, retrofit R3): only drawable types.
+                   AND type IN ({_GRAPH_TYPE_LIST})
+                 ORDER BY id""",
+            (work_id, chapter),
+        ).fetchall()
+        return [Node(**dict(r)) for r in rows]
+
+    def list_entity_labels_revealed(
+        self, work_id: int, chapter: int
+    ) -> list[EntityLabel]:
+        """Labels the reader may see at chapter N (label AND its entity revealed).
+
+        The same both-endpoints logic as node properties: a name for a character the
+        reader has not met is still a spoiler, so the entity's own reveal gates it too.
+        """
+        if not self.has_entity_labels_table():
+            return []  # pre-R3 database: no labels exist to reveal
+        rows = self.conn.execute(
+            """SELECT l.*
+                 FROM entity_labels l
+                 JOIN nodes n ON l.entity_id = n.id
+                WHERE n.work_id = ?
+                  AND l.revealed_chapter <= ?
+                  AND n.revealed_chapter <= ?
+                ORDER BY l.id""",
+            (work_id, chapter, chapter),
+        ).fetchall()
+        return [_label_from_row(r) for r in rows]
+
+    def display_names_at(self, work_id: int, chapter: int) -> dict[int, str]:
+        """entity_id -> the name to show at chapter N, fenced.
+
+        "The most recent label the reader has been given" — ordered by
+        ``revealed_chapter`` descending, then a primary label ahead of a secondary one,
+        then fuller forms ahead of shorter ones, then the longer string, so the result is
+        deterministic rather than dependent on insertion order.
+
+        Only NAMING kinds (full/short/epithet) can become a display name. A title is
+        *attached* to a person (R3 task 5), not substituted for their name: once "the
+        Warden" is linked to Orin Drask, the graph should still read "Orin Drask" and
+        carry the title alongside. Titles and descriptions therefore come back through
+        ``list_entity_labels_revealed`` but never win this query.
+        """
+        if not self.has_entity_labels_table():
+            return {}  # pre-R3 database: the graph falls back to nodes.name
+        rows = self.conn.execute(
+            """SELECT entity_id, label FROM (
+                   SELECT l.entity_id AS entity_id,
+                          l.label     AS label,
+                          ROW_NUMBER() OVER (
+                              PARTITION BY l.entity_id
+                              ORDER BY l.revealed_chapter DESC,
+                                       l.is_primary DESC,
+                                       CASE l.kind WHEN 'full' THEN 0
+                                                   WHEN 'short' THEN 1
+                                                   ELSE 2 END,
+                                       LENGTH(l.label) DESC,
+                                       l.id
+                          ) AS rank
+                     FROM entity_labels l
+                     JOIN nodes n ON l.entity_id = n.id
+                    WHERE n.work_id = ?
+                      AND l.revealed_chapter <= ?
+                      AND n.revealed_chapter <= ?
+                      AND l.kind IN ('full', 'short', 'epithet')
+               ) WHERE rank = 1""",
+            (work_id, chapter, chapter),
+        ).fetchall()
+        return {int(r["entity_id"]): str(r["label"]) for r in rows}
 
     def list_edges_revealed(self, work_id: int, chapter: int) -> list[Edge]:
         rows = self.conn.execute(

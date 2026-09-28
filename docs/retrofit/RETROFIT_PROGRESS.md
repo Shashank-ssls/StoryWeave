@@ -14,7 +14,7 @@ No phase starts until the previous one is green, committed and pushed.
 | R0 | branch, rules, baseline rerun | **green** | `4ba8f80` | [MEASURED] frozen-DB SHA-256 match · ch40 206 nodes / 1316 edges served · fence 0 violations / 105,243 elements · relation micro-F1 0.0459 · entity F1 0.5319 · D1 = 1326 fenced rows → 1316 served (10 lost) · 1307 of 1326 edges are `rule` · 160 of 162 relation FPs are Tier-1 · env gate 10/10 in both venvs | 2026-09-28 |
 | R1 | co-occurrence off + rescore on the v1 key | **green** | `8319c46` | [MEASURED] relation micro-F1 **0.0459 → 0.0000** (worse: all 5 v1 TPs were rule edges) · FP **162 → 2** (Tier-1 160 → 0) · FN 46 → 51 · ch40 edges served **1316 → 18** · isolated nodes at ch40 **0 → 186 of 206** · entity F1 unchanged at 0.5319 · D2 is now 100% of the projection loss (19 rows → 18 served) · fence 0 / 17,471 | 2026-09-28 |
 | R2 | Stage 0 cleaner | **green** | `3b91545` | [MEASURED] 0 watermark hits / 0 homoglyphs over 44 committed chapters · clean text byte-identical to pre-R2 in **0 of 44 chapters changed** · residual Greek/Cyrillic **0** · injection round-trip **1,063 hits removed, 0 failures** · Shadow Slave **[NOT MEASURED]**, text absent from this machine | 2026-09-28 |
-| R3 | 4 node types + `entity_labels` | not started | — | — | — |
+| R3 | 4 node types + `entity_labels` | **green** | (this phase) | [MEASURED] 4-type entity F1 **0.6076** strict / 0.6582 alias-aware on the PROJECTED key (different answer key — never a delta vs 0.532) · alias F1 **0.7500** (P=1.0000, R=0.6000), **over-merges 0**, under-merges 3→2 · fence **0 / 20,439** incl. 5,965 label elements, 2 label canaries fire · frozen DB serves, **0 / 95,530** · Hollow Crown digest identical · 806 mentions → 188 entities, 240 labels · title links **0 (correct: corpus has none)** | 2026-09-28 |
 | R4 | 12 relations + validator + weight (fixes D1/D2) | not started | — | — | — |
 | R5 | LLM recall pass (optional) | not started | — | — | — |
 | R6 | salience per chapter + 4-clause query + ego API (fixes D3) | not started | — | — | — |
@@ -255,3 +255,85 @@ regex-first cleaner misses them, which is why folding precedes pattern matching,
 test suite proves the wrong order fails. The 1,063-hit injection round-trip is what lets me
 claim the cleaner works without the corpus that motivated it, and the zero-diff audit is
 what lets R3 attribute its entity delta to the ontology change alone.
+
+---
+
+## R3 — four types + entity_labels · green, 2026-09-28
+
+Full evidence: `evidence/retrofit/R3_RESULT.md` (read §0 first — the scoring key changed).
+
+### Acceptance
+
+- [x] `check_local_env.py --c-drive-report` passes; C: sizes match the R0 baseline
+      (`.cache` 135.8 MB unchanged; pip/Ollama/Playwright still absent). Nothing downloaded.
+- [x] Migration up/down on a fixture DB (`test_migration_up_then_down`); up on a copy of the
+      frozen baseline wrote 293 labels / 219 entities, idempotent, down clean.
+- [x] Label-reveal fence tests pass, plus the harness surface: **0 violations over 20,439
+      elements (5,965 of them labels)**, two negative controls both firing.
+- [x] Entity P/R/F1 per type with counts, and alias P/R/F1 with over/under-merge counts,
+      in `R3_RESULT.md`.
+- [x] **Over-merges = 0.**
+- [x] Gates: ruff clean · mypy 85 files · pytest **221 passed, 6 skipped** (185 → 221).
+- [x] Commit + push.
+
+### The mapping (per the user's decision, which overrode R3 task 1)
+
+Stored `NodeType` unchanged (8 values, same CHECK, same validation); new `GraphNodeType`
+(4) is all that new extraction may write and the payload may serve; `LEGACY_TYPE_MAP`
+documents each old type's fate. Enforced in three independent places: labels prompt 4 types
+(nothing created), `add_node` rejects (nothing stored), and the payload query adds
+`type IN (...)` **after** the fence clause (nothing legacy served). No migration.
+
+### Two bugs the display filter exposed
+
+1. `nx.add_edge` silently created attribute-less **phantom nodes** for undrawn endpoints,
+   failing payload validation. Edges with undrawn endpoints are now skipped.
+2. A **pre-R3 database crashed the new label reads** (`no such table: entity_labels`) — the
+   frozen baseline is read-only and cannot be migrated on the fly. `has_entity_labels_table()`
+   probes once; such a database serves with `nodes.name` as the fallback label.
+
+### One I2 deviation, stated not buried
+
+`test_all_eight_node_types_present_by_final_chapter` asserted the Hollow Crown **payload**
+carries all 8 types — the exact thing R3 reverses. It is now
+`test_all_eight_node_types_stored_but_only_four_are_drawn`, asserting both halves (still
+stored, still fenced, only 4 drawn), which is strictly stronger. **No seeded data changed**:
+the fixture digest `e73a69c0…c482` was recorded before any R3 code and is asserted in a test.
+
+### Aliases — the R4-critical number
+
+P=1.0000 R=0.6000 **F1=0.7500**, **0 over-merges**, under-merges 3 → 2 (v1's
+`'scribe'+'sorrel'` miss fixed). Both remaining are `'captain'` ↔ `Orin Drask`, refused by
+two rules independently: `captain` is inside the hyphenated `Warden-Captain` so it is not a
+contiguous token subsequence, and it is a bare role word. All 19 whole-corpus refusals are
+listed with reasons in `R3_RESULT.md` §5.
+
+Two fixes the measurement forced: the 6-chapter window refused **16 correct** shortenings
+(`juno`→`juno stray` etc.), so it is 40 for this work in `storyweave.toml` (swept: 6/10/20/40
+→ 27/29/38/41 merges, over-merges 0 throughout); and widening it admitted
+`'girl'→'chancery girl'`, so bare person/role nouns joined the generic set.
+
+### Title linking: 0 links, correctly
+
+The corpus has **no** comma-bracketed title apposition — verified by grepping all 40
+chapters independently of the code (zero matches both directions). The first implementation
+produced two links and **both were wrong** (a possessive, "the Ninth House's"; and a fronted
+prepositional phrase, "At the Chancery, Ser Robart Kell"). Four guards later: 0 accepted, 0
+wrong. Reported as a negative result.
+
+### Viva defense
+
+R3's substance is that it narrowed what the graph draws without migrating a single row: two
+vocabularies and one documented mapping, enforced at creation, storage and serving, so the
+frozen v1 database and the Hollow Crown fixture still load and serve untouched. The phase
+also shows the measurement earning its keep three times — the chapter window was refusing 16
+real aliases, widening it exposed a latent over-merge, and the title linker's only two
+outputs were both false positives. Each was found by running the thing on real text rather
+than by reasoning about it, and the 4-type entity score is reported on its own key because a
+delta against 0.532 would be arithmetic on two different answer keys.
+
+### Next phase
+
+R4 (closed relations + validator). **No download needed**: relex is present and loads with
+`HF_HUB_OFFLINE=1`. **R4 is fully Ollama-free** — its edges come from GLiNER-RelEx plus the
+rule validator; the LLM tier is R5's and R5 is optional.

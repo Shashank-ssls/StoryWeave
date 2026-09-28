@@ -17,12 +17,20 @@ import re
 from dataclasses import dataclass, field
 
 from storyweave.config import Settings, get_settings
-from storyweave.db.models import ExtractionMethod, Mention, Node, NodeType
+from storyweave.db.models import (
+    EntityLabel,
+    ExtractionMethod,
+    LabelKind,
+    Mention,
+    Node,
+    NodeType,
+)
 from storyweave.db.repository import Repository
 from storyweave.ingest.work_config import WorkConfig
-from storyweave.nlp.cluster import cluster_mentions
+from storyweave.nlp.cluster import cluster_mentions_detailed, normalize_surface
 from storyweave.nlp.extractor import GlinerExtractor
 from storyweave.nlp.labels import DEFAULT_LABELS, LABEL_TO_TYPE
+from storyweave.nlp.titles import find_title_links
 
 
 @dataclass
@@ -31,12 +39,21 @@ class ExtractionReport:
     mentions_count: int = 0
     entities_count: int = 0
     per_type: dict[NodeType, int] = field(default_factory=dict)
+    labels_count: int = 0
+    title_links: int = 0
+    titles_rejected: int = 0
+    #: abbreviation merges made, and candidates refused (with reasons), for the report
+    alias_merges: int = 0
+    alias_under_merges: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
         by_type = ", ".join(f"{t.value}:{n}" for t, n in sorted(self.per_type.items()))
         return (
             f"work id={self.work_id}: {self.mentions_count} mentions -> "
-            f"{self.entities_count} entities ({by_type})"
+            f"{self.entities_count} entities ({by_type}); "
+            f"{self.labels_count} labels, {self.alias_merges} alias merges, "
+            f"{len(self.alias_under_merges)} refused, "
+            f"{self.title_links} title links ({self.titles_rejected} refused)"
         )
 
 
@@ -77,6 +94,7 @@ def extract_work(
     cfg_settings = settings or get_settings()
     ext = extractor or build_extractor(cfg, cfg_settings)
 
+    repo.clear_entity_labels(work_id)  # before clear_nodes: labels FK-cascade off nodes
     repo.clear_mentions(work_id)
     repo.clear_nodes(work_id)  # cascades mention.node_id -> NULL too
     report = ExtractionReport(work_id=work_id)
@@ -116,7 +134,16 @@ def extract_work(
             report.mentions_count += 1
 
     # Cluster the persisted mentions into canonical entities.
-    for cluster in cluster_mentions(repo.list_mentions(work_id)):
+    outcome = cluster_mentions_detailed(repo.list_mentions(work_id), cfg.clustering)
+    report.alias_merges = len(outcome.merges)
+    report.alias_under_merges = [
+        f"{d.short!r} -/-> {d.host!r}: {d.reason}" for d in outcome.under_merges
+    ]
+    #: entity_id -> the surface strings naming it, for title apposition matching
+    names_by_entity: dict[int, set[str]] = {}
+    _node_types: dict[int, NodeType] = {}
+
+    for cluster in outcome.clusters:
         rep = cluster.representative
         evidence = _snippet(chapter_text.get(rep.chapter_id, ""), rep.char_start, rep.char_end)
         node_id = repo.add_node(
@@ -137,6 +164,70 @@ def extract_work(
                 repo.set_mention_node(member.id, node_id)
         report.entities_count += 1
         report.per_type[cluster.type] = report.per_type.get(cluster.type, 0) + 1
+
+        # --- entity_labels: the canonical name plus every merged surface variant ---
+        # Each label's revealed_chapter is the chapter that surface FIRST APPEARS in, not
+        # the entity's reveal chapter: the reader learns "Drask" when they read "Drask",
+        # which may be chapters after they met "Warden-Captain Orin Drask".
+        surfaces: dict[str, tuple[int, Mention]] = {}
+        for member in cluster.members:
+            surface = member.surface.strip()
+            prior = surfaces.get(surface)
+            if prior is None or member.chapter_ordinal < prior[0]:
+                surfaces[surface] = (member.chapter_ordinal, member)
+        names_by_entity[node_id] = set(surfaces)
+        _node_types[node_id] = cluster.type
+
+        canonical_norm = normalize_surface(cluster.name)
+        for surface, (first_chapter, member) in sorted(surfaces.items()):
+            is_primary = surface == cluster.name
+            # A surface with fewer words than the canonical name is a shortening of it;
+            # same length means it is the same name differently punctuated/cased.
+            kind = (
+                LabelKind.FULL
+                if is_primary or normalize_surface(surface) == canonical_norm
+                else LabelKind.SHORT
+            )
+            repo.add_entity_label(
+                EntityLabel(
+                    entity_id=node_id,
+                    label=surface,
+                    kind=kind,
+                    revealed_chapter=first_chapter,
+                    is_primary=is_primary,
+                    quote=_snippet(
+                        chapter_text.get(member.chapter_id, ""),
+                        member.char_start,
+                        member.char_end,
+                    ),
+                )
+            )
+            report.labels_count += 1
+
+    # --- titles: attach to the person the text appositions them to, fenced on that
+    # chapter. Characters only - an organization does not hold a title.
+    character_names = {
+        nid: names
+        for nid, names in names_by_entity.items()
+        if _node_types.get(nid) is NodeType.CHARACTER
+    }
+    links, rejected = find_title_links(
+        character_names, {c.ordinal: c.clean_text for c in chapters}
+    )
+    for link in links:
+        repo.add_entity_label(
+            EntityLabel(
+                entity_id=link.entity_id,
+                label=link.title,
+                kind=LabelKind.TITLE,
+                revealed_chapter=link.chapter,  # the reveal: when the text connects them
+                is_primary=False,
+                quote=link.quote,  # mandatory for a title; R4's validator reads it
+            )
+        )
+        report.labels_count += 1
+        report.title_links += 1
+    report.titles_rejected = len(rejected)
 
     return report
 

@@ -118,7 +118,14 @@ def seed_hollow_crown(repo: Repository) -> int:
                 revealed_chapter=chapter,
                 extraction_method=GLINER,
                 evidence_span=evidence,
-            )
+            ),
+            # Hollow Crown's fixture predates retrofit R3 and deliberately contains one
+            # node of each of the eight v1 types, including the four that are no longer
+            # drawable. Its rows must stay byte-identical (rule I2) because the fence's
+            # own regression suite depends on them, so this is the one sanctioned use of
+            # the legacy escape hatch. The nodes still load and still fence correctly;
+            # the four non-drawable ones are simply never served in a graph payload.
+            allow_legacy_type=True,
         )
 
     for src, tgt, relation, tier, revealed, method, evidence in _EDGES:

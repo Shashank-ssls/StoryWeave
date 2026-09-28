@@ -1,0 +1,40 @@
+﻿python : 
+F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv-ml\Lib\site-packages\huggingface_hub\utils\_validators.py:189: 
+UserWarning: The `resume_download` argument is deprecated and ignored in `snapshot_download`. Downloads always resume 
+whenever possible.
+At line:1 char:420
++ ... .py | Select-Object -Last 1; python tools/build_r3_db.py 2>&1 | Tee-O ...
++                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...never possible.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+source : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\samples\the-ninth-house
+output : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\retrofit\ninth_house_r3.db
+config : abbreviation window=6, merge_abbreviations=True, cooccurrence_enabled=False
+ingest : work 'the-ninth-house' (id=1): +40 chapters, ~0 updated, =0 unchanged, +163 chunks, 0 cruft lines removed
+
+Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]
+Fetching 4 files: 100%|██████████| 4/4 [00:00<00:00, 998.70it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits 
+and faster downloads.
+extract: work id=1: 817 mentions -> 206 entities (Character:67, Item:55, Organization:21, Place:63); 247 labels, 27 alias merges, 32 refused, 2 title links (1 refused)
+
+entities by type:
+  Character        67
+  Place            63
+  Item             55
+  Organization     21
+
+entity_labels by kind:
+  full            218
+  short            27
+  title             2
+
+alias merges made   : 27
+alias merges refused: 32
+  rule 3                         16
+  rule 2                         12
+  rule 4                          3
+  ambiguous                       1
+

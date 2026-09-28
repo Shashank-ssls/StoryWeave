@@ -12,6 +12,9 @@ world-truth. Everything a client can see passes through here. The fence keys on
   (e.g. Wren == Prince Caelum revealed at ch2; Zhou Mingrui ⇄ Klein at ch1).
 * **Node properties** — visible when the property AND its node are revealed (the
   property-level both-rule), so a secret stat on a hidden character stays hidden.
+* **Entity labels** — visible when the label AND its entity are revealed (retrofit
+  R3; the same both-rule as properties). A name is spoiler-bearing: linking the title
+  "the Warden" to a person at chapter 5 must not show at chapter 4.
 * **Search hits** — visible when ``chapter_ordinal <= N`` (chunk reveal key).
 
 Enforcement lives at the data layer: SQL ``WHERE``/``JOIN`` clauses in
@@ -27,7 +30,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from storyweave.db.models import Arc, Edge, Node, NodeProperty
+from storyweave.db.models import Arc, Edge, EntityLabel, Node, NodeProperty
 from storyweave.db.repository import Repository
 
 if TYPE_CHECKING:  # pragma: no cover - typing only (avoids a runtime import cycle)
@@ -45,6 +48,30 @@ def visible_edges(repo: Repository, work_id: int, chapter: int) -> list[Edge]:
     Tier-3 identity edges are fenced by exactly this rule — no special-casing.
     """
     return repo.list_edges_revealed(work_id, chapter)
+
+
+def visible_graph_nodes(repo: Repository, work_id: int, chapter: int) -> list[Node]:
+    """Nodes for the GRAPH payload: fenced, then narrowed to the four drawable types.
+
+    Separate from :func:`visible_nodes` on purpose. ``visible_nodes`` is the fence and
+    nothing else, and other surfaces (entity detail, eval) still want every revealed
+    node whatever its type. This one additionally applies retrofit R3's DISPLAY filter,
+    as a second, separately-commented SQL clause after the fence clause — never merged
+    with it (retrofit rule 1).
+    """
+    return repo.list_graph_nodes_revealed(work_id, chapter)
+
+
+def visible_entity_labels(
+    repo: Repository, work_id: int, chapter: int
+) -> list[EntityLabel]:
+    """Entity labels the reader may see at chapter N (label + entity revealed)."""
+    return repo.list_entity_labels_revealed(work_id, chapter)
+
+
+def visible_display_names(repo: Repository, work_id: int, chapter: int) -> dict[int, str]:
+    """entity_id -> the name to show at chapter N. Fenced; see ``display_names_at``."""
+    return repo.display_names_at(work_id, chapter)
 
 
 def visible_node_properties(
