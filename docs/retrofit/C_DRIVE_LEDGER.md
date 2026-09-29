@@ -8,9 +8,11 @@ written down, so this file is the exception list.
 inspection. Every size and timestamp below is **[MEASURED]**, read off the machine, not
 estimated. Nothing was deleted or modified during the audit.
 
-**Total attributable to this project: 281,361 bytes (0.27 MB) of files, plus 3 shortcuts,
-1 registry uninstall key, and 1 user-PATH entry.** No service, no scheduled task, no
-firewall rule, no HKLM change.
+**Total attributable to this project: 281,361 bytes (0.27 MB) of files, plus 3 shortcuts
+and 1 registry uninstall key.** No service, no scheduled task, no firewall rule, no HKLM
+change. The user-PATH entry (item 7) was **removed on 2026-09-29** — see §2.5.
+
+**Open items: 1, 2, 3, 4, 5, 6. Retired: 7.**
 
 > **Honesty note.** Two of the entries below were NOT in my earlier report of the Ollama
 > install, and are recorded here because the audit found them, not because they were
@@ -28,9 +30,9 @@ firewall rule, no HKLM change.
 | 2 | app logs + local sqlite | `C:\Users\space\AppData\Local\Ollama\` | 276,845 B | Ollama tray app + server | 2026-09-29 |
 | 3 | Start Menu folder + shortcut | `%APPDATA%\...\Start Menu\Programs\Ollama\` | 732 B | `OllamaSetup.exe` | 2026-09-29 |
 | 4 | Start Menu shortcut | `%APPDATA%\...\Start Menu\Programs\Ollama.lnk` | 732 B | `OllamaSetup.exe` | 2026-09-29 |
-| 5 | **Startup shortcut (auto-start)** | `%APPDATA%\...\Programs\Startup\Ollama.lnk` | 768 B | `OllamaSetup.exe` | 2026-09-29 |
+| 5 | **Startup shortcut (auto-start)** — still ENABLED, see §5 | `%APPDATA%\...\Programs\Startup\Ollama.lnk` | 768 B | `OllamaSetup.exe` | 2026-09-29 |
 | 6 | Uninstall registry key | `HKCU\...\Uninstall\{44E83376-...}_is1` | key | `OllamaSetup.exe` | 2026-09-29 |
-| 7 | **User PATH entry** `F:\Tools\Ollama` | `HKCU\Environment\Path` | value | `OllamaSetup.exe` | 2026-09-29 |
+| 7 | ~~User PATH entry `F:\Tools\Ollama`~~ — **REMOVED 2026-09-29** | `HKCU\Environment\Path` | — | `OllamaSetup.exe` | 2026-09-29 |
 | 8 | Claude Code session data | `C:\Users\space\.claude\projects\F--Dev-...-StoryWeave\` | 118.35 MB | Claude Code harness | 2026-06-21 |
 | 9 | Claude Code scratchpad | `%LOCALAPPDATA%\Temp\claude\F--Dev-...-StoryWeave\` | 2.64 MB | Claude Code harness | 2026-09-27 |
 
@@ -120,8 +122,36 @@ This matters for two reasons:
    running shell* (whose PATH was captured before the install), so I reported ollama was
    not on PATH. It is — in every **new** shell.
 
-*Remove:* strip the single `F:\Tools\Ollama` element from `HKCU\Environment\Path`, leaving
-every other element intact. The uninstall script does exactly that and nothing more.
+#### Status: REMOVED 2026-09-29 — [MEASURED]
+
+Removed with `tools/uninstall_project_c_traces.ps1 -Only 7 -Apply`, after a dry run of the
+same command printed the before/after. The raw value was backed up first to
+`.local\hkcu_path_backup_20260929.txt` (989 chars, on F:, gitignored).
+
+| | before | after |
+| --- | ---: | ---: |
+| PATH elements | 32 | **31** |
+| contains `F:\Tools\Ollama` | yes | **no** |
+| value kind | `ExpandString` (REG_EXPAND_SZ) | **`ExpandString`** — preserved |
+
+Exactly one element changed. The other 31 — including the two empty elements the value
+already contained — were written back byte-for-byte; the script filters on an exact match
+and never rebuilds the list. Reading and writing through
+`RegistryValueOptions::DoNotExpandEnvironmentNames` is what keeps `REG_EXPAND_SZ` from
+being flattened into a literal `REG_SZ` with today's `%USERPROFILE%` baked in.
+
+**Verified in two genuinely new shells** (`Start-Process powershell -NoProfile -File`):
+
+```
+NEW shell WITHOUT dev.ps1 :  NOT FOUND
+NEW shell WITH .\dev.ps1  :  FOUND F:\Tools\Ollama\ollama.exe
+```
+
+That is the intended end state: ollama is reachable only inside a `dev.ps1` session, where
+`OLLAMA_MODELS` also points at F:. Items 1–6 were confirmed untouched by the same run.
+
+*Restore, if ever needed:* re-append `F:\Tools\Ollama` to `HKCU\Environment\Path`, or
+restore the whole value from the backup file above.
 
 **No `OLLAMA_*` variables were persisted.** `OLLAMA_MODELS` is set per-session by
 `dev.ps1` / `dev.bat` only, which is what keeps models on F:.
@@ -164,9 +194,16 @@ Confirmed still **absent**, as the local-only rule requires: `%LOCALAPPDATA%\pip
 default** and requires `-Apply` to change anything. It has **not** been run with `-Apply`.
 
 ```powershell
-.\tools\uninstall_project_c_traces.ps1            # prints what it would do
-.\tools\uninstall_project_c_traces.ps1 -Apply     # actually removes
+.\tools\uninstall_project_c_traces.ps1                 # dry run, all items
+.\tools\uninstall_project_c_traces.ps1 -Only 7         # dry run, one item
+.\tools\uninstall_project_c_traces.ps1 -Only 7 -Apply  # remove that one item
+.\tools\uninstall_project_c_traces.ps1 -Apply          # remove everything in the ledger
 ```
+
+`-Only <id>` restricts the run to the given ledger item(s); everything else prints as
+`skipped (out of scope)`. Retiring one item at a time is the normal case — the ledger is
+a list of independent traces, not a single all-or-nothing install. Item 7 was retired this
+way on 2026-09-29, and the run confirmed items 1–6 untouched.
 
 For a complete removal of Ollama including the F: program directory, prefer the vendor
 uninstaller `F:\Tools\Ollama\unins000.exe`, then run this script to sweep the C: leftovers
@@ -174,9 +211,28 @@ it leaves behind (`.ollama` and `%LOCALAPPDATA%\Ollama` survive a normal uninsta
 
 ---
 
-## 5. Recommendation — the Startup shortcut (not done; your call)
+## 5. Item 5 — the Startup shortcut: reported disabled, NOT CONFIRMED
 
-**Recommendation: yes, disable it, and do it before R5.**
+**Status 2026-09-29: the user reports disabling it via Task Manager. This audit cannot
+confirm that, and the evidence says it is still enabled.** Recorded as-measured rather
+than as-reported, per retrofit rule 9.
+
+What was checked, and what it showed:
+
+| probe | result |
+| --- | --- |
+| `StartupApproved\StartupFolder` under **HKCU** | key exists, **0 values** — no Ollama entry |
+| `StartupApproved\StartupFolder` under **HKLM** | key exists, **0 values** |
+| `StartupApproved\Run` / `Run32`, HKCU + HKLM | 3 / 0 / 2 / 1 values, **none matching `*llama*`** |
+| the shortcut file itself | present, attributes `Archive`, `LastWriteTime` still 2026-09-29 11:09:31 (install time, unmodified) |
+
+Disabling a Startup-**folder** item in Task Manager writes a value named for the shortcut
+into `HKCU\...\Explorer\StartupApproved\StartupFolder`, with bit 0 of the first byte set.
+There is no such value, so either the toggle did not apply, or a different item was
+toggled. **Please re-check before relying on it.** The shortcut is therefore still listed
+as an open ledger item.
+
+**Recommendation stands: disable it before R5.**
 
 `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\Ollama.lnk` launches
 `F:\Tools\Ollama\ollama app.exe` at every login. That tray app starts its own server in a
@@ -204,4 +260,5 @@ Either way, start the server explicitly for R5 instead:
 ollama serve
 ```
 
-I have **not** applied this. It is a change to C: and this task is report-only.
+I have **not** applied this myself: it is a C: change outside the single item (7) this
+session was scoped to remove.

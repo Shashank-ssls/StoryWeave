@@ -31,13 +31,21 @@
 .PARAMETER Apply
     Actually perform the removals. Without it the script only reports.
 
+.PARAMETER Only
+    Restrict the run to the given ledger item id(s), 1-7. Everything else is skipped and
+    reported as skipped. Retiring ONE ledger item at a time is the normal case: the
+    ledger is a list of independent traces, not a single all-or-nothing install.
+
 .EXAMPLE
     .\tools\uninstall_project_c_traces.ps1
-    .\tools\uninstall_project_c_traces.ps1 -Apply
+    .\tools\uninstall_project_c_traces.ps1 -Only 7
+    .\tools\uninstall_project_c_traces.ps1 -Only 7 -Apply
 #>
 [CmdletBinding()]
 param(
-    [switch]$Apply
+    [switch]$Apply,
+    [ValidateRange(1, 7)]
+    [int[]]$Only
 )
 
 Set-StrictMode -Version Latest
@@ -56,6 +64,12 @@ $Targets = @(
     [pscustomobject]@{ Id = 5; Kind = 'File'; Path = (Join-Path $StartMenu 'Startup\Ollama.lnk'); Note = 'auto-start shortcut' }
 )
 
+function Test-InScope {
+    param([int]$Id)
+    if ($null -eq $Only -or $Only.Count -eq 0) { return $true }
+    return $Only -contains $Id
+}
+
 function Get-SizeBytes {
     param([string]$Path)
     if (-not (Test-Path -LiteralPath $Path)) { return 0 }
@@ -70,9 +84,11 @@ function Get-SizeBytes {
 }
 
 $mode = if ($Apply) { 'APPLY  (changes WILL be made)' } else { 'DRY RUN (nothing will change)' }
+$scope = if ($null -eq $Only -or $Only.Count -eq 0) { 'all ledger items (1-7)' } else { "ONLY item(s) $($Only -join ', ')" }
 Write-Host ''
 Write-Host ('=' * 78)
 Write-Host "  Project C: trace removal -- $mode"
+Write-Host "  Scope: $scope"
 Write-Host ('=' * 78)
 Write-Host ''
 
@@ -87,6 +103,10 @@ if ($running.Count -gt 0) {
 # --- files and folders ------------------------------------------------------------
 $total = 0L
 foreach ($t in $Targets) {
+    if (-not (Test-InScope -Id $t.Id)) {
+        Write-Host ("[{0}] skipped (out of scope)  {1}" -f $t.Id, $t.Path)
+        continue
+    }
     if (Test-Path -LiteralPath $t.Path) {
         $bytes = Get-SizeBytes -Path $t.Path
         $total += $bytes
@@ -104,7 +124,10 @@ foreach ($t in $Targets) {
 
 # --- registry: uninstall key ------------------------------------------------------
 Write-Host ''
-if (Test-Path -LiteralPath $UninstallKey) {
+if (-not (Test-InScope -Id 6)) {
+    Write-Host '[6] skipped (out of scope)'
+}
+elseif (Test-Path -LiteralPath $UninstallKey) {
     $dn = (Get-ItemProperty -LiteralPath $UninstallKey).DisplayName
     Write-Host ("[6] REMOVE  {0}" -f $UninstallKey)
     Write-Host ("         uninstall entry for '{0}'" -f $dn)
@@ -121,7 +144,7 @@ else {
 # Read the RAW (unexpanded) value so a REG_EXPAND_SZ PATH is not flattened -- writing
 # back an expanded PATH would silently bake in today's values of %USERPROFILE% etc.
 Write-Host ''
-$envKey = 'HKCU:\Environment'
+$skipPath = -not (Test-InScope -Id 7)
 $raw = $null
 try {
     $rk = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $false)
@@ -133,7 +156,10 @@ try {
 }
 catch { $raw = $null }
 
-if ([string]::IsNullOrEmpty($raw)) {
+if ($skipPath) {
+    Write-Host '[7] skipped (out of scope)'
+}
+elseif ([string]::IsNullOrEmpty($raw)) {
     Write-Host '[7] absent  HKCU\Environment\Path has no value'
 }
 else {
@@ -145,9 +171,19 @@ else {
     }
     else {
         Write-Host ("[7] REMOVE  '{0}' from HKCU\Environment\Path" -f $PathEntryToRemove)
-        Write-Host ("         {0} element(s); {1} other element(s) kept untouched" -f $removedCount, $keep.Count)
+        Write-Host ("         value kind: {0} (preserved on write)" -f $kind)
+        Write-Host ("         {0} element(s) removed; {1} other element(s) kept untouched" -f $removedCount, $keep.Count)
+        $newValue = ($keep -join ';')
+        Write-Host ''
+        Write-Host '         --- BEFORE (raw, unexpanded) ---'
+        foreach ($e in $parts) {
+            $mark = if ($e.Trim().TrimEnd('\') -eq $PathEntryToRemove.TrimEnd('\')) { ' <== REMOVE' } else { '' }
+            Write-Host ("           {0}{1}" -f $e, $mark)
+        }
+        Write-Host '         --- AFTER (raw, unexpanded) ---'
+        foreach ($e in $keep) { Write-Host ("           {0}" -f $e) }
+        Write-Host ''
         if ($Apply) {
-            $newValue = ($keep -join ';')
             $rk = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true)
             $rk.SetValue('Path', $newValue, $kind)
             $rk.Close()
