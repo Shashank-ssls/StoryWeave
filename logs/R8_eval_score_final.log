@@ -1,0 +1,82 @@
+﻿REFERENCE ANNOTATION: model-generated (GPT-5), one fresh session per chapter, single run each; paragraph indices, alias positions and evidence spans verified and corrected by hand; ch09 reindexed from 0- to 1-indexed. Every score below is AGREEMENT between two systems (StoryWeave v1 and GPT-5), NOT accuracy against human ground truth. See evidence/annotation/PROVENANCE.md.
+
+============================================================================
+VALIDATION
+============================================================================
+
+ch09.json — 22 entities, 21 relations, 7 paragraphs
+  parses as JSON: yes
+  all checks passed
+  excluded from scoring: 0 entities, 0 relations, 0 aliases, 0 rejected_mentions
+  uncertain records (excluded from all scoring): 4
+
+ch17.json — 15 entities, 18 relations, 7 paragraphs
+  parses as JSON: yes
+  all checks passed
+  excluded from scoring: 0 entities, 0 relations, 0 aliases, 0 rejected_mentions
+  uncertain records (excluded from all scoring): 11
+
+ch37.json — 9 entities, 12 relations, 9 paragraphs
+  parses as JSON: yes
+  all checks passed
+  excluded from scoring: 0 entities, 0 relations, 0 aliases, 0 rejected_mentions
+  uncertain records (excluded from all scoring): 8
+
+============================================================================
+MATCH RULES (stated verbatim, as required)
+============================================================================
+
+normalise(s): Unicode NFKC; replace the curly apostrophe U+2019 with '; casefold; strip surrounding whitespace and the characters "'`.,;:!?()[]{}<>; collapse every internal whitespace run to one space; drop a leading article 'the ', 'a ' or 'an '; drop a trailing possessive "'s".
+
+PRIMARY (strict): a v1 entity matches a reference entity iff normalise(v1.name) == normalise(reference.name) AND v1.type == reference.type. One-to-one: each reference entity is consumed by at most one v1 entity. SECONDARY (alias-aware, reported alongside, never instead): additionally allow a match when normalise(v1.name) equals the normalisation of ANY of the reference entity's surface_forms, with the type still required to be equal.
+
+A v1 edge matches a reference relation iff their source entities matched, their target entities matched, and the relation string is equal. Reference relations with directed=true are matched on the ORDERED pair; with directed=false, either order is accepted. Endpoints that could not be matched to a v1 entity make the relation unmatchable, and it is counted as a reference-side miss.
+
+v1's entity set for a chapter = every canonical node with at least one row in
+`mentions` for that chapter (repository.list_mentions). v1's relation set is
+reported two ways: `chapter_local` = edges with first_seen_chapter == N, and
+`cumulative` = every edge whose BOTH endpoints are mentioned in chapter N
+regardless of when v1 first recorded it. Neither is privileged; the strict one
+penalises v1 for relations it recorded in an earlier chapter, the generous one
+credits v1 for relations this chapter's text may not support.
+
+============================================================================
+ENTITY DETECTION — agreement with the model-generated reference
+============================================================================
+
+--- chapter 9 (v1: 19 entities, reference: 22) ---
+  [strict] TP=12 FP=7 FN=10  P=0.6316 R=0.5455 F1=0.5854
+      Ability       TP=0   FP=0   FN=1   P=0.000 R=0.000 F1=0.000
+      Character     TP=6   FP=3   FN=3   P=0.667 R=0.667 F1=0.667
+      Concept       TP=0   FP=0   FN=1   P=0.000 R=0.000 F1=0.000
+      Item          TP=0   FP=3   FN=1   P=0.000 R=0.000 F1=0.000
+      Organization  TP=1   FP=0   FN=1   P=1.000 R=0.500 F1=0.667
+      Place         TP=5   FP=1   FN=2   P=0.833 R=0.714 F1=0.769
+      Title         TP=0   FP=0   FN=1   P=0.000 R=0.000 F1=0.000
+  [alias_aware] TP=13 FP=6 FN=9  P=0.6842 R=0.5909 F1=0.6341
+    v1 entities with no reference counterpart (strict FP):
+      'ledger' (Item)
+      'Corwin' (Character)
+      'Drask' (Character)
+      'Captain' (Character)
+      'coin purse' (Item)
+      'Across the Quarter' (Place)
+      'certain goods' (Item)
+    reference entities v1 did not produce (strict FN):
+      'Orin Drask' (Character)
+      'Warden-Captain' (Title)
+      'Warden' (Concept)
+      'Sorrel' (Character)
+      "Undercroft's hidden door" (Item)
+      "fishmonger's stall" (Place)
+      "Warden's Discipline" (Ability)
+      'Vell Hall' (Place)
+      'House Vell' (Organization)
+      'Corwin Vell' (Character)
+
+--- chapter 17 (v1: 15 entities, reference: 15) ---
+  [strict] TP=7 FP=8 FN=8  P=0.4667 R=0.4667 F1=0.4667
+      Character     TP=5   FP=2   FN=1   P=0.714 R=0.833 F1=0.769
+      Event         TP=0   FP=0   FN=1   P=0.000 R=0.000 F1=0.000
+      Item          TP=0   FP=1   FN=0   P=0.000 R=0.000 F1=0.000
+      Organization  TP=1   FP=1   FN=3   P=0.500 R=0.250 F1=0.333

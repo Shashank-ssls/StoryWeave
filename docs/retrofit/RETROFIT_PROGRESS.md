@@ -22,8 +22,29 @@ No phase starts until the previous one is green, committed and pushed.
 | R5 | LLM recall pass (optional) | not started | — | — | — |
 | R6 | salience per chapter + 4-clause query + ego API (fixes D3) | **green** | `c372ac4` | [MEASURED] **cast dial binds**: ch40 (12,7)/(24,21)/(53,27) for 20/50/all — v1's was a no-op · **D3 fixed**: status count 17/86/191 by chapter, was a constant · salience **P@10 0.8750, MAP 0.9033** vs v1 degree 0.4000/0.4414 — but **AUC 0.6667 defined at only 1 of 3 chapters** · dots ch10/20/40 **10/7/12** (predicted 8–20/15–20/20 → two missed, mechanism in §3, NOT re-ordered to fit) · fence **0 / 28,046** over 12,660 queries, controls fire · found the API silently dropping `grade`+`quote` from every edge | 2026-09-29 |
 | R6 | salience per chapter + 4-clause query + ego API (fixes D3) | not started | — | — | — |
-| R7 | frontend readability, timeline removed | not started | — | — | — |
-| R8 | evaluation + projection check | not started | — | — | — |
+| R7 | frontend readability, timeline removed | **green** | `a851fd3` | [MEASURED] ch40 default **20 dots / 18 lines**, all 20 names legible, nothing clipped (R6: 12 dots) · **Playwright 13 failed / 88 passed → 101 passed / 0 failed** · first-load `/graph` requests **3 → 1** · relation labels drawn at ch40 **4 of 13**, rest on zoom/focus (band was ≥80% → **MISSED**) · INFERRED share ch10/ch20 **100%/100%** (band 70–100% → in) · fit zoom ch20 0.688 → **0.889**, ch40 0.745 → **0.774** via `orientToViewport` · **9 defects fixed**, 8 found by looking · fence **0 / 28,869** · timeline gone (grep proof) | 2026-09-30 |
+| R8 | evaluation + projection check | **green** | `pending` | [MEASURED] v1 vs final like-for-like: fence **0/105,243 → 0/28,869** · relation FP **162 → 7** · relation micro-F1 **0.0459 → 0.0000** · entity F1 (v1 key) **0.5319 → 0.5682** · ch40 payload **152/976 → 20/18** · median `/graph` ch40 **28.2ms → 11.3ms** · own keys: entity 4-type **0.6250**, alias **0.7500** with **0 over-merges**, salience P@10 **0.8750** / MAP **0.9033** (AUC defined at 1 of 3 chapters) · **19 bands pre-registered, 6 inside, 12 outside, 1 mis-specified, 0 edited** · 2 stop conditions fired, 2 honoured | 2026-09-30 |
+
+### R8 — final evaluation
+
+`evidence/retrofit/EVAL_RETROFIT.md` and `evidence/retrofit/PROJECTION_CHECK.md`. Scope was
+reduced for time: **no new pipeline run**, so the final DB is R5's extraction plus R6's
+salience, and extraction throughput / peak RSS are marked **[NOT MEASURED]** rather than
+estimated.
+
+**The result in one line: the retrofit made the graph readable, the fence provable and the
+false positives nearly disappear, and it did not make relation extraction work.**
+
+The withdrawn 0.20–0.35 relation-F1 projection is recorded in PROJECTION_CHECK.md §0 with a
+sourcing caveat: the planning document it came from is **not in this repository**, and
+neither are `PREDICTIONS.md` or `EVALUATION_PLAN.md` (both named in the R8 phase doc;
+`git log --all` shows no commit ever added them). That row is the only one whose source is
+not a committed artifact, and it says so.
+
+Pre-registration tally across R4–R7: **19 bands, 6 inside, 12 outside, 1 mis-specified, 0
+edited after the fact.** The ones that landed inside are counts of things the system emits;
+the ones that missed are almost all quality measures. The system was consistently predicted
+to be more accurate than it is, in writing, before each measurement.
 
 Minimum viable demo path if time runs out: R0 → R1 → R4 → R6 → R7. R2, R3, R5 are
 accuracy work; skipping them is a documented scope cut, not a failure.

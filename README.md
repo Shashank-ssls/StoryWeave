@@ -53,6 +53,70 @@ appears on the exact chapter the text reveals it, and never before.
 
 ---
 
+## Measured results (retrofit v2, branch `retrofit/v2-core`)
+
+**StoryWeave reads a novel and builds a graph of who is who and how they are connected,
+where every node and edge carries the chapter at which a *reader* learns it. Ask it
+anything at chapter *n* and it answers with only what a reader at chapter *n* could know —
+enforced in one SQL chokepoint, not by hiding things in the browser. Every relationship it
+draws comes with the book's own sentence as its citation, or it is not drawn.**
+
+Full evaluation: [`evidence/retrofit/EVAL_RETROFIT.md`](evidence/retrofit/EVAL_RETROFIT.md) ·
+every pre-registered prediction vs its measurement:
+[`evidence/retrofit/PROJECTION_CHECK.md`](evidence/retrofit/PROJECTION_CHECK.md).
+
+### The graph, at chapter 40
+
+| | | |
+| --- | --- | --- |
+| ![Default view at chapter 40](evidence/retrofit/shots/R7/desktop_ch40_default.png) | ![Side panel with the book's own sentence](evidence/retrofit/shots/R7/desktop_ch40_panel.png) | ![Chapter 1: nothing to show yet](evidence/retrofit/shots/R7/desktop_ch1_low_edges.png) |
+| **`desktop_ch40_default.png`** — twenty named people, an always-visible legend, and three controls that change the *payload*, not just the picture. | **`desktop_ch40_panel.png`** — click anyone: the relation in plain words and the book's own sentence, with its chapter. | **`desktop_ch1_low_edges.png`** — chapter 1: "No main cast yet". The system declining to show what it has not earned. |
+
+All 15 screenshots (desktop + phone, chapters 10/20/40, default and "Everyone") are in
+[`evidence/retrofit/shots/R7/`](evidence/retrofit/shots/R7/), with the DOM counts behind
+every one in `capture_log.txt`.
+
+### Headline numbers — all [MEASURED]
+
+| quantity | v1 | after the retrofit |
+| --- | ---: | ---: |
+| **spoiler-fence violations** | 0 / 105,243 elements | **0 / 28,869** over 12,660 queries, both negative controls firing |
+| relation false positives (v1 answer key) | 162 | **7** |
+| relation micro-F1 (v1 answer key) | 0.0459 | **0.0000** |
+| entity F1 (v1 8-type key) | 0.5319 | **0.5682** |
+| entity F1 (4-type key, its own) | — | **0.6250** |
+| alias F1 / **over-merges** | — | **0.7500** / **0** |
+| default view at chapter 40 | 152 dots / 976 lines | **20 / 18** |
+| median `/graph` at chapter 40 | 28.2 ms | **11.3 ms** |
+
+**Read that second-to-last row honestly: relation F1 went to zero, and that is the real
+result.** All five of v1's "true positives" came from a co-occurrence rule that emitted
+1,307 edges to catch 5 — and caused 160 of the 162 false positives. Deleting it deleted
+them. Five phases then traced exactly why the replacement finds so little: the endpoints
+that go missing are **pronouns**. English writes *"she had served the house since before
+the fire"*, and a citation rule that demands both names in one sentence rejects a true
+relationship because of the word "she". Coreference resolution is the top item of future
+work, and the reasoning is in `EVAL_RETROFIT.md` §4.
+
+What did work: the fence is provable at forty chapters across thirteen surfaces, over-merges
+of separate identities have never occurred, and the graph went from 976 unlabelled lines to
+18 labelled ones that a non-technical reader can actually follow.
+
+### Running the demo
+
+```powershell
+.\dev.ps1                                  # activates .venv, pins every cache inside the repo
+python tools/check_local_env.py            # must print PASS before anything else
+storyweave seed-demo --no-ninth-house      # seeds the CC0 sample novel
+python -m uvicorn storyweave.api.app:app --port 8000
+cd frontend; npm install; npm run dev      # http://localhost:5173
+```
+
+To browse the evaluated Ninth House graph instead, point the API at it first:
+`$env:STORYWEAVE_DB_PATH = "data/retrofit/ninth_house_r6.db"`.
+
+---
+
 ## How a fresh clone behaves
 
 The clone gives you all the **source code** plus the **CC0 sample novel**. Several things are
