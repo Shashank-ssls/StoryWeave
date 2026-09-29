@@ -742,3 +742,57 @@ priced above, not recommended.
 
 ruff clean · mypy 75 files · pytest **287 passed, 6 skipped** (270 → 287, 17 new LLM
 tests) · C: **byte-identical to the ledger** after 236 model calls.
+
+---
+
+## R6 — PRE-REGISTRATION (written before any scoring, never edited)
+
+### Baseline to beat — v1's degree-based ranking, [MEASURED] in R0/R1
+
+| metric | v1 (R0) | after R1 (edges removed) |
+| --- | ---: | ---: |
+| P@10 | 0.4000 | 0.3000 |
+| MAP | 0.4414 | 0.3668 |
+
+R1 recorded *why* this is the wrong signal: the ranker scores by fenced payload degree,
+so when the co-occurrence edges went away the ranking collapsed with them. R6 therefore
+**excludes edge degree from the feature set entirely** (a change from
+`docs/retrofit/R6_salience_and_query_layer.md`, which lists "STATED degree ≤ n" as a
+feature). Ranking a cast by how many edges we managed to extract makes the display filter
+a hostage to extraction recall, which R4–R5 measured at close to zero.
+
+### Features — fixed here, equal weights, never tuned on the annotation
+
+Each min-max normalised within that chapter's candidate set, then summed with **equal
+weight**: lifetime mentions ≤ n · recent mentions (last 10% of chapters ≤ n, min 3) ·
+chapter spread · has proper name · speaks dialogue. Ties broken by `first_seen_chapter`,
+then id. Every feature uses only chapters ≤ n (rule 7).
+
+Significance gate for Characters: eligible only with a proper name AND (≥3 chapters OR
+≥5 mentions) by chapter n.
+
+### Predictions — [PREDICTED]
+
+| quantity | predicted band |
+| --- | --- |
+| salience **AUC** vs the annotation's `significant` flag | **0.70 – 0.92** |
+| salience **P@10** | **0.55 – 0.85** |
+| default-view **dots** at ch10 (Characters, cast 20) | **8 – 20** |
+| default-view **dots** at ch20 | **15 – 20** |
+| default-view **dots** at ch40 | **20** (the cast dial should bind) |
+
+Reasoning, one line: mention frequency is the strongest cheap proxy for importance in
+prose and the significance gate removes the one-line walk-ons that drag precision down,
+so this should beat v1's 0.40 P@10 comfortably; the dots prediction is really a test that
+the cast dial binds at all, which in v1 it did not (D3, a client-side no-op).
+
+### Clause order fixed before implementation
+
+```
+fence: e.revealed_chapter <= n AND both endpoints revealed   -- SAFETY
+display: salience rank <= cast_size                          -- display
+display: node.type IN (...)                                  -- display
+display: grade IN ('STATED','INFERRED'), SAME_AS STATED only -- display
+```
+
+The fence clauses come first and are never merged with the display clauses (rule 1).
