@@ -1,0 +1,62 @@
+﻿python : 
+F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv-ml\Lib\site-packages\huggingface_hub\utils\_validators.py:189: 
+UserWarning: The `resume_download` argument is deprecated and ignored in `snapshot_download`. Downloads always resume 
+whenever possible.
+At line:1 char:340
++ ... _OFFLINE=1; python tools/build_r3_db.py --out data/retrofit/ninth_hou ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...never possible.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+[transformers] The tokenizer you are loading from 'microsoft/deberta-v3-small' with an incorrect regex pattern: 
+https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/discussions/84#69121093e8b480e709447d5e. This 
+will lead to incorrect tokenization. You should set the `fix_mistral_regex=True` flag when loading this tokenizer to 
+fix this issue.
+source : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\samples\the-ninth-house
+output : data\retrofit\ninth_house_r4b_entities.db
+config : abbreviation window=40, merge_abbreviations=True, cooccurrence_enabled=False
+ingest : work 'the-ninth-house' (id=1): +40 chapters, ~0 updated, =0 unchanged, +163 chunks, 0 cruft lines removed
+extract: work id=1: 815 mentions -> 191 entities (Character:53, Item:54, Organization:25, Place:59); 245 labels, 40 alias merges, 19 refused, 0 title links (0 refused), 9 group-noun org promotions
+
+entities by type:
+  Place            59
+  Item             54
+  Character        53
+  Organization     25
+
+entity_labels by kind:
+  full            204
+  short            41
+
+alias merges made   : 40
+alias merges refused: 19
+  rule 2                         12
+  rule 4                          4
+  ambiguous                       3
+
+every refusal, in full:
+  'aldenreach' -/-> 'aldenreach orphan house': rule 2: short form appears first (ch1 before ch20)
+  'archive' -/-> 'rebuilt archive': rule 2: short form appears first (ch29 before ch39)
+  'bone market' -/-> 'beneath the bone market': rule 2: short form appears first (ch3 before ch6)
+  'captain' -/-> None: rule 4: stop-word-only shortening
+  'child' -/-> None: rule 4: stop-word-only shortening
+  'court' -/-> 'ashen court': rule 2: short form appears first (ch35 before ch36)
+  'girl' -/-> None: rule 4: stop-word-only shortening
+  'household' -/-> None: ambiguous: 2 candidate full names (ashcombe household, regent's household)
+  'kaelen' -/-> 'kaelen the unmaker': rule 2: short form appears first (ch19 before ch25)
+  'keep' -/-> 'aldenreach keep': rule 2: short form appears first (ch14 before ch35)
+  'king' -/-> None: rule 4: stop-word-only shortening
+  'letter' -/-> 'half-finished letter': rule 2: short form appears first (ch1 before ch32)
+  'marrow' -/-> 'marrow seal': rule 2: short form appears first (ch20 before ch24)
+  'ninth house' -/-> 'old ninth house': rule 2: short form appears first (ch1 before ch19)
+  'quarter' -/-> None: ambiguous: 2 candidate full names (across the quarter, salt quarter)
+  'regency' -/-> 'regency council': rule 2: short form appears first (ch1 before ch2)
+  'regent' -/-> 'lord regent': rule 2: short form appears first (ch28 before ch35)
+  'salt tithe' -/-> 'salt tithe rolls': rule 2: short form appears first (ch2 before ch12)
+  'vell' -/-> None: ambiguous: 5 candidate full names (corwin vell, duchess meraude vell, s. vell, sable vell, tobin vell)
+
+title links accepted: 0
+title links refused : 0
+
+stored node types: {'Character': 53, 'Organization': 25, 'Place': 59, 'Item': 54}

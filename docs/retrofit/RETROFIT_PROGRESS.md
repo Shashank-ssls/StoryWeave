@@ -16,6 +16,7 @@ No phase starts until the previous one is green, committed and pushed.
 | R2 | Stage 0 cleaner | **green** | `3b91545` | [MEASURED] 0 watermark hits / 0 homoglyphs over 44 committed chapters · clean text byte-identical to pre-R2 in **0 of 44 chapters changed** · residual Greek/Cyrillic **0** · injection round-trip **1,063 hits removed, 0 failures** · Shadow Slave **[NOT MEASURED]**, text absent from this machine | 2026-09-28 |
 | R3 | 4 node types + `entity_labels` | **green** | `69a95e7` | [MEASURED] 4-type entity F1 **0.6076** strict / 0.6582 alias-aware on the PROJECTED key (different answer key — never a delta vs 0.532) · alias F1 **0.7500** (P=1.0000, R=0.6000), **over-merges 0**, under-merges 3→2 · fence **0 / 20,439** incl. 5,965 label elements, 2 label canaries fire · frozen DB serves, **0 / 95,530** · Hollow Crown digest identical · 806 mentions → 188 entities, 240 labels · title links **0 (correct: corpus has none)** | 2026-09-28 |
 | R4 | 12 relations + validator + weight (fixes D1/D2) | **green (STOP CONDITION HIT)** | `f1204f0` | [MEASURED] STATED micro-F1 **0.0000** (TP=0 FP=3 FN=23) vs pre-registered 0.05–0.20 · STATED+INFERRED also 0.0000, so the both-names rule costs **0** recall · v1-key like-for-like 0.0000 (FP 2→3, FN 51) · 306 proposals → **64 edges, 37 STATED**, all ring 2, **0 ring-1 social edges** · rejections 137 ENDPOINT_NOT_STORED / 44 DOMAIN_RANGE / 0 all other codes · recall accounting 28 out-of-scope / 12 NO_PROPOSAL / 6 ENTITY_MISSING (all one entity) / 2 WRONG_TYPE / 1 VALIDATOR_REJECTED / 1 INFERRED / 1 FOUND · curated 12 of 19 would be accepted, 1 STATED · **D1/D2 fixed**: ch40 976 drawable rows → 976 payload edges, edge 1325 SECRET_IDENTITY preserved · fence 0 / 24,450 | 2026-09-29 |
+| R4b | Organization recall (head-noun rule) | **green (partial: entities yes, relations no)** | `PENDING` | [MEASURED] `ENTITY_MISSING` **6 → 0, stage eliminated** · but `NO_PROPOSAL` **12 → 18**, relation micro-F1 **0.0000 → 0.0000** · entity F1 4-type **0.6076 → 0.6250** (TP 24→25, **FP unchanged 17**) · Organization F1 **0.400 → 0.545** · over-merges **0 → 0** · 9 rule promotions → **3 new Organizations, 0 false positives, 0 lost** · 4 label-prompt candidates measured, **none recovered the class** · relation build bit-identical to R4 | 2026-09-29 |
 | R5 | LLM recall pass (optional) | not started | — | — | — |
 | R6 | salience per chapter + 4-clause query + ego API (fixes D3) | not started | — | — | — |
 | R7 | frontend readability, timeline removed | not started | — | — | — |
@@ -440,3 +441,72 @@ set-equality test at seven chapters.
 R5 (LLM recall pass) is now clearly aimed: 12 of 51 gold relations are `NO_PROPOSAL` on
 pairs whose entities already exist. It remains optional, and the alternative — fixing the
 entity miss that costs six relations — may be cheaper. **Decide before starting.**
+
+---
+
+## R4b — Organization recall · green (partial), 2026-09-29
+
+Full evidence: `evidence/retrofit/R4b_RESULT.md`. Logs: `evidence/retrofit/logs/R4b_*.log`.
+
+**Scoped to fix the CLASS behind R4's `ENTITY_MISSING`, not the instance.** The gold
+annotation was never opened during diagnosis, the prompt probe or the rule design, and no
+gold entity is named anywhere in the rule, its vocabulary or the config.
+
+### The result, stated plainly
+
+**The general fix works at the entity layer and recovers ZERO of the six relations.**
+`ENTITY_MISSING` goes 6 → 0 — the stage is eliminated — but those six relations move into
+`NO_PROPOSAL` (12 → 18) rather than becoming true positives, and relation micro-F1 is
+0.0000 before and after. The rule was **not** narrowed to make the number move.
+
+**Why**: GLiNER-RelEx runs its OWN NER internally and is never given the graph's entity
+list, so it reproduces the identical nested-span error one stage later — it sees
+`Salt Quarter` (a Place) and never proposes a relation whose endpoint is
+`Salt Quarter watch`. Fixing the entity layer cannot reach the relation layer while the
+two stages independently repeat the same step. That is the phase's real finding.
+
+### Diagnosis, from the text only
+
+The whole class is **5 phrases in 40 chapters**, each occurring once. Three already
+became Organizations; two produced **no mention at all**, so the fault is upstream of
+clustering, significance and the four-type write check — all three are excluded by
+measurement, not argument.
+
+**The label prompt is not the fix, and that was measured before any rule was written**:
+four candidate prompt additions ("group of people", "military unit", "institution", all
+three) were run over every relevant sentence and **none recovered the class**; the
+nested-Place reading survived every one.
+
+### What the rule created — all 40 chapters
+
+9 rule-derived mentions → **3 new Organization nodes, 0 false positives, 0 lost**:
+`Salt Quarter watch`, `Cassian's guard`, `Vell family`. The other 6 promotions reinforced
+organizations the model had already found. Entity F1 0.6076 → 0.6250 with **false
+positives unchanged at 17**, Organization F1 0.400 → 0.545, **over-merges 0**.
+
+Two false-positive iterations are recorded in the report with their general fixes
+(`'A ring'` → exclude sentence-initial determiners; `'And House'`/`'If House'` → exclude
+the whole closed class of English function words, because a proper modifier is an
+OPEN-class word). Neither fix blacklists the word that broke.
+
+### Gates
+
+ruff `All checks passed!` · mypy `Success: no issues found in 69 source files` ·
+pytest **266 passed, 6 skipped** (253 → 266, 13 new).
+
+### Viva defense
+
+R4b refused the cheap win. The brief's risk was a rule shaped around one gold entity, so
+the diagnosis ran with the annotation closed and the design was decided by a NEGATIVE
+measurement — four prompt additions, none of which recovered the class. The shipped rule
+is a general English construction whose two false positives were fixed by widening a
+guard to a closed word class rather than blacklisting the offenders. The outcome is
+honest in both directions: the entity layer genuinely improved and the relation score did
+not move one thousandth, and the reason why is a specific, testable defect in how relex
+is wired.
+
+### Next
+
+Before R5: relex is handed raw text and re-discovers entities it should be told about.
+Feeding the graph's known spans into relation extraction is the change that converts these
+six, and it is likely cheaper than the LLM pass. **Decide between the two before starting.**

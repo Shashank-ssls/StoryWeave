@@ -1,0 +1,62 @@
+﻿python : 
+F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv-ml\Lib\site-packages\huggingface_hub\utils\_validators.py:189: 
+UserWarning: The `resume_download` argument is deprecated and ignored in `snapshot_download`. Downloads always resume 
+whenever possible.
+At line:1 char:340
++ ... _OFFLINE=1; python tools/r4b_prompt_probe.py > evidence/retrofit/logs ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...never possible.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+[transformers] The tokenizer you are loading from 'microsoft/deberta-v3-small' with an incorrect regex pattern: 
+https://huggingface.co/mistralai/Mistral-Small-3.1-24B-Instruct-2503/discussions/84#69121093e8b480e709447d5e. This 
+will lead to incorrect tokenization. You should set the `fix_mistral_regex=True` flag when loading this tokenizer to 
+fix this issue.
+probing 5 sentences, threshold=0.5
+
+==========================================================================
+shipped R3 set   labels=['Character', 'person', 'Place', 'location', 'Organization', 'faction', 'Item']
+==========================================================================
+  "Cassian's guard"              MISSED
+  'Ashcombe household'           MISSED
+  "The Regent's household"       MISSED
+  'Salt Quarter watch'           'Salt Quarter'->Place
+  'The chancery'                 MISSED
+
+==========================================================================
++ 'group of people'   labels=['Character', 'person', 'Place', 'location', 'Organization', 'faction', 'Item', 'group of people']
+==========================================================================
+  "Cassian's guard"              MISSED
+  'Ashcombe household'           'Ashcombe household'->Organization
+  "The Regent's household"       MISSED
+  'Salt Quarter watch'           'Salt Quarter'->Place
+  'The chancery'                 MISSED
+
+==========================================================================
++ 'military unit'   labels=['Character', 'person', 'Place', 'location', 'Organization', 'faction', 'Item', 'military unit']
+==========================================================================
+  "Cassian's guard"              MISSED
+  'Ashcombe household'           MISSED
+  "The Regent's household"       MISSED
+  'Salt Quarter watch'           'Salt Quarter'->Place
+  'The chancery'                 MISSED
+
+==========================================================================
++ 'institution'   labels=['Character', 'person', 'Place', 'location', 'Organization', 'faction', 'Item', 'institution']
+==========================================================================
+  "Cassian's guard"              MISSED
+  'Ashcombe household'           MISSED
+  "The Regent's household"       MISSED
+  'Salt Quarter watch'           'Salt Quarter'->Place
+  'The chancery'                 MISSED
+
+==========================================================================
++ all three   labels=['Character', 'person', 'Place', 'location', 'Organization', 'faction', 'Item', 'group of people', 'military unit', 'institution']
+==========================================================================
+  "Cassian's guard"              MISSED
+  'Ashcombe household'           MISSED
+  "The Regent's household"       MISSED
+  'Salt Quarter watch'           'Salt Quarter'->Place
+  'The chancery'                 MISSED
+

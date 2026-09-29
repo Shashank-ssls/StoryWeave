@@ -1,0 +1,594 @@
+﻿REFERENCE ANNOTATION: model-generated (GPT-5), one fresh session per chapter, single run each; paragraph indices, alias positions and evidence spans verified and corrected by hand; ch09 reindexed from 0- to 1-indexed. Every score below is AGREEMENT between two systems (StoryWeave v1 and GPT-5), NOT accuracy against human ground truth. See evidence/annotation/PROVENANCE.md.
+
+============================================================================
+VALIDATION
+============================================================================
+  4-TYPE PROJECTION ch09: dropped 3 reference entities whose type is not drawable: 'Warden-Captain' (Title), 'Warden' (Concept), "Warden's Discipline" (Ability)
+
+ch09.json — 22 entities, 21 relations, 7 paragraphs
+  parses as JSON: yes
+  all checks passed
+  excluded from scoring: 3 entities, 0 relations, 0 aliases, 0 rejected_mentions
+  uncertain records (excluded from all scoring): 4
+  4-TYPE PROJECTION ch17: dropped 3 reference entities whose type is not drawable: 'Vell Masque' (Event), 'Lord' (Title), 'Scribe' (Title)
+
+ch17.json — 15 entities, 18 relations, 7 paragraphs
+  parses as JSON: yes
+  all checks passed
+  excluded from scoring: 3 entities, 0 relations, 0 aliases, 0 rejected_mentions
+  uncertain records (excluded from all scoring): 11
+  4-TYPE PROJECTION ch37: dropped 2 reference entities whose type is not drawable: 'Wanderer' (Concept), 'Choir initiate' (Concept)
+
+ch37.json — 9 entities, 12 relations, 9 paragraphs
+  parses as JSON: yes
+  all checks passed
+  excluded from scoring: 2 entities, 0 relations, 0 aliases, 0 rejected_mentions
+  uncertain records (excluded from all scoring): 8
+
+============================================================================
+MATCH RULES (stated verbatim, as required)
+============================================================================
+
+normalise(s): Unicode NFKC; replace the curly apostrophe U+2019 with '; casefold; strip surrounding whitespace and the characters "'`.,;:!?()[]{}<>; collapse every internal whitespace run to one space; drop a leading article 'the ', 'a ' or 'an '; drop a trailing possessive "'s".
+
+PRIMARY (strict): a v1 entity matches a reference entity iff normalise(v1.name) == normalise(reference.name) AND v1.type == reference.type. One-to-one: each reference entity is consumed by at most one v1 entity. SECONDARY (alias-aware, reported alongside, never instead): additionally allow a match when normalise(v1.name) equals the normalisation of ANY of the reference entity's surface_forms, with the type still required to be equal.
+
+A v1 edge matches a reference relation iff their source entities matched, their target entities matched, and the relation string is equal. Reference relations with directed=true are matched on the ORDERED pair; with directed=false, either order is accepted. Endpoints that could not be matched to a v1 entity make the relation unmatchable, and it is counted as a reference-side miss.
+
+v1's entity set for a chapter = every canonical node with at least one row in
+`mentions` for that chapter (repository.list_mentions). v1's relation set is
+reported two ways: `chapter_local` = edges with first_seen_chapter == N, and
+`cumulative` = every edge whose BOTH endpoints are mentioned in chapter N
+regardless of when v1 first recorded it. Neither is privileged; the strict one
+penalises v1 for relations it recorded in an earlier chapter, the generous one
+credits v1 for relations this chapter's text may not support.
+
+============================================================================
+ENTITY DETECTION — agreement with the model-generated reference
+============================================================================
+
+--- chapter 9 (v1: 18 entities, reference: 19) ---
+  [strict] TP=11 FP=7 FN=8  P=0.6111 R=0.5789 F1=0.5946
+      Character     TP=6   FP=3   FN=3   P=0.667 R=0.667 F1=0.667
+      Item          TP=0   FP=3   FN=1   P=0.000 R=0.000 F1=0.000
+      Organization  TP=0   FP=0   FN=2   P=0.000 R=0.000 F1=0.000
+      Place         TP=5   FP=1   FN=2   P=0.833 R=0.714 F1=0.769
+  [alias_aware] TP=12 FP=6 FN=7  P=0.6667 R=0.6316 F1=0.6486
+    v1 entities with no reference counterpart (strict FP):
+      'ledger' (Item)
+      'Corwin' (Character)
+      'Drask' (Character)
+      'Captain' (Character)
+      'coin purse' (Item)
+      'Across the Quarter' (Place)
+      'certain goods' (Item)
+    reference entities v1 did not produce (strict FN):
+      'Orin Drask' (Character)
+      'Salt Quarter watch' (Organization)
+      'Sorrel' (Character)
+      "Undercroft's hidden door" (Item)
+      "fishmonger's stall" (Place)
+      'Vell Hall' (Place)
+      'House Vell' (Organization)
+      'Corwin Vell' (Character)
+
+--- chapter 17 (v1: 15 entities, reference: 12) ---
+  [strict] TP=7 FP=8 FN=5  P=0.4667 R=0.5833 F1=0.5185
+      Character     TP=5   FP=2   FN=1   P=0.714 R=0.833 F1=0.769
+      Item          TP=0   FP=1   FN=0   P=0.000 R=0.000 F1=0.000
+      Organization  TP=1   FP=1   FN=3   P=0.500 R=0.250 F1=0.333
+      Place         TP=1   FP=4   FN=1   P=0.200 R=0.500 F1=0.286
+  [alias_aware] TP=7 FP=8 FN=5  P=0.4667 R=0.5833 F1=0.5185
+    v1 entities with no reference counterpart (strict FP):
+      'Chancery' (Organization)
+      'House Ashcombe' (Place)
+      'Tobin Vell' (Character)
+      'Vell' (Character)
+      'House Vell' (Place)
+      'invitation' (Item)
+      'House Oswald' (Place)
+      'rooms' (Place)
+    reference entities v1 did not produce (strict FN):
+      'House Vell' (Organization)
+      'House Oswald' (Organization)
+      'Tobin' (Character)
+      'House Ashcombe' (Organization)
+      'Chancery' (Place)
+    same name, DIFFERENT type (counted as both FP and FN above):
+      'Chancery': v1=Organization reference=Place
+      'House Ashcombe': v1=Place reference=Organization
+      'House Vell': v1=Place reference=Organization
+      'House Oswald': v1=Place reference=Organization
+
+--- chapter 37 (v1: 8 entities, reference: 7) ---
+  [strict] TP=6 FP=2 FN=1  P=0.7500 R=0.8571 F1=0.8000
+      Character     TP=2   FP=2   FN=1   P=0.500 R=0.667 F1=0.571
+      Organization  TP=1   FP=0   FN=0   P=1.000 R=1.000 F1=1.000
+      Place         TP=3   FP=0   FN=0   P=1.000 R=1.000 F1=1.000
+  [alias_aware] TP=7 FP=1 FN=0  P=0.8750 R=1.0000 F1=0.9333
+    v1 entities with no reference counterpart (strict FP):
+      'Mira' (Character)
+      'Wanderer' (Character)
+    reference entities v1 did not produce (strict FN):
+      'Mira Quell' (Character)
+
+--- pooled over chapters 9, 17, 37 ---
+  [strict] TP=24 FP=17 FN=14  P=0.5854 R=0.6316 F1=0.6076
+      Character     TP=13  FP=7   FN=5   P=0.650 R=0.722 F1=0.684
+      Item          TP=0   FP=4   FN=1   P=0.000 R=0.000 F1=0.000
+      Organization  TP=2   FP=1   FN=5   P=0.667 R=0.286 F1=0.400
+      Place         TP=9   FP=5   FN=3   P=0.643 R=0.750 F1=0.692
+  [alias_aware] TP=26 FP=15 FN=12  P=0.6341 R=0.6842 F1=0.6582
+
+============================================================================
+ALIAS CLUSTERING — pairwise same-cluster agreement
+============================================================================
+Universe = surface strings BOTH sides know (v1 saw them as mentions in that
+chapter, and the reference lists them as a name, surface_form or alias).
+
+--- chapter 9: 15 shared surface strings, 105 pairs ---
+  TP=1 FP=0 FN=2 TN=102
+  P=1.0000 R=0.3333 F1=0.5000
+  over-merges (v1 joined what the reference separates): 0
+  under-merges (reference joined what v1 separates): 2
+      'captain' + 'drask' — reference groups both under 'Orin Drask'; v1 keeps 'Captain' and 'Drask' apart
+      'captain' + 'orin drask' — reference groups both under 'Orin Drask'; v1 keeps 'Captain' and 'Drask' apart
+
+--- chapter 17: 13 shared surface strings, 78 pairs ---
+  TP=1 FP=0 FN=0 TN=77
+  P=1.0000 R=1.0000 F1=1.0000
+  over-merges (v1 joined what the reference separates): 0
+  under-merges (reference joined what v1 separates): 0
+
+--- chapter 37: 8 shared surface strings, 28 pairs ---
+  TP=1 FP=0 FN=0 TN=27
+  P=1.0000 R=1.0000 F1=1.0000
+  over-merges (v1 joined what the reference separates): 0
+  under-merges (reference joined what v1 separates): 0
+
+--- pooled --- TP=3 FP=0 FN=2  P=1.0000 R=0.6000 F1=0.7500
+
+============================================================================
+RELATIONS — agreement with the model-generated reference
+============================================================================
+
+######## variant: chapter_local ########
+
+--- chapter 9 (v1: 0 edges, reference: 21 relations, 16 unmatchable) ---
+  micro: TP=0 FP=0 FN=21  P=0.0000 R=0.0000 F1=0.0000
+  micro, counting ONLY reference relations whose endpoints v1 found (narrower, reported alongside): FN=5 P=0.0000 R=0.0000 F1=0.0000
+      HasAbility       TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      HasTitle         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      LeaderOf         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      LocatedIn        TP=0   FP=0    FN=6   P=0.000 R=0.000 F1=0.000
+      MemberOf         TP=0   FP=0    FN=5   P=0.000 R=0.000 F1=0.000
+      RelatedTo        TP=0   FP=0    FN=5   P=0.000 R=0.000 F1=0.000
+      Respects         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      Serves           TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+  macro-F1 over 8 relation types: 0.0000
+  micro-F1: 0.0000
+      tier 1: TP=0 FP=0 FN=19 P=0.000 R=0.000 F1=0.000
+      tier 2: TP=0 FP=0 FN=2 P=0.000 R=0.000 F1=0.000
+    reference relations that could not be matched (an endpoint is not in v1's entity set):
+      Orin Drask -LeaderOf-> Salt Quarter watch [source 'Orin Drask' and target 'Salt Quarter watch' not found by v1]
+      Orin Drask -HasTitle-> Warden-Captain [endpoint missing from entities[]]
+      Casimir Lowe -MemberOf-> Salt Quarter watch [target 'Salt Quarter watch' not found by v1]
+      Ettie Marsh -MemberOf-> Salt Quarter watch [target 'Salt Quarter watch' not found by v1]
+      Pryn Voss -MemberOf-> Salt Quarter watch [target 'Salt Quarter watch' not found by v1]
+      Juno Stray -MemberOf-> Salt Quarter watch [target 'Salt Quarter watch' not found by v1]
+      Salt Quarter watch -LocatedIn-> Salt Quarter [source 'Salt Quarter watch' not found by v1]
+      Undercroft -RelatedTo-> Undercroft's hidden door [target "Undercroft's hidden door" not found by v1]
+      Undercroft's hidden door -RelatedTo-> fishmonger's stall [source "Undercroft's hidden door" and target "fishmonger's stall" not found by v1]
+      Juno Stray -RelatedTo-> Undercroft's hidden door [target "Undercroft's hidden door" not found by v1]
+      Juno Stray -HasAbility-> Warden's Discipline [endpoint missing from entities[]]
+      Orin Drask -Respects-> Juno Stray [source 'Orin Drask' not found by v1]
+      Hask -MemberOf-> House Vell [target 'House Vell' not found by v1]
+      Hask -Serves-> House Vell [target 'House Vell' not found by v1]
+      Hask -RelatedTo-> Vell Hall [target 'Vell Hall' not found by v1]
+      Hask -RelatedTo-> Corwin Vell [target 'Corwin Vell' not found by v1]
+    reference relations v1 lacks (FN):
+      Casimir Lowe -LocatedIn-> eastern docks
+      Ettie Marsh -LocatedIn-> market row
+      Juno Stray -LocatedIn-> Bone Market
+      Hask -LocatedIn-> Bone Market
+      the trader -LocatedIn-> Bone Market
+      Orin Drask -LeaderOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Orin Drask -HasTitle-> Warden-Captain [unmatchable: endpoint not found by v1]
+      Casimir Lowe -MemberOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Ettie Marsh -MemberOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Pryn Voss -MemberOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Juno Stray -MemberOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Salt Quarter watch -LocatedIn-> Salt Quarter [unmatchable: endpoint not found by v1]
+      Undercroft -RelatedTo-> Undercroft's hidden door [unmatchable: endpoint not found by v1]
+      Undercroft's hidden door -RelatedTo-> fishmonger's stall [unmatchable: endpoint not found by v1]
+      Juno Stray -RelatedTo-> Undercroft's hidden door [unmatchable: endpoint not found by v1]
+      Juno Stray -HasAbility-> Warden's Discipline [unmatchable: endpoint not found by v1]
+      Orin Drask -Respects-> Juno Stray [unmatchable: endpoint not found by v1]
+      Hask -MemberOf-> House Vell [unmatchable: endpoint not found by v1]
+      Hask -Serves-> House Vell [unmatchable: endpoint not found by v1]
+      Hask -RelatedTo-> Vell Hall [unmatchable: endpoint not found by v1]
+      Hask -RelatedTo-> Corwin Vell [unmatchable: endpoint not found by v1]
+
+--- chapter 17 (v1: 0 edges, reference: 18 relations, 12 unmatchable) ---
+  micro: TP=0 FP=0 FN=18  P=0.0000 R=0.0000 F1=0.0000
+  micro, counting ONLY reference relations whose endpoints v1 found (narrower, reported alongside): FN=6 P=0.0000 R=0.0000 F1=0.0000
+      AffiliatedWith   TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      Fears            TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      HasTitle         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      LocatedIn        TP=0   FP=0    FN=2   P=0.000 R=0.000 F1=0.000
+      MemberOf         TP=0   FP=0    FN=3   P=0.000 R=0.000 F1=0.000
+      ParticipatedIn   TP=0   FP=0    FN=3   P=0.000 R=0.000 F1=0.000
+      RelatedTo        TP=0   FP=0    FN=5   P=0.000 R=0.000 F1=0.000
+      Respects         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      Sibling          TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+  macro-F1 over 9 relation types: 0.0000
+  micro-F1: 0.0000
+      tier 1: TP=0 FP=0 FN=15 P=0.000 R=0.000 F1=0.000
+      tier 2: TP=0 FP=0 FN=3 P=0.000 R=0.000 F1=0.000
+    reference relations that could not be matched (an endpoint is not in v1's entity set):
+      House Vell -ParticipatedIn-> Vell Masque [endpoint missing from entities[]]
+      Vell Masque -LocatedIn-> Aldenreach [endpoint missing from entities[]]
+      Lord Fennick Oswald -MemberOf-> House Oswald [target 'House Oswald' not found by v1]
+      Brenna Oswald -MemberOf-> House Oswald [target 'House Oswald' not found by v1]
+      House Oswald -MemberOf-> Council [source 'House Oswald' not found by v1]
+      House Vell -AffiliatedWith-> House Ashcombe [source 'House Vell' and target 'House Ashcombe' not found by v1]
+      Brenna Oswald -ParticipatedIn-> Vell Masque [endpoint missing from entities[]]
+      Lord Fennick Oswald -ParticipatedIn-> Vell Masque [endpoint missing from entities[]]
+      Sorrel -LocatedIn-> Chancery [target 'Chancery' not found by v1]
+      Sorrel -HasTitle-> Scribe [endpoint missing from entities[]]
+      House Vell -RelatedTo-> House Oswald [source 'House Vell' and target 'House Oswald' not found by v1]
+      Brenna Oswald -RelatedTo-> House Vell [target 'House Vell' not found by v1]
+    reference relations v1 lacks (FN):
+      Lord Fennick Oswald -Sibling-> Brenna Oswald
+      Brenna Oswald -RelatedTo-> Corwin
+      Lord Fennick Oswald -RelatedTo-> Corwin
+      Brenna Oswald -Respects-> Corwin
+      Lord Fennick Oswald -Fears-> Corwin
+      Lord Fennick Oswald -RelatedTo-> Brenna Oswald
+      House Vell -ParticipatedIn-> Vell Masque [unmatchable: endpoint not found by v1]
+      Vell Masque -LocatedIn-> Aldenreach [unmatchable: endpoint not found by v1]
+      Lord Fennick Oswald -MemberOf-> House Oswald [unmatchable: endpoint not found by v1]
+      Brenna Oswald -MemberOf-> House Oswald [unmatchable: endpoint not found by v1]
+      House Oswald -MemberOf-> Council [unmatchable: endpoint not found by v1]
+      House Vell -AffiliatedWith-> House Ashcombe [unmatchable: endpoint not found by v1]
+      Brenna Oswald -ParticipatedIn-> Vell Masque [unmatchable: endpoint not found by v1]
+      Lord Fennick Oswald -ParticipatedIn-> Vell Masque [unmatchable: endpoint not found by v1]
+      Sorrel -LocatedIn-> Chancery [unmatchable: endpoint not found by v1]
+      Sorrel -HasTitle-> Scribe [unmatchable: endpoint not found by v1]
+      House Vell -RelatedTo-> House Oswald [unmatchable: endpoint not found by v1]
+      Brenna Oswald -RelatedTo-> House Vell [unmatchable: endpoint not found by v1]
+
+--- chapter 37 (v1: 0 edges, reference: 12 relations, 10 unmatchable) ---
+  micro: TP=0 FP=0 FN=12  P=0.0000 R=0.0000 F1=0.0000
+  micro, counting ONLY reference relations whose endpoints v1 found (narrower, reported alongside): FN=2 P=0.0000 R=0.0000 F1=0.0000
+      LocatedIn        TP=0   FP=0    FN=3   P=0.000 R=0.000 F1=0.000
+      MemberOf         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      Protects         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      RelatedTo        TP=0   FP=0    FN=6   P=0.000 R=0.000 F1=0.000
+      Respects         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+  macro-F1 over 5 relation types: 0.0000
+  micro-F1: 0.0000
+      tier 1: TP=0 FP=0 FN=10 P=0.000 R=0.000 F1=0.000
+      tier 2: TP=0 FP=0 FN=2 P=0.000 R=0.000 F1=0.000
+    reference relations that could not be matched (an endpoint is not in v1's entity set):
+      Mira Quell -LocatedIn-> Undercroft [source 'Mira Quell' not found by v1]
+      Mira Quell -MemberOf-> Choir [source 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Thessaly [source 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Sorrel [source 'Mira Quell' not found by v1]
+      Mira Quell -Respects-> Sorrel [source 'Mira Quell' not found by v1]
+      Sorrel -Protects-> Mira Quell [target 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Thessaly [source 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Wanderer [endpoint missing from entities[]]
+      Mira Quell -RelatedTo-> Thornmere [source 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Choir initiate [endpoint missing from entities[]]
+    reference relations v1 lacks (FN):
+      Choir -LocatedIn-> Undercroft
+      Grey Road -LocatedIn-> Undercroft
+      Mira Quell -LocatedIn-> Undercroft [unmatchable: endpoint not found by v1]
+      Mira Quell -MemberOf-> Choir [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Thessaly [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Sorrel [unmatchable: endpoint not found by v1]
+      Mira Quell -Respects-> Sorrel [unmatchable: endpoint not found by v1]
+      Sorrel -Protects-> Mira Quell [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Thessaly [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Wanderer [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Thornmere [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Choir initiate [unmatchable: endpoint not found by v1]
+
+--- pooled [chapter_local] --- TP=0 FP=0 FN=51
+  micro P=0.0000 R=0.0000 F1=0.0000   macro-F1 over 13 relation types: 0.0000
+      AffiliatedWith   TP=0   FP=0    FN=1   F1=0.000
+      Fears            TP=0   FP=0    FN=1   F1=0.000
+      HasAbility       TP=0   FP=0    FN=1   F1=0.000
+      HasTitle         TP=0   FP=0    FN=2   F1=0.000
+      LeaderOf         TP=0   FP=0    FN=1   F1=0.000
+      LocatedIn        TP=0   FP=0    FN=11  F1=0.000
+      MemberOf         TP=0   FP=0    FN=9   F1=0.000
+      ParticipatedIn   TP=0   FP=0    FN=3   F1=0.000
+      Protects         TP=0   FP=0    FN=1   F1=0.000
+      RelatedTo        TP=0   FP=0    FN=16  F1=0.000
+      Respects         TP=0   FP=0    FN=3   F1=0.000
+      Serves           TP=0   FP=0    FN=1   F1=0.000
+      Sibling          TP=0   FP=0    FN=1   F1=0.000
+      tier 1: TP=0 FP=0 FN=44 F1=0.000
+      tier 2: TP=0 FP=0 FN=7 F1=0.000
+
+######## variant: cumulative ########
+
+--- chapter 9 (v1: 0 edges, reference: 21 relations, 16 unmatchable) ---
+  micro: TP=0 FP=0 FN=21  P=0.0000 R=0.0000 F1=0.0000
+  micro, counting ONLY reference relations whose endpoints v1 found (narrower, reported alongside): FN=5 P=0.0000 R=0.0000 F1=0.0000
+      HasAbility       TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      HasTitle         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      LeaderOf         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      LocatedIn        TP=0   FP=0    FN=6   P=0.000 R=0.000 F1=0.000
+      MemberOf         TP=0   FP=0    FN=5   P=0.000 R=0.000 F1=0.000
+      RelatedTo        TP=0   FP=0    FN=5   P=0.000 R=0.000 F1=0.000
+      Respects         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      Serves           TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+  macro-F1 over 8 relation types: 0.0000
+  micro-F1: 0.0000
+      tier 1: TP=0 FP=0 FN=19 P=0.000 R=0.000 F1=0.000
+      tier 2: TP=0 FP=0 FN=2 P=0.000 R=0.000 F1=0.000
+    reference relations that could not be matched (an endpoint is not in v1's entity set):
+      Orin Drask -LeaderOf-> Salt Quarter watch [source 'Orin Drask' and target 'Salt Quarter watch' not found by v1]
+      Orin Drask -HasTitle-> Warden-Captain [endpoint missing from entities[]]
+      Casimir Lowe -MemberOf-> Salt Quarter watch [target 'Salt Quarter watch' not found by v1]
+      Ettie Marsh -MemberOf-> Salt Quarter watch [target 'Salt Quarter watch' not found by v1]
+      Pryn Voss -MemberOf-> Salt Quarter watch [target 'Salt Quarter watch' not found by v1]
+      Juno Stray -MemberOf-> Salt Quarter watch [target 'Salt Quarter watch' not found by v1]
+      Salt Quarter watch -LocatedIn-> Salt Quarter [source 'Salt Quarter watch' not found by v1]
+      Undercroft -RelatedTo-> Undercroft's hidden door [target "Undercroft's hidden door" not found by v1]
+      Undercroft's hidden door -RelatedTo-> fishmonger's stall [source "Undercroft's hidden door" and target "fishmonger's stall" not found by v1]
+      Juno Stray -RelatedTo-> Undercroft's hidden door [target "Undercroft's hidden door" not found by v1]
+      Juno Stray -HasAbility-> Warden's Discipline [endpoint missing from entities[]]
+      Orin Drask -Respects-> Juno Stray [source 'Orin Drask' not found by v1]
+      Hask -MemberOf-> House Vell [target 'House Vell' not found by v1]
+      Hask -Serves-> House Vell [target 'House Vell' not found by v1]
+      Hask -RelatedTo-> Vell Hall [target 'Vell Hall' not found by v1]
+      Hask -RelatedTo-> Corwin Vell [target 'Corwin Vell' not found by v1]
+    reference relations v1 lacks (FN):
+      Casimir Lowe -LocatedIn-> eastern docks
+      Ettie Marsh -LocatedIn-> market row
+      Juno Stray -LocatedIn-> Bone Market
+      Hask -LocatedIn-> Bone Market
+      the trader -LocatedIn-> Bone Market
+      Orin Drask -LeaderOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Orin Drask -HasTitle-> Warden-Captain [unmatchable: endpoint not found by v1]
+      Casimir Lowe -MemberOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Ettie Marsh -MemberOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Pryn Voss -MemberOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Juno Stray -MemberOf-> Salt Quarter watch [unmatchable: endpoint not found by v1]
+      Salt Quarter watch -LocatedIn-> Salt Quarter [unmatchable: endpoint not found by v1]
+      Undercroft -RelatedTo-> Undercroft's hidden door [unmatchable: endpoint not found by v1]
+      Undercroft's hidden door -RelatedTo-> fishmonger's stall [unmatchable: endpoint not found by v1]
+      Juno Stray -RelatedTo-> Undercroft's hidden door [unmatchable: endpoint not found by v1]
+      Juno Stray -HasAbility-> Warden's Discipline [unmatchable: endpoint not found by v1]
+      Orin Drask -Respects-> Juno Stray [unmatchable: endpoint not found by v1]
+      Hask -MemberOf-> House Vell [unmatchable: endpoint not found by v1]
+      Hask -Serves-> House Vell [unmatchable: endpoint not found by v1]
+      Hask -RelatedTo-> Vell Hall [unmatchable: endpoint not found by v1]
+      Hask -RelatedTo-> Corwin Vell [unmatchable: endpoint not found by v1]
+
+--- chapter 17 (v1: 0 edges, reference: 18 relations, 12 unmatchable) ---
+  micro: TP=0 FP=0 FN=18  P=0.0000 R=0.0000 F1=0.0000
+  micro, counting ONLY reference relations whose endpoints v1 found (narrower, reported alongside): FN=6 P=0.0000 R=0.0000 F1=0.0000
+      AffiliatedWith   TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      Fears            TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      HasTitle         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      LocatedIn        TP=0   FP=0    FN=2   P=0.000 R=0.000 F1=0.000
+      MemberOf         TP=0   FP=0    FN=3   P=0.000 R=0.000 F1=0.000
+      ParticipatedIn   TP=0   FP=0    FN=3   P=0.000 R=0.000 F1=0.000
+      RelatedTo        TP=0   FP=0    FN=5   P=0.000 R=0.000 F1=0.000
+      Respects         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      Sibling          TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+  macro-F1 over 9 relation types: 0.0000
+  micro-F1: 0.0000
+      tier 1: TP=0 FP=0 FN=15 P=0.000 R=0.000 F1=0.000
+      tier 2: TP=0 FP=0 FN=3 P=0.000 R=0.000 F1=0.000
+    reference relations that could not be matched (an endpoint is not in v1's entity set):
+      House Vell -ParticipatedIn-> Vell Masque [endpoint missing from entities[]]
+      Vell Masque -LocatedIn-> Aldenreach [endpoint missing from entities[]]
+      Lord Fennick Oswald -MemberOf-> House Oswald [target 'House Oswald' not found by v1]
+      Brenna Oswald -MemberOf-> House Oswald [target 'House Oswald' not found by v1]
+      House Oswald -MemberOf-> Council [source 'House Oswald' not found by v1]
+      House Vell -AffiliatedWith-> House Ashcombe [source 'House Vell' and target 'House Ashcombe' not found by v1]
+      Brenna Oswald -ParticipatedIn-> Vell Masque [endpoint missing from entities[]]
+      Lord Fennick Oswald -ParticipatedIn-> Vell Masque [endpoint missing from entities[]]
+      Sorrel -LocatedIn-> Chancery [target 'Chancery' not found by v1]
+      Sorrel -HasTitle-> Scribe [endpoint missing from entities[]]
+      House Vell -RelatedTo-> House Oswald [source 'House Vell' and target 'House Oswald' not found by v1]
+      Brenna Oswald -RelatedTo-> House Vell [target 'House Vell' not found by v1]
+    reference relations v1 lacks (FN):
+      Lord Fennick Oswald -Sibling-> Brenna Oswald
+      Brenna Oswald -RelatedTo-> Corwin
+      Lord Fennick Oswald -RelatedTo-> Corwin
+      Brenna Oswald -Respects-> Corwin
+      Lord Fennick Oswald -Fears-> Corwin
+      Lord Fennick Oswald -RelatedTo-> Brenna Oswald
+      House Vell -ParticipatedIn-> Vell Masque [unmatchable: endpoint not found by v1]
+      Vell Masque -LocatedIn-> Aldenreach [unmatchable: endpoint not found by v1]
+      Lord Fennick Oswald -MemberOf-> House Oswald [unmatchable: endpoint not found by v1]
+      Brenna Oswald -MemberOf-> House Oswald [unmatchable: endpoint not found by v1]
+      House Oswald -MemberOf-> Council [unmatchable: endpoint not found by v1]
+      House Vell -AffiliatedWith-> House Ashcombe [unmatchable: endpoint not found by v1]
+      Brenna Oswald -ParticipatedIn-> Vell Masque [unmatchable: endpoint not found by v1]
+      Lord Fennick Oswald -ParticipatedIn-> Vell Masque [unmatchable: endpoint not found by v1]
+      Sorrel -LocatedIn-> Chancery [unmatchable: endpoint not found by v1]
+      Sorrel -HasTitle-> Scribe [unmatchable: endpoint not found by v1]
+      House Vell -RelatedTo-> House Oswald [unmatchable: endpoint not found by v1]
+      Brenna Oswald -RelatedTo-> House Vell [unmatchable: endpoint not found by v1]
+
+--- chapter 37 (v1: 0 edges, reference: 12 relations, 10 unmatchable) ---
+  micro: TP=0 FP=0 FN=12  P=0.0000 R=0.0000 F1=0.0000
+  micro, counting ONLY reference relations whose endpoints v1 found (narrower, reported alongside): FN=2 P=0.0000 R=0.0000 F1=0.0000
+      LocatedIn        TP=0   FP=0    FN=3   P=0.000 R=0.000 F1=0.000
+      MemberOf         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      Protects         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+      RelatedTo        TP=0   FP=0    FN=6   P=0.000 R=0.000 F1=0.000
+      Respects         TP=0   FP=0    FN=1   P=0.000 R=0.000 F1=0.000
+  macro-F1 over 5 relation types: 0.0000
+  micro-F1: 0.0000
+      tier 1: TP=0 FP=0 FN=10 P=0.000 R=0.000 F1=0.000
+      tier 2: TP=0 FP=0 FN=2 P=0.000 R=0.000 F1=0.000
+    reference relations that could not be matched (an endpoint is not in v1's entity set):
+      Mira Quell -LocatedIn-> Undercroft [source 'Mira Quell' not found by v1]
+      Mira Quell -MemberOf-> Choir [source 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Thessaly [source 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Sorrel [source 'Mira Quell' not found by v1]
+      Mira Quell -Respects-> Sorrel [source 'Mira Quell' not found by v1]
+      Sorrel -Protects-> Mira Quell [target 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Thessaly [source 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Wanderer [endpoint missing from entities[]]
+      Mira Quell -RelatedTo-> Thornmere [source 'Mira Quell' not found by v1]
+      Mira Quell -RelatedTo-> Choir initiate [endpoint missing from entities[]]
+    reference relations v1 lacks (FN):
+      Choir -LocatedIn-> Undercroft
+      Grey Road -LocatedIn-> Undercroft
+      Mira Quell -LocatedIn-> Undercroft [unmatchable: endpoint not found by v1]
+      Mira Quell -MemberOf-> Choir [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Thessaly [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Sorrel [unmatchable: endpoint not found by v1]
+      Mira Quell -Respects-> Sorrel [unmatchable: endpoint not found by v1]
+      Sorrel -Protects-> Mira Quell [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Thessaly [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Wanderer [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Thornmere [unmatchable: endpoint not found by v1]
+      Mira Quell -RelatedTo-> Choir initiate [unmatchable: endpoint not found by v1]
+
+--- pooled [cumulative] --- TP=0 FP=0 FN=51
+  micro P=0.0000 R=0.0000 F1=0.0000   macro-F1 over 13 relation types: 0.0000
+      AffiliatedWith   TP=0   FP=0    FN=1   F1=0.000
+      Fears            TP=0   FP=0    FN=1   F1=0.000
+      HasAbility       TP=0   FP=0    FN=1   F1=0.000
+      HasTitle         TP=0   FP=0    FN=2   F1=0.000
+      LeaderOf         TP=0   FP=0    FN=1   F1=0.000
+      LocatedIn        TP=0   FP=0    FN=11  F1=0.000
+      MemberOf         TP=0   FP=0    FN=9   F1=0.000
+      ParticipatedIn   TP=0   FP=0    FN=3   F1=0.000
+      Protects         TP=0   FP=0    FN=1   F1=0.000
+      RelatedTo        TP=0   FP=0    FN=16  F1=0.000
+      Respects         TP=0   FP=0    FN=3   F1=0.000
+      Serves           TP=0   FP=0    FN=1   F1=0.000
+      Sibling          TP=0   FP=0    FN=1   F1=0.000
+      tier 1: TP=0 FP=0 FN=44 F1=0.000
+      tier 2: TP=0 FP=0 FN=7 F1=0.000
+
+============================================================================
+TIER-3 IDENTITY — reported as COUNTS, not F1
+============================================================================
+
+  chapter 9: reference Tier-3 records = 0; v1 Tier-3 edges first_seen here = 0 (among this chapter's entities, any chapter: 0); matched = 0
+
+  chapter 17: reference Tier-3 records = 0; v1 Tier-3 edges first_seen here = 0 (among this chapter's entities, any chapter: 0); matched = 0
+
+  chapter 37: reference Tier-3 records = 0; v1 Tier-3 edges first_seen here = 0 (among this chapter's entities, any chapter: 0); matched = 0
+
+  REQUIRED STATEMENT — v1 holds TRANSMIGRATED_INTO at ch37: False.
+  The reference for ch37 contains 0 Tier-3 record(s), so a matching Tier-3 record is ABSENT.
+  Pooled: reference Tier-3 = 0, v1 Tier-3 (chapter-local) = 0, matched = 0.
+
+============================================================================
+SIGNIFICANCE RANKING — v1 entities ranked by fenced degree at chapter N
+============================================================================
+Positive class = reference entity with significant=true, transferred onto the
+v1 entity it matched (strict match). A v1 entity with no reference
+counterpart is a negative.
+
+--- chapter 9: 18 v1 entities ranked, 5 positive ---
+     1   Across the Quarter     degree=0
+     2 + Bone Market            degree=0
+     3   Captain                degree=0
+     4   Casimir Lowe           degree=0
+     5   Corwin                 degree=0
+     6   Drask                  degree=0
+     7   Ettie Marsh            degree=0
+     8 + Hask                   degree=0
+     9 + Juno Stray             degree=0
+    10   Pryn Voss              degree=0
+    11 + Salt Quarter           degree=0
+    12 + Undercroft             degree=0
+    13   certain goods          degree=0
+    14   coin purse             degree=0
+    15   eastern docks          degree=0
+    16   ledger                 degree=0
+    17   market row             degree=0
+    18   trader                 degree=0
+  P@10: 0.3000
+  P@20: not measured: only 18 ranked entities, fewer than 20
+  Recall@20: not measured: only 18 ranked entities, fewer than 20
+  MAP: 0.3727
+  AUC: 0.5846
+
+--- chapter 17: 15 v1 entities ranked, 7 positive ---
+     1 + Aldenreach             degree=0
+     2 + Brenna Oswald          degree=0
+     3   Chancery               degree=0
+     4 + Corwin                 degree=0
+     5 + Council                degree=0
+     6   House Ashcombe         degree=0
+     7   House Oswald           degree=0
+     8   House Vell             degree=0
+     9 + Ione                   degree=0
+    10 + Lord Fennick Oswald    degree=0
+    11 + Sorrel                 degree=0
+    12   Tobin Vell             degree=0
+    13   Vell                   degree=0
+    14   invitation             degree=0
+    15   rooms                  degree=0
+  P@10: 0.6000
+  P@20: not measured: only 15 ranked entities, fewer than 20
+  Recall@20: not measured: only 15 ranked entities, fewer than 20
+  MAP: 0.7631
+  AUC: 0.7500
+
+--- chapter 37: 8 v1 entities ranked, 6 positive ---
+     1 + Choir                  degree=0
+     2 + Grey Road              degree=0
+     3   Mira                   degree=0
+     4 + Sorrel                 degree=0
+     5 + Thessaly               degree=0
+     6 + Thornmere              degree=0
+     7 + Undercroft             degree=0
+     8   Wanderer               degree=0
+  P@10: not measured: only 8 ranked entities, fewer than 10
+  P@20: not measured: only 8 ranked entities, fewer than 20
+  Recall@20: not measured: only 8 ranked entities, fewer than 20
+  MAP: 0.8734
+  AUC: 0.6667
+
+--- pooled (the three ranked lists concatenated in chapter order, 41 entities, 18 positive) ---
+  NOTE: concatenating ranked lists is not a single ranking; these pooled
+  figures describe the concatenation and nothing more.
+  P@10: 0.3000
+  P@20: 0.3500
+  Recall@20: 0.3889
+  MAP: 0.3864
+  AUC: 0.3671
+
+============================================================================
+REJECTED MENTIONS — strings the reference says should NOT be entities
+============================================================================
+
+--- chapter 9: 14 rejected strings scored, v1 emitted 3 of them ---
+      'ledger' -> v1 canonical name of entity 'ledger' (Item)
+          reference reason: An incidental generic object. The passage uses it only to describe record-keeping and does not establish an individually significant item.
+      'certain goods' -> v1 canonical name of entity 'certain goods' (Item)
+          reference reason: Unspecified merchandise rather than individually identifiable items.
+      'coin purse' -> v1 canonical name of entity 'coin purse' (Item)
+          reference reason: An incidental generic object whose individual identity is not important to following the chapter.
+  emitted-rate on rejected strings: 0.2143
+
+--- chapter 17: 19 rejected strings scored, v1 emitted 1 of them ---
+      'rooms' -> v1 canonical name of entity 'rooms' (Place)
+          reference reason: Generic physical spaces without individually identifiable locations.
+  emitted-rate on rejected strings: 0.0526
+
+--- chapter 37: 16 rejected strings scored, v1 emitted 0 of them ---
+  emitted-rate on rejected strings: 0.0000
+
+--- pooled --- 4 of 49 rejected strings were emitted by v1 (rate 0.0816)
+
+wrote evidence\retrofit\R4b_entity_before.csv (1146 rows)
+
+REFERENCE ANNOTATION: model-generated (GPT-5), one fresh session per chapter, single run each; paragraph indices, alias positions and evidence spans verified and corrected by hand; ch09 reindexed from 0- to 1-indexed. Every score below is AGREEMENT between two systems (StoryWeave v1 and GPT-5), NOT accuracy against human ground truth. See evidence/annotation/PROVENANCE.md.

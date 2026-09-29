@@ -30,6 +30,7 @@ from storyweave.ingest.work_config import WorkConfig
 from storyweave.nlp.cluster import cluster_mentions_detailed, normalize_surface
 from storyweave.nlp.extractor import GlinerExtractor
 from storyweave.nlp.labels import DEFAULT_LABELS, LABEL_TO_TYPE
+from storyweave.nlp.orgs import GROUP_NOUNS, find_organization_spans
 from storyweave.nlp.titles import find_title_links
 
 
@@ -45,6 +46,8 @@ class ExtractionReport:
     #: abbreviation merges made, and candidates refused (with reasons), for the report
     alias_merges: int = 0
     alias_under_merges: list[str] = field(default_factory=list)
+    #: retrofit R4b: Organization spans added by the group-noun head rule
+    group_noun_promotions: int = 0
 
     def summary(self) -> str:
         by_type = ", ".join(f"{t.value}:{n}" for t, n in sorted(self.per_type.items()))
@@ -53,7 +56,8 @@ class ExtractionReport:
             f"{self.entities_count} entities ({by_type}); "
             f"{self.labels_count} labels, {self.alias_merges} alias merges, "
             f"{len(self.alias_under_merges)} refused, "
-            f"{self.title_links} title links ({self.titles_rejected} refused)"
+            f"{self.title_links} title links ({self.titles_rejected} refused), "
+            f"{self.group_noun_promotions} group-noun org promotions"
         )
 
 
@@ -116,6 +120,26 @@ def extract_work(
                 if prev is None or sp.score > prev.score:
                     best[key] = MentionSpanTuple(cs, ce, sp.type, sp.surface, sp.score, sp.subtype)
 
+        # Retrofit R4b: add the Organization spans the model structurally cannot see.
+        # Runs AFTER the model's own spans are collected and never replaces one, so the
+        # floor's output is a strict subset of what is persisted.
+        if cfg.extraction.promote_group_nouns:
+            group_nouns = tuple(cfg.extraction.group_nouns) or GROUP_NOUNS
+            already = frozenset((s.start, s.end) for s in best.values())
+            for org in find_organization_spans(chapter.clean_text, already, group_nouns):
+                key = (org.char_start, org.char_end, NodeType.ORGANIZATION)
+                if key in best:
+                    continue
+                best[key] = MentionSpanTuple(
+                    org.char_start, org.char_end, NodeType.ORGANIZATION,
+                    org.surface,
+                    # Score 1.0 is not a model confidence and must not be read as one:
+                    # this span came from a deterministic rule, which is also why its
+                    # provenance is `rule`, not `gliner`.
+                    1.0, None, ExtractionMethod.RULE,
+                )
+                report.group_noun_promotions += 1
+
         for ordinal, span in enumerate(sorted(best.values(), key=lambda s: (s.start, s.end))):
             repo.add_mention(
                 Mention(
@@ -129,6 +153,7 @@ def extract_work(
                     char_start=span.start,
                     char_end=span.end,
                     score=span.score,
+                    extraction_method=span.method,
                 )
             )
             report.mentions_count += 1
@@ -242,3 +267,6 @@ class MentionSpanTuple:
     surface: str
     score: float
     subtype: str | None
+    #: retrofit R4b: how this span was produced. `rule` for a group-noun promotion,
+    #: so a rule-derived mention is never mistaken for a model prediction.
+    method: ExtractionMethod = ExtractionMethod.GLINER

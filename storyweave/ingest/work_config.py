@@ -89,6 +89,17 @@ class ExtractionConfig(BaseModel):
     # {"power system": "Concept"}. Helps recall for genre-specific common nouns.
     extra_labels: dict[str, str] = Field(default_factory=dict)
 
+    # --- retrofit R4b: common-noun-headed Organization recovery. ---
+    # GLiNER returns the PLACE nested inside "the Salt Quarter watch" and never proposes
+    # the longer organization span; four candidate label-prompt additions were measured
+    # and none recovered the class (evidence/retrofit/R4b_RESULT.md §2). The head-noun
+    # rule in storyweave/nlp/orgs.py does. ON by default: it is a general English
+    # pattern, not a per-book hack, and it only ADDS spans the model missed.
+    promote_group_nouns: bool = True
+    # Override the English collective-noun list. Empty -> orgs.GROUP_NOUNS. Knob is
+    # DATA, per work, for a book whose organizations are headed by invented nouns.
+    group_nouns: list[str] = Field(default_factory=list)
+
 
 class RelationConfig(BaseModel):
     # --- Tier-1 structural (Phase 3): co-occurrence rules, zero ML. ---
