@@ -64,6 +64,9 @@ playwright-report/
 # measurement harness (tools/*.py, added for the evidence phase) is source and is tracked.
 tools/*
 !tools/*.py
+# The C: trace remover is source too (a PowerShell script, not a dropped binary):
+# it is the executable half of docs/retrofit/C_DRIVE_LEDGER.md and must be reviewable.
+!tools/uninstall_project_c_traces.ps1
 
 # --- Evidence artifacts (tools/run_evidence.py) ---
 # The raw screenshots are ~39MB of regenerable intermediates: re-run tools/capture.py.

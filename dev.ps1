@@ -23,6 +23,14 @@ $env:TORCH_HOME = Join-Path $LocalRoot "torch_cache"
 $env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $LocalRoot "ms-playwright"
 $env:npm_config_cache = Join-Path $LocalRoot "npm_cache"
 $env:OLLAMA_MODELS = Join-Path $LocalRoot "ollama_models"
+# Ollama lives on F: (F:\Tools\Ollama). The installer DID append that directory to the
+# persistent user PATH (HKCU\Environment\Path -- recorded in
+# docs/retrofit/C_DRIVE_LEDGER.md section 2.5), but this line is deliberately kept anyway:
+# it is SESSION-SCOPED, it makes the dependency explicit, and it keeps working if that
+# PATH entry is ever removed by tools/uninstall_project_c_traces.ps1. Prepended, so the
+# F: copy always wins over any other ollama on PATH. No setx: nothing is persisted here.
+$OllamaDir = "F:\Tools\Ollama"
+if (Test-Path $OllamaDir) { $env:PATH = "$OllamaDir;$env:PATH" }
 # pip/torch/HF unpack their archives into TEMP; on C: by default, so redirect it.
 $env:TEMP = Join-Path $LocalRoot "tmp"
 $env:TMP = $env:TEMP

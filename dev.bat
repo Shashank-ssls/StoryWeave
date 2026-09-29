@@ -14,6 +14,10 @@ set "TORCH_HOME=%LOCAL_ROOT%\torch_cache"
 set "PLAYWRIGHT_BROWSERS_PATH=%LOCAL_ROOT%\ms-playwright"
 set "npm_config_cache=%LOCAL_ROOT%\npm_cache"
 set "OLLAMA_MODELS=%LOCAL_ROOT%\ollama_models"
+REM Ollama lives on F:. The installer also added this to the persistent user PATH
+REM (see docs/retrofit/C_DRIVE_LEDGER.md section 2.5); this line is session-scoped,
+REM makes the dependency explicit, and survives removal of that PATH entry.
+if exist "F:\Tools\Ollama\ollama.exe" set "PATH=F:\Tools\Ollama;%PATH%"
 set "TEMP=%LOCAL_ROOT%\tmp"
 set "TMP=%LOCAL_ROOT%\tmp"
 REM HF_HOME deliberately points OUTSIDE the repo at the machine-wide cache on F:,

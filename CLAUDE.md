@@ -71,6 +71,13 @@ the variable set, `ollama pull` without `OLLAMA_MODELS` set, `winget`/`choco`/
 system installers, and changing system or user environment variables. All
 variables are set per session by `dev.ps1` / `dev.bat` only.
 
+**Any write to C: (file, registry, PATH, shortcut, service) must be recorded in
+`docs/retrofit/C_DRIVE_LEDGER.md` in the same session, before the phase is committed.**
+A third-party installer can add a registry key, a Start Menu shortcut and a user PATH
+entry without any project code running — that is what Ollama 0.34.4 did on 2026-09-29
+(ledger §2). `tools/uninstall_project_c_traces.ps1` removes only ledger items, dry-run
+by default.
+
 New Python packages go into the correct venv's `requirements*.txt` and lock file
 in the same commit. Prefer what is already installed (stdlib `urllib` for Ollama
 HTTP, existing `matplotlib` if present) over adding packages.
