@@ -1,0 +1,59 @@
+﻿==============================================================================
+R4c REPORT -- ninth_house_r4b.db
+==============================================================================
+
+1. FENCED EDGES BY RING (all types drawn, all grades)
+
+ chapter   nodes   edges   ring1   ring2  STATED  INFERRED
+------------------------------------------------------------
+      10      86      22       3      19      11        11
+      20     134      28       3      25      14        14
+      30     153      45       3      42      25        20
+      40     191      64       4      60      37        27
+
+2. PER-RELATION, fenced at chapter 40
+
+  ring1  ALLY_OF        total=  0  STATED=  0
+  ring1  ENEMY_OF       total=  0  STATED=  0
+  ring1  KILLED         total=  0  STATED=  0
+  ring1  KIN_OF         total=  0  STATED=  0
+  ring2  LEADS          total=  2  STATED=  0
+  ring2  LOCATED_IN     total= 20  STATED= 20
+  ring2  MEMBER_OF      total= 22  STATED=  6
+  ring1  MENTOR_OF      total=  0  STATED=  0
+  ring2  OWNS           total= 16  STATED= 10
+  ring1  ROMANTIC_WITH  total=  0  STATED=  0
+  ring1  SAME_AS        total=  0  STATED=  0
+  ring1  SERVES         total=  4  STATED=  1
+
+3. DEFAULT VIEW at ch40 -- Characters only, cast=20, STATED only
+   (a measurement projection defined in this tool's docstring, not an API)
+
+   Characters visible at ch40 : 53
+   cast shown                 : 20
+   DEFAULT-VIEW EDGES (STATED): 0
+   ... if INFERRED were shown : 0
+
+   cast, in rank order:
+      1. Sorrel                       default-view degree 0
+      2. Thessaly                     default-view degree 0
+      3. Vesper                       default-view degree 0
+      4. Cassian                      default-view degree 0
+      5. Corwin                       default-view degree 0
+      6. Meraude                      default-view degree 0
+      7. Hask                         default-view degree 0
+      8. Thorne                       default-view degree 0
+      9. Juno Stray                   default-view degree 0
+     10. Ione                         default-view degree 0
+     11. Denna                        default-view degree 0
+     12. Vey                          default-view degree 0
+     13. Drask                        default-view degree 0
+     14. Mira                         default-view degree 0
+     15. Master Vane                  default-view degree 0
+     16. Ser Robart Kell              default-view degree 0
+     17. Ysolde                       default-view degree 0
+     18. Pryn Voss                    default-view degree 0
+     19. Sallowmere                   default-view degree 0
+     20. Ettie Marsh                  default-view degree 0
+
+   isolated in the default view: 20 of 20

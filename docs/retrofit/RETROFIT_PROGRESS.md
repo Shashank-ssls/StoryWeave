@@ -510,3 +510,44 @@ is wired.
 Before R5: relex is handed raw text and re-discovers entities it should be told about.
 Feeding the graph's known spans into relation extraction is the change that converts these
 six, and it is likely cheaper than the LLM pass. **Decide between the two before starting.**
+
+---
+
+## R4c — PRE-REGISTRATION (written before the R4c run, never edited)
+
+**Correction to R4 and R4b first.** Both reports said every R4 edge was ring 2 ("all 64
+are ring 2", "R4 produced an overlay and no graph"). That is **wrong**, and the error was
+found by building `tools/r4c_report.py` and counting rings directly: **SERVES is a ring-1
+relation** (retrofit rule 3 lists it there), so R4/R4b have **4 ring-1 edges at ch40**, of
+which **1 is STATED**. The corrected baseline is below. The substantive claim those
+reports made — that no *social* graph reached the reader — survives, because the default
+view still has zero edges; but the number was stated wrongly and is corrected here rather
+than quietly fixed.
+
+### Measured R4b baseline (existing data, not the R4c experiment)
+
+| chapter | nodes | edges | ring1 | ring2 | STATED |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 10 | 86 | 22 | 3 | 19 | 11 |
+| 20 | 134 | 28 | 3 | 25 | 14 |
+| 30 | 153 | 45 | 3 | 42 | 25 |
+| 40 | 191 | 64 | **4** | 60 | 37 |
+
+**Default view at ch40 (Characters only, cast=20, STATED): 0 edges, 20 of 20 isolated.**
+
+### Predictions for R4c — [PREDICTED]
+
+| quantity | predicted band |
+| --- | --- |
+| ring-1 edges at ch40 (fenced, drawn, any grade) | **4 – 25** |
+| ring-2 edges at ch40 (fenced, drawn, any grade) | **60 – 150** |
+| STATED micro-F1, 12-relation key | **0.05 – 0.25** |
+
+Reasoning, one line: constraining relex to the stored mentions removes the nested-span
+failure that made endpoints unground-able, so the 12 `NO_PROPOSAL` gold relations become
+reachable and ring-2 should grow the most (it is what the corpus states plainly); ring-1
+should move least, because the book's kinship and alliance claims are mostly pronominal
+and the STATED rule still demands both names in one quote.
+
+Unchanged from R4's own pre-registration and not re-tuned: the model, the fixed relex
+thresholds (ner 0.3 / rel 0.6), the cue lists, the kin guard, the validator.
