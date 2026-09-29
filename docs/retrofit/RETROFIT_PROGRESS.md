@@ -337,3 +337,22 @@ delta against 0.532 would be arithmetic on two different answer keys.
 R4 (closed relations + validator). **No download needed**: relex is present and loads with
 `HF_HUB_OFFLINE=1`. **R4 is fully Ollama-free** — its edges come from GLiNER-RelEx plus the
 rule validator; the LLM tier is R5's and R5 is optional.
+
+---
+
+## R4 — PRE-REGISTRATION (written before the first scoring run, never edited)
+
+**Expected STATED-only relation micro-F1 on the 12-relation projection of the
+annotation: [PREDICTED] 0.05 – 0.20.**
+
+Reasoning (one line, as required): GLiNER-RelEx is zero-shot on unseen fantasy prose and
+the STATED grade additionally demands both participants' labels *and* a relation cue inside
+a single verbatim quote, which this book's pronoun-heavy narration will frequently fail —
+so recall should be low and precision high, on a key that has dropped the structural
+relations v1 never got right.
+
+Set before scoring and without reading the annotation's gold relations or quotes: the
+per-relation cue lists, the relex confidence threshold (the already-configured default),
+and the kin guard. Any threshold sweep is a diagnostic table only and does not select the
+shipped value. The 19 hand-curated seed edges are not extraction output and are excluded
+from every score.
