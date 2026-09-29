@@ -3,8 +3,7 @@ import Landing from "./Landing/Landing";
 import Compose from "./Compose/Compose";
 import Dossier from "./Dossier/Dossier";
 import Stemma from "./Stemma/Stemma";
-import Chronicle from "./Chronicle/Chronicle";
-import { ChapterProvider } from "./chapter/ChapterProvider";
+import { ChapterProvider, DEFAULT_VIEW, FULL_VIEW } from "./chapter/ChapterProvider";
 import ChapterChrome from "./chapter/ChapterChrome";
 import RevealChrome from "./reveal/RevealChrome";
 import { useGlobalShortcuts } from "./shortcuts/useGlobalShortcuts";
@@ -18,7 +17,7 @@ import styles from "./CodexApp.module.css";
 // as tokens.css defines them rather than being re-declared here.
 //
 // Inside a work, one ChapterProvider (keyed by slug) wraps all three tabs: the bookmark,
-// payload cache and in-flight request are shared across Dossier/Stemma/Chronicle and
+// payload cache and in-flight request are shared across the Dossier and the Stemma and
 // survive tab switches, and are torn down whole when the slug changes (R3).
 export default function CodexApp({ route }: { route: CodexRoute }): JSX.Element {
   // R9 §8.5: one global keyboard map for the whole app root — `g d`/`g w`/`g c` (only
@@ -34,11 +33,18 @@ export default function CodexApp({ route }: { route: CodexRoute }): JSX.Element 
         ) : route.name === "add" ? (
           <Compose />
         ) : (
-          <ChapterProvider key={route.slug} slug={route.slug}>
+          <ChapterProvider
+            key={route.slug}
+            slug={route.slug}
+            // R7: the route decides what the FIRST payload should be, so a first visit
+            // costs exactly one /graph request. The Dossier needs the whole fenced graph
+            // (it is reached by entity URL and must never say "not present" about someone
+            // the reader has met); the Stemma opens on rule 2's default view.
+            initialView={route.name === "work-entity" ? FULL_VIEW : DEFAULT_VIEW}
+          >
             <RevealChrome>
               {route.name === "work-entity" && <Dossier route={route} />}
               {route.name === "work-web" && <Stemma route={route} />}
-              {route.name === "work-chronicle" && <Chronicle route={route} />}
               <ChapterChrome />
             </RevealChrome>
           </ChapterProvider>

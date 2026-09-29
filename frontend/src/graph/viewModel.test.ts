@@ -139,10 +139,18 @@ describe("copy (§7.4)", () => {
   it("has a sentence for every identity enum in ontology.ts", () => {
     for (const rel of IDENTITY_RELATIONS) expect(IDENTITY_COPY[rel]?.sentence).toBeTruthy();
   });
-  it("labels ties in lowercase, unknown as 'linked'", () => {
+  it("labels ties in plain words; no 'linked' fallback (R7)", () => {
     expect(tieLabel("Ally")).toBe("ally of");
     expect(tieLabel("LocatedIn")).toBe("in");
-    expect(tieLabel("RelatedTo")).toBe("linked");
+    // R7: "linked" is gone. An unmapped relation is humanised so a relation we forgot to
+    // name shows up looking wrong, rather than being silently erased; `RelatedTo` alone
+    // stays wordless, and deliberately so (see UNLABELLED in viewModel.ts).
+    expect(tieLabel("RelatedTo")).toBe("");
+    expect(tieLabel("MENTOR_OF")).toBe("mentors");
+    expect(tieLabel("SERVES")).toBe("serves");
+    expect(tieLabel("SERVES", true)).toBe("commands"); // read from the other endpoint
+    expect(tieLabel("ALLY_OF", true)).toBe("ally of"); // symmetric: no inverse reading
+    expect(tieLabel("NOT_A_REAL_RELATION")).toBe("not a real relation");
     expect(tieLabel("ALIAS")).toBe("alias");
   });
   it("count words up to twenty, digits above", () => {

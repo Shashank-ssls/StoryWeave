@@ -9,13 +9,20 @@ import {
   type ReactNode,
 } from "react";
 import { fetchWorks } from "../../api";
-import type { ArcModel, ArcsResponse, GraphElements, GraphResponse, WorkModel } from "../../types";
+import type {
+  ArcModel,
+  ArcsResponse,
+  CastSize,
+  GraphElements,
+  GraphResponse,
+  WorkModel,
+} from "../../types";
 import { diffGraphs, type GraphDiff, type Reveal } from "../../graph/diff";
 import { readBookmark, writeBookmark } from "./bookmarkStore";
 
 // The chapter model (FRONTEND_OVERHAUL.md §5 Phase 3; DESIGN_SPEC §5, §8.1, §9.1).
 // One instance per open work, mounted in CodexApp keyed by slug so it survives tab
-// switches (Dossier ↔ Stemma ↔ Chronicle share one bookmark, one cache, one in-flight
+// switches (Dossier ↔ Stemma share one bookmark, one cache, one in-flight
 // request) and is torn down whole when the reader changes work.
 //
 // The UI's share of the spoiler fence lives here. The server fence (query/fence.py) is
@@ -42,6 +49,66 @@ export interface PendingReveal {
   id: number;
   n: number;
   reveals: Reveal[];
+}
+
+/**
+ * R7: what the reader has asked to SEE, as opposed to how far they have read.
+ *
+ * These are display choices and they live on the server (retrofit rules 1 and 6): every
+ * change re-requests `/graph`, and nothing is ever filtered out of a payload here. v1's
+ * equivalents were client-side array filters over a payload that always contained the
+ * whole book's cast — defect D3, and the reason the dial appeared to do nothing.
+ *
+ * `types` always contains "Character" (rule 2: the default graph is people), plus
+ * whichever overlays are toggled on. `cast` is the dial.
+ */
+export interface ViewParams {
+  cast: CastSize;
+  groups: boolean;
+  places: boolean;
+  items: boolean;
+}
+
+/** The Stemma's default: people only, main cast of twenty (retrofit rule 2). */
+export const DEFAULT_VIEW: ViewParams = {
+  cast: "20",
+  groups: false,
+  places: false,
+  items: false,
+};
+
+/**
+ * The Dossier's view: everything the fence allows.
+ *
+ * The Dossier is not a picture of the cast, it is a page ABOUT one entity, reached by a
+ * URL that may name anyone the reader has met. Serving it the Stemma's top-twenty would
+ * make it answer "not present" for a revealed character — a false statement about the
+ * fence, and a worse bug than the one the dial fixes. Each screen therefore declares the
+ * view it needs on mount; the request still goes to the server either way.
+ */
+export const FULL_VIEW: ViewParams = {
+  cast: "all",
+  groups: true,
+  places: true,
+  items: true,
+};
+
+export function sameView(a: ViewParams, b: ViewParams): boolean {
+  return a.cast === b.cast && a.groups === b.groups && a.places === b.places && a.items === b.items;
+}
+
+/** The `types` query parameter for a set of overlay toggles. */
+export function typesParam(v: ViewParams): string {
+  const out = ["Character"];
+  if (v.groups) out.push("Organization");
+  if (v.places) out.push("Place");
+  if (v.items) out.push("Item");
+  return out.join(",");
+}
+
+/** Cache key: a payload is only reusable for the same chapter AND the same view. */
+function cacheKey(n: number, v: ViewParams): string {
+  return `${n}|${v.cast}|${typesParam(v)}`;
 }
 
 export interface ChapterBanner {
@@ -78,8 +145,12 @@ export interface ChapterModel {
   /** R6: set only by a forward commit whose diff has >=1 reveal (§8.2). Consumed once by
    *  RevealChrome via `dismissReveal`. */
   pendingReveal: PendingReveal | null;
+  /** R7: what the reader asked to SEE (cast dial + overlay toggles). Server-side. */
+  view: ViewParams;
   /** The only way the bookmark moves. Validates, then runs §8.1's forward/backward flow. */
   requestChapter(n: number): void;
+  /** R7: the only way the view changes. Re-requests /graph; never filters locally. */
+  setView(next: ViewParams): void;
   openDialog(prefill?: number): void;
   closeDialog(): void;
   dismissToast(): void;
@@ -90,14 +161,6 @@ export interface ChapterModel {
    *  never visited/prefetched this session (replay then falls back to a normal reveal —
    *  see `graph/diff.ts`'s `classifyReveal`). */
   getCachedPayload(n: number): GraphElements | null;
-  /** R7 (Chronicle §6.4): fetches every chapter 1..min(upTo, bookmark) not already cached,
-   *  so the identity timeline (which pair was revealed when, and whether it later deepened)
-   *  can be reconstructed from `getCachedPayload` alone. F1-safe by construction — it never
-   *  requests above the current bookmark, and never touches `bookmark`/`data`/`banner`; a
-   *  request that fails is simply left uncached (the timeline degrades per-pair, the same
-   *  honesty rule replay already uses). Never aborts, and is never aborted by, the main
-   *  request. Resolves once every attempt has settled. */
-  ensureHistory(upTo: number): Promise<void>;
 }
 
 const ChapterContext = createContext<ChapterModel | null>(null);
@@ -113,8 +176,14 @@ const TOAST_MS = 4000;
 // Raw fetch for the fenced graph route (same URL as api.ts's fetchGraph — R0 recon:
 // `/api/v1/works/{slug}/graph?n={n}`) but with an AbortSignal, which api.ts's helper
 // doesn't take. Kept private to this file: nothing else in the Codex UI may fetch a graph.
-async function fetchFencedGraph(slug: string, n: number, signal: AbortSignal): Promise<GraphElements> {
-  const resp = await fetch(`/api/v1/works/${encodeURIComponent(slug)}/graph?n=${n}`, { signal });
+async function fetchFencedGraph(
+  slug: string,
+  n: number,
+  view: ViewParams,
+  signal: AbortSignal,
+): Promise<GraphElements> {
+  const query = `n=${n}&cast=${view.cast}&types=${encodeURIComponent(typesParam(view))}`;
+  const resp = await fetch(`/api/v1/works/${encodeURIComponent(slug)}/graph?${query}`, { signal });
   if (!resp.ok) throw new Error(`${resp.status} for graph?n=${n}`);
   const body = (await resp.json()) as GraphResponse;
   return body.elements;
@@ -128,7 +197,18 @@ async function fetchFencedArcs(slug: string, n: number, signal: AbortSignal): Pr
   return body.arcs;
 }
 
-export function ChapterProvider({ slug, children }: { slug: string; children: ReactNode }): JSX.Element {
+export function ChapterProvider({
+  slug,
+  initialView = DEFAULT_VIEW,
+  children,
+}: {
+  slug: string;
+  /** The view the FIRST load should request. Passed by the route (see CodexApp), because
+   *  a screen that declares its view after mounting would cost a second `/graph` request
+   *  on every first visit — which the fence specs count, and rightly. */
+  initialView?: ViewParams;
+  children: ReactNode;
+}): JSX.Element {
   const [work, setWork] = useState<WorkModel | null>(null);
   const [workError, setWorkError] = useState(false);
   const [bookmark, setBookmark] = useState(1);
@@ -140,15 +220,20 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
   const [toast, setToast] = useState<ChapterToast | null>(null);
   const [pendingReveal, setPendingReveal] = useState<PendingReveal | null>(null);
   const [dialog, setDialog] = useState({ open: false, prefill: 1 });
+  const [view, setViewState] = useState<ViewParams>(initialView);
 
   // Mutable plumbing, deliberately outside React state so the fence checks are
   // synchronous and can't lag a render behind the user's action.
-  const cache = useRef(new Map<number, GraphElements>());
+  const cache = useRef(new Map<string, GraphElements>());
   const abortRef = useRef<AbortController | null>(null);
   const tokenRef = useRef(0);
   const bookmarkRef = useRef(1); // mirrors `bookmark` for use inside async callbacks
   const dataRef = useRef<GraphElements | null>(null);
   const toastTimer = useRef<number | null>(null);
+  const viewRef = useRef<ViewParams>(initialView); // mirrors `view` for async callbacks
+  const inFlight = useRef<{ n: number; view: ViewParams } | null>(null);
+  /** A view change that arrived while a chapter move was in flight; applied afterwards. */
+  const pendingView = useRef(false);
 
   const chapterCount = work?.chapter_count ?? 0;
 
@@ -183,14 +268,18 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       const token = tokenRef.current;
       const controller = new AbortController();
       abortRef.current = controller;
+      // Synchronous mirror of what is being fetched. `loading` state lags a render, and
+      // `setView` has to know about an in-flight request in the same tick to stay
+      // idempotent — see the request-count bug fixed there.
+      inFlight.current = { n, view: viewRef.current };
       setLoading(n);
       try {
-        const payload = await fetchFencedGraph(slug, n, controller.signal);
+        const payload = await fetchFencedGraph(slug, n, viewRef.current, controller.signal);
         // Token guard: an aborted request usually throws, but a response that resolved
         // in the same tick as a newer confirm would otherwise slip through — the token
         // check closes that gap regardless of what the signal did.
         if (token !== tokenRef.current) return null;
-        cache.current.set(n, payload);
+        cache.current.set(cacheKey(n, viewRef.current), payload);
         return payload;
       } catch (err) {
         if (token !== tokenRef.current) return null; // superseded — not an error to show
@@ -199,12 +288,37 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       } finally {
         if (token === tokenRef.current) {
           abortRef.current = null;
+          inFlight.current = null;
           setLoading(null);
         }
       }
     },
     [slug, invalidateInFlight],
   );
+
+  /** Apply a view change that had to wait for a chapter move to land. No-op otherwise. */
+  const applyPendingView = useCallback((): void => {
+    if (!pendingView.current) return;
+    pendingView.current = false;
+    const n = bookmarkRef.current;
+    const cached = cache.current.get(cacheKey(n, viewRef.current));
+    if (cached) {
+      dataRef.current = cached;
+      setData(cached);
+      return;
+    }
+    void load(n)
+      .then((payload) => {
+        if (payload && bookmarkRef.current === n) {
+          dataRef.current = payload;
+          setData(payload);
+        }
+      })
+      .catch(() => {
+        /* the chapter itself is already committed; a failed view refetch keeps what is
+           on screen rather than blanking it (§6.7's rule, applied to the view). */
+      });
+  }, [load]);
 
   const requestChapter = useCallback(
     (raw: number): void => {
@@ -220,8 +334,8 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
         // purge synchronously (F5) before any await, so no cached chapter above the new
         // bookmark survives even for one tick.
         invalidateInFlight();
-        for (const k of [...cache.current.keys()]) if (k > n) cache.current.delete(k);
-        const cached = cache.current.get(n) ?? null;
+        for (const k of [...cache.current.keys()]) if (Number(k.split("|")[0]) > n) cache.current.delete(k);
+        const cached = cache.current.get(cacheKey(n, viewRef.current)) ?? null;
         bookmarkRef.current = n;
         dataRef.current = cached;
         setBookmark(n);
@@ -235,6 +349,7 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
               dataRef.current = payload;
               setData(payload);
             }
+            applyPendingView();
           })
           .catch(() => setBanner({ failed: n, showing: null }));
         return;
@@ -242,11 +357,12 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
 
       // Forward, or the initial load / a retry of the current chapter. Old data stays on
       // screen under the loading wash; the bookmark moves only once the payload is here.
-      const prev = cache.current.get(old) ?? null;
+      const prev = cache.current.get(cacheKey(old, viewRef.current)) ?? null;
       void load(n)
         .then((payload) => {
           if (!payload) return;
           commit(n, payload);
+          applyPendingView(); // a tab/view switch that waited for this move
           if (n > old) {
             const diff = diffGraphs(prev, payload);
             // R6 §8.2: a diff with >=1 reveal goes to the reveal UI instead of the plain
@@ -257,7 +373,7 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
         })
         .catch(() => setBanner({ failed: n, showing: dataRef.current ? bookmarkRef.current : null }));
     },
-    [chapterCount, slug, loading, invalidateInFlight, load, commit, showToast],
+    [chapterCount, slug, loading, invalidateInFlight, load, commit, showToast, applyPendingView],
   );
 
   // Resolve the work (title + chapter_count) once per slug. Nothing about the graph is
@@ -312,17 +428,17 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       return;
     }
     const n = bookmark - 1;
-    const cached = cache.current.get(n);
+    const cached = cache.current.get(cacheKey(n, viewRef.current));
     if (cached) {
       setPrevData(cached);
       return;
     }
     setPrevData(null);
     const controller = new AbortController();
-    fetchFencedGraph(slug, n, controller.signal)
+    fetchFencedGraph(slug, n, viewRef.current, controller.signal)
       .then((payload) => {
         if (controller.signal.aborted || bookmarkRef.current !== bookmark) return;
-        cache.current.set(n, payload);
+        cache.current.set(cacheKey(n, viewRef.current), payload);
         setPrevData(payload);
       })
       .catch(() => {
@@ -371,34 +487,69 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
   const dismissToast = useCallback((): void => setToast(null), []);
   const dismissBanner = useCallback((): void => setBanner(null), []);
   const dismissReveal = useCallback((): void => setPendingReveal(null), []);
-  const getCachedPayload = useCallback((n: number): GraphElements | null => cache.current.get(n) ?? null, []);
 
-  const historyInFlight = useRef<Promise<void> | null>(null);
-  const ensureHistory = useCallback(
-    async (upTo: number): Promise<void> => {
-      if (historyInFlight.current) await historyInFlight.current;
-      const top = Math.min(upTo, bookmarkRef.current);
-      const missing: number[] = [];
-      for (let k = 1; k <= top; k++) if (!cache.current.has(k)) missing.push(k);
-      if (missing.length === 0) return;
-      const run = (async (): Promise<void> => {
-        const controller = new AbortController();
-        for (const k of missing) {
-          if (k > bookmarkRef.current) break; // bookmark moved back mid-run
-          try {
-            const payload = await fetchFencedGraph(slug, k, controller.signal);
-            if (k <= bookmarkRef.current) cache.current.set(k, payload);
-          } catch {
-            // best-effort: a chapter that fails to backfill just stays uncached — the
-            // identity timeline degrades for that one pair, it never blocks the screen.
+  // R7: the only way the view changes. It goes back to the SERVER — retrofit rule 6, no
+  // client-side filtering of any kind — so the payload the canvas draws is always exactly
+  // what the API decided to serve for this chapter and these settings. The bookmark is
+  // untouched: changing what you look at is not reading further, so no toast, no reveal,
+  // no diff, and F1 is unaffected (the request is still for the confirmed bookmark).
+  const setView = useCallback(
+    (next: ViewParams): void => {
+      // Idempotent: a screen re-declaring the view it already has must not re-fetch.
+      //
+      // "Already has" includes "is fetching right now". The first version only checked
+      // `dataRef.current !== null`, so on a first visit — where the mount effect runs
+      // while the provider's own initial load is still in flight — the same view was
+      // re-requested, and a re-render did it again: [MEASURED] THREE identical
+      // `/graph?n=1&cast=all&types=…` requests on one page load, caught by
+      // `fence.spec.ts` F1 ("first visit … requests only n=1"). The fence specs count
+      // requests exactly, and here they were counting a real bug.
+      const settled = dataRef.current !== null;
+      const fetching = inFlight.current !== null && sameView(inFlight.current.view, next);
+      if (sameView(next, viewRef.current) && (settled || fetching)) return;
+      viewRef.current = next;
+      // React runs a CHILD's effects before its parent's, so a screen declaring its view
+      // on mount gets here before this provider's own initial load has even started.
+      // Recording the view and returning lets that one load request the right thing,
+      // instead of racing it with a second identical request (the other half of the
+      // three-requests-on-first-visit bug above).
+      if (!initialised.current) {
+        setViewState(next);
+        return;
+      }
+      // A chapter move already in flight OWNS the request. Changing the view must never
+      // cancel it: the reader's chapter is the primary action and the view is secondary,
+      // and `load` aborts whatever is in flight. Without this, switching tabs during a
+      // forward fetch silently lost the move — the bookmark stayed where it was
+      // (`fence.spec.ts` "tab switch during a forward fetch: bookmark still commits").
+      // The view is recorded and re-requested once the move lands.
+      if (inFlight.current !== null) {
+        setViewState(next);
+        pendingView.current = true;
+        return;
+      }
+      setViewState(next);
+      const n = bookmarkRef.current;
+      const cached = cache.current.get(cacheKey(n, next));
+      if (cached) {
+        dataRef.current = cached;
+        setData(cached);
+        return;
+      }
+      void load(n)
+        .then((payload) => {
+          if (payload && bookmarkRef.current === n) {
+            dataRef.current = payload;
+            setData(payload);
           }
-        }
-      })();
-      historyInFlight.current = run;
-      await run;
-      historyInFlight.current = null;
+        })
+        .catch(() => setBanner({ failed: n, showing: dataRef.current ? n : null }));
     },
-    [slug],
+    [load],
+  );
+  const getCachedPayload = useCallback(
+    (n: number): GraphElements | null => cache.current.get(cacheKey(n, viewRef.current)) ?? null,
+    [],
   );
 
   const value = useMemo<ChapterModel>(
@@ -416,18 +567,19 @@ export function ChapterProvider({ slug, children }: { slug: string; children: Re
       toast,
       dialog,
       pendingReveal,
+      view,
       requestChapter,
+      setView,
       openDialog,
       closeDialog,
       dismissToast,
       dismissBanner,
       dismissReveal,
       getCachedPayload,
-      ensureHistory,
     }),
     [slug, work, workError, chapterCount, bookmark, data, prevData, arcs, loading, banner, toast,
-      dialog, pendingReveal, requestChapter, openDialog, closeDialog, dismissToast, dismissBanner,
-      dismissReveal, getCachedPayload, ensureHistory],
+      dialog, pendingReveal, view, requestChapter, setView, openDialog, closeDialog, dismissToast,
+      dismissBanner, dismissReveal, getCachedPayload],
   );
 
   return <ChapterContext.Provider value={value}>{children}</ChapterContext.Provider>;

@@ -15,13 +15,11 @@ test.describe("Global keyboard map (§8.5)", () => {
     await page.waitForSelector('[data-testid="entity-main"]');
   });
 
-  test("g d / g w / g c navigate the three tabs from anywhere in a work", async ({ page }) => {
+  // R7 removed `g c` with the Chronicle; the chord itself still works for the two tabs.
+  test("g d / g w navigate the two tabs from anywhere in a work", async ({ page }) => {
     await page.keyboard.press("g");
     await page.keyboard.press("w");
     await expect(page).toHaveURL(new RegExp(`#/work/${SLUG}/web`));
-    await page.keyboard.press("g");
-    await page.keyboard.press("c");
-    await expect(page).toHaveURL(new RegExp(`#/work/${SLUG}/chronicle`));
     await page.keyboard.press("g");
     await page.keyboard.press("d");
     await expect(page).toHaveURL(new RegExp(`#/work/${SLUG}/entity`));

@@ -32,10 +32,19 @@ function nOf(url: string): number {
 // routes most-recently-registered-first; `fallback()` passes to the one before it).
 const IDENTITY_RELATIONS = new Set(["SAME_AS", "ALIAS", "SECRET_IDENTITY", "REINCARNATION", "TRANSMIGRATED_INTO"]);
 async function stripReveals(route: Route): Promise<void> {
-  const resp = await route.fetch();
-  const body = (await resp.json()) as { elements: { edges: { data: { relation: string } }[] } };
-  body.elements.edges = body.elements.edges.filter((e) => !IDENTITY_RELATIONS.has(e.data.relation));
-  await route.fulfill({ response: resp, body: JSON.stringify(body) });
+  try {
+    const resp = await route.fetch();
+    const body = (await resp.json()) as { elements: { edges: { data: { relation: string } }[] } };
+    body.elements.edges = body.elements.edges.filter((e) => !IDENTITY_RELATIONS.has(e.data.relation));
+    await route.fulfill({ response: resp, body: JSON.stringify(body) });
+  } catch {
+    // R7: a request still in this handler when the page navigates (or the test ends)
+    // leaves Playwright disposing the APIResponse under us — "apiResponse.json: Response
+    // has been disposed", seen only in full-suite runs, never in isolation. Nothing is
+    // reading that response by then, so letting it through is enough; swallowing the
+    // second failure too keeps a torn-down context from failing the test.
+    await route.continue().catch(() => {});
+  }
 }
 
 async function attachLog(log: GraphRequestLog, name = "graph-requests"): Promise<void> {

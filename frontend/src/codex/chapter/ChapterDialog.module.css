@@ -4,7 +4,11 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  /* R7 (found by the 390x844 Rule Zero capture): the Stemma's responsive drawer scrim
+     is z-index 24-25, so at phone width it sat ON TOP of this modal and swallowed every
+     click inside it -- the chapter could not be changed from the rail on a phone at all.
+     A modal dialog outranks any drawer by definition, so it goes above both. */
+  z-index: 40;
   background: var(--scrim);
   display: flex;
   align-items: center;
@@ -212,11 +216,22 @@
   color: var(--ink);
 }
 
+/* R7 (found by the 390x844 Rule Zero capture): on a phone the dialog's content is
+   taller than the dialog (scrollHeight 926 vs clientHeight 794), which put "Set
+   bookmark" at y=812-864 -- clipped by the dialog AND 20px below the 844px viewport, so
+   the reader could not change chapter at all on a phone. The actions row is now stuck to
+   the bottom of the scroll container, so the button is reachable at any height. The
+   opaque background is required: without it the scrolling content shows through. */
 .actions {
   display: flex;
   align-items: center;
   gap: var(--s-4);
   margin-top: var(--s-2);
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+  padding-bottom: var(--s-2);
+  padding-top: var(--s-2);
 }
 
 /* Artboard 6: the primary spans the row, Cancel is a compact outline beside it. */

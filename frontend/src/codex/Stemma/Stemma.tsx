@@ -8,22 +8,16 @@ import { MinusIcon, PlusIcon } from "../../icons";
 import { codexTheme, fillTemplate } from "../theme";
 import { tabItems, navigateToTab } from "../tabs";
 import { roman } from "../chapter/roman";
-import { useChapter } from "../chapter/ChapterProvider";
+import { DEFAULT_VIEW, useChapter, type ViewParams } from "../chapter/ChapterProvider";
 import { useReveal } from "../reveal/RevealContext";
 import StateCard from "../states/StateCard";
 import { buildViewModel, principalOf, tieLabel, tiesOf } from "../../graph/viewModel";
-import {
-  identityEndpoints,
-  neighboursOf,
-  searchNames,
-  SHOW_ALL,
-  visibleGraph,
-  type CastSize,
-  type ShowFilter,
-} from "../../graph/stemmaModel";
+import { identityEndpoints, neighboursOf, searchNames, visibleGraph } from "../../graph/stemmaModel";
+import type { CastSize } from "../../types";
 import StemmaCanvas, { type EdgeHover, type Selection, type StemmaCanvasHandle } from "./StemmaCanvas";
 import SelectionPanel from "./SelectionPanel";
 import styles from "./Stemma.module.css";
+import { isTypingTarget } from "../typingTarget";
 
 // DESIGN_SPEC.md §6.3 The Stemma — the full graph with focus mode (§8.3). All story data
 // comes from the R3 chapter model's fenced payload; the rail filters and the search only
@@ -33,9 +27,6 @@ import styles from "./Stemma.module.css";
 const HOVER_MS = 80;
 const TOOLTIP_MAX = 80;
 
-function isTypingTarget(t: EventTarget | null): boolean {
-  return t instanceof HTMLElement && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
-}
 
 export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
   const title = useWorkTitle();
@@ -48,8 +39,14 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
   // undefined = not resolved yet (first data still loading); null = the reader cleared it.
   const [focusId, setFocusId] = useState<string | null | undefined>(undefined);
   const [steps, setSteps] = useState<1 | 2>(1);
-  const [show, setShow] = useState<ShowFilter>(SHOW_ALL);
-  const [cast, setCast] = useState<CastSize>("principal");
+
+  // R7: the Stemma's controls are its own UI state, applied to the SERVER on every
+  // change. The Dossier declares FULL_VIEW on its mount, so returning here re-declares
+  // the graph view — deliberately resetting to the default rather than silently keeping a
+  // setting the reader can no longer see, since the controls are only on this screen.
+  const [controls, setControls] = useState<ViewParams>(DEFAULT_VIEW);
+  const applyView = m.setView;
+  useEffect(() => { applyView(controls); }, [applyView, controls]);
   const [selected, setSelected] = useState<Selection | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [kbdId, setKbdId] = useState<string | null>(null);
@@ -96,20 +93,31 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
   }, [vm, urlFocus, principal?.id]);
 
   // URL mirrors the focus (§8.3) — location.replace: no history entry, hashchange fires.
+  //
+  // R7: only while the Stemma is still the current route. The effect re-runs whenever
+  // `vm` changes, and a view refetch can land one tick AFTER the reader has navigated
+  // away — which rewrote the hash back to `/web?focus=…` and bounced them here. Measured
+  // as `g d` (go to Dossier) landing on `#/work/…/web?focus=1` instead of `/entity`.
   useEffect(() => {
     if (!vm || focusId === undefined) return;
+    if (route.name !== "work-web") return;
+    if (!window.location.hash.startsWith(`#/work/${encodeURIComponent(route.slug)}/web`)) return;
     const wanted = routePath({ name: "work-web", slug: route.slug, focus: focusId });
     if (window.location.hash !== wanted) window.location.replace(wanted);
-  }, [focusId, route.slug, vm]);
+  }, [focusId, route.slug, route.name, vm]);
 
   // The visible graph is recomputed on every focus change (the focus is always visible)
   // but only becomes a NEW object when its content changes — otherwise the canvas would
   // re-run physics and refit on every click.
-  const graphRaw = useMemo(() => (vm ? visibleGraph(vm, { show, cast, focusId: focusId ?? null }) : null), [vm, show, cast, focusId]);
+  // R7: the payload IS the graph. Nothing is filtered here — the cast dial and the
+  // overlay toggles are server query parameters (`m.setView`), so what the canvas draws
+  // is exactly what the API served. This memo now only stabilises the object identity so
+  // the canvas does not re-run physics on every unrelated render.
+  const graphRaw = useMemo(() => (vm ? visibleGraph(vm) : null), [vm]);
   const graphRef = useRef<{ key: string; value: typeof graphRaw }>({ key: "", value: null });
   const graph = useMemo(() => {
     const key = graphRaw
-      ? `${graphRaw.nodes.map((n) => n.id).join(",")}|${graphRaw.edges.map((e) => e.id).join(",")}|${[...graphRaw.folded].map(([k, v]) => `${k}:${v}`).join(",")}`
+      ? `${graphRaw.nodes.map((n) => n.id).join(",")}|${graphRaw.edges.map((e) => e.id).join(",")}`
       : "";
     if (key !== graphRef.current.key) graphRef.current = { key, value: graphRaw };
     return graphRef.current.value;
@@ -250,35 +258,45 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
           )}
         </div>
 
-        <fieldset className={styles.fieldset}>
-          <legend className={styles.fieldLabel}>{codexTheme.showLabel}</legend>
-          {([["people", codexTheme.showPeople], ["orders", codexTheme.showOrders], ["places", codexTheme.showPlaces]] as const).map(([k, label]) => (
-            <label key={k} className={styles.check}>
-              <input type="checkbox" className={styles.checkbox} checked={show[k]} onChange={(e) => setShow({ ...show, [k]: e.target.checked })} data-testid={`show-${k}`} />
-              {label}
-            </label>
-          ))}
-        </fieldset>
-
+        {/* R7 controls. Every one of these calls `m.setView`, which re-requests /graph;
+            none of them touches the payload locally (retrofit rule 6). The cast dial is
+            first because it is the one a new reader reaches for. */}
         <div className={styles.field}>
           <div className={styles.fieldLabel}>{codexTheme.castSizeLabel}</div>
-          <div className={styles.segmented} role="radiogroup" aria-label={codexTheme.castSizeLabel}>
-            {(["principal", "everyone"] as const).map((k) => (
+          <div className={`${styles.segmented} ${styles.segmentedFull}`} role="radiogroup" aria-label={codexTheme.castSizeLabel}>
+            {([["20", codexTheme.cast20], ["50", codexTheme.cast50], ["all", codexTheme.castAll]] as const).map(([k, label]) => (
               <button
                 key={k}
                 type="button"
                 role="radio"
-                aria-checked={cast === k}
-                className={`${styles.segment} ${cast === k ? styles.segmentOn : ""}`}
-                onClick={() => setCast(k)}
+                aria-checked={controls.cast === k}
+                className={`${styles.segment} ${controls.cast === k ? styles.segmentOn : ""}`}
+                onClick={() => setControls({ ...controls, cast: k as CastSize })}
                 data-testid={`cast-${k}`}
               >
-                {k === "principal" ? codexTheme.castPrincipal : codexTheme.castEveryone}
+                {label}
               </button>
             ))}
           </div>
           <p className={styles.caption}>{codexTheme.castCaption}</p>
         </div>
+
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.fieldLabel}>{codexTheme.showLabel}</legend>
+          {([["groups", codexTheme.showOrders], ["places", codexTheme.showPlaces], ["items", codexTheme.showItems]] as const).map(([k, label]) => (
+            <label key={k} className={styles.check}>
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={controls[k]}
+                onChange={(e) => setControls({ ...controls, [k]: e.target.checked })}
+                data-testid={`show-${k}`}
+              />
+              {label}
+            </label>
+          ))}
+          <p className={styles.caption}>{codexTheme.showCaption}</p>
+        </fieldset>
 
         <div className={styles.railSpacer} />
         {m.chapterCount > 0 && (
@@ -330,12 +348,39 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
               onEdgeHover={setHover}
             />
           )}
+          {/* R7: a calm note, not a blank canvas. Fewer than 3 lines is the common case
+              early in a book and after R5 measured how sparse real extraction is — a
+              reader who sees an empty screen assumes the app is broken. */}
+          {graph && graph.edges.length < 3 && (
+            <div className={styles.fewEdges} data-testid="few-edges">
+              <StateCard
+                testId="few-edges-card"
+                label={graph.nodes.length === 0 ? codexTheme.emptyCastLabel : codexTheme.fewEdgesLabel}
+                headline={graph.nodes.length === 0 ? codexTheme.emptyCastTitle : codexTheme.fewEdgesTitle}
+                body={fillTemplate(
+                  graph.nodes.length === 0 ? codexTheme.emptyCastBody : codexTheme.fewEdgesBody,
+                  { n: roman(m.bookmark) },
+                )}
+              />
+            </div>
+          )}
           {tooltip && hover && (
             <div className={styles.tooltip} style={{ left: hover.x, top: hover.y }} role="tooltip" data-testid="edge-tooltip">
               <div>{tooltip.line}</div>
               {tooltip.quote && <div className={styles.tooltipQuote}>“{tooltip.quote}”</div>}
             </div>
           )}
+        </div>
+
+        <div className={styles.legendBar} data-testid="graph-legend">
+          <span className={styles.legendTitle}>{codexTheme.legendTitle}</span>
+          {codexTheme.legendShapes.map(([kind, label]) => (
+            <span key={kind} className={styles.legendItem}>
+              <span className={styles.legendGlyph} data-kind={kind} aria-hidden="true" />
+              {label}
+            </span>
+          ))}
+          <span className={styles.legendLines}>{codexTheme.legendLines}</span>
         </div>
 
         <div className={styles.controls}>
@@ -359,7 +404,7 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
       </div>
 
       <aside className={`${styles.rightPanel} ${panelOpen ? styles.panelOpen : ""}`} data-testid="stemma-right-panel">
-        {vm && <SelectionPanel vm={vm} selected={selected} onOpen={openDossier} />}
+        {vm && <SelectionPanel vm={vm} selected={selected} slug={route.slug} n={m.bookmark} onOpen={openDossier} />}
       </aside>
     </div>
   );

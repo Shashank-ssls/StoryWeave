@@ -12,7 +12,7 @@ import styles from "./RevealChrome.module.css";
 
 // R6 orchestrator (DESIGN_SPEC.md §6.5, §8.2, §8.1 jump-far). Mounted once per work,
 // wrapping the three tabs + ChapterChrome (CodexApp), so it sits above Dossier/Stemma/
-// Chronicle and can route a forward commit's reveals to the right presentation without any
+// the Stemma and can route a forward commit's reveals to the right presentation without any
 // of them fetching or holding reveal state themselves:
 //   >3 reveals               -> RevealSummarySheet, regardless of quiet mode (a bare toast
 //                                can't reasonably summarise a big batch; the sheet is

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { CodexRoute } from "../../router/useHashRoute";
 import { navigateToTab } from "../tabs";
+import { isTypingTarget } from "../typingTarget";
 
-// DESIGN_SPEC.md §8.5 global keyboard map: `g d` / `g w` / `g c` (chord: `g` arms a short
+// DESIGN_SPEC.md §8.5 global keyboard map: `g d` / `g w` (chord: `g` arms a short
 // window, the next key picks the screen) and `?` (opens the shortcut sheet). Scoped to the
 // app root via a window listener with the same typing-target guard every other global
 // shortcut in this app uses (R3's `[`/`]`, Stemma's `/` and arrows) — never fires while the
@@ -11,9 +12,6 @@ import { navigateToTab } from "../tabs";
 // itself — each already runs its own scoped Escape/Tab handling).
 const CHORD_MS = 900;
 
-function isTypingTarget(t: EventTarget | null): boolean {
-  return t instanceof HTMLElement && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
-}
 
 function aDialogIsOpen(): boolean {
   return document.querySelector('[role="dialog"][aria-modal="true"]') !== null;
@@ -35,10 +33,11 @@ export function useGlobalShortcuts(route: CodexRoute): { sheetOpen: boolean; clo
         chordArmed.current = false;
         window.clearTimeout(chordTimer.current);
         const r = routeRef.current;
-        if (r.name !== "work-entity" && r.name !== "work-web" && r.name !== "work-chronicle") return;
-        if (e.key === "d" || e.key === "w" || e.key === "c") {
+        if (r.name !== "work-entity" && r.name !== "work-web") return;
+        // `g c` went with the Chronicle in R7; an unmapped chord key is simply ignored.
+        if (e.key === "d" || e.key === "w") {
           e.preventDefault();
-          navigateToTab(e.key === "d" ? "entity" : e.key === "w" ? "web" : "chronicle", r);
+          navigateToTab(e.key === "d" ? "entity" : "web", r);
         }
         return;
       }

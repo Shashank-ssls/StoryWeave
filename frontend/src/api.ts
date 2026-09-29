@@ -1,5 +1,6 @@
 import type {
   AnalysisStatus,
+  EgoResponse,
   AppendResponse,
   IngestResponse,
   PreviewResponse,
@@ -65,5 +66,16 @@ export async function appendChapters(slug: string, text: string): Promise<Append
   return postJSON<AppendResponse>(
     `/api/v1/works/${encodeURIComponent(slug)}/chapters`,
     { text },
+  );
+}
+
+// R7: the side panel's source. `/ego` answers "how are these two related, and where does
+// the book say so?" with a relation, a grade and the verbatim sentence for each
+// neighbour — the three things v1's panel lacked when it said only "linked". Fenced at
+// `n` server-side; an entity not yet revealed is a 404, indistinguishable from one that
+// does not exist (a 404/200 split would leak by itself).
+export async function fetchEgo(slug: string, entityId: string, n: number): Promise<EgoResponse> {
+  return getJSON<EgoResponse>(
+    `/api/v1/works/${encodeURIComponent(slug)}/entity/${encodeURIComponent(entityId)}/ego?n=${n}`,
   );
 }

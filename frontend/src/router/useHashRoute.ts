@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 // Hand-rolled hash router (FRONTEND_OVERHAUL.md §6 Phase 2 / R2; DESIGN_SPEC.md §5).
 // Routes: landing `#/`, `#/add` (R9 step 8: the ingest form, ported off the deleted
 // legacy app), `#/work/:slug/entity/:id`, `#/work/:slug/web?focus=:id`,
-// `#/work/:slug/chronicle`, plus the dev-only `#/_type` (token gallery). The chapter
+// plus the dev-only `#/_type` (token gallery). R7 removed the Chronicle/timeline route;
+// an old `#/work/:slug/chronicle` bookmark now resolves to the graph rather than 404ing.
+// The chapter
 // bookmark MUST NOT appear in any URL (DESIGN_SPEC §5) — nothing here ever reads or
 // writes a chapter number.
 
@@ -12,13 +14,9 @@ export type Route =
   | { name: "add" }
   | { name: "work-entity"; slug: string; entityId: string }
   | { name: "work-web"; slug: string; focus: string | null }
-  | { name: "work-chronicle"; slug: string }
   | { name: "type-scale" };
 
-export type WorkRoute = Extract<
-  Route,
-  { name: "work-entity" } | { name: "work-web" } | { name: "work-chronicle" }
->;
+export type WorkRoute = Extract<Route, { name: "work-entity" } | { name: "work-web" }>;
 export type CodexRoute = Extract<Route, { name: "landing" } | { name: "add" }> | WorkRoute;
 
 // The entity-id placeholder used when `#/work/:slug` is visited with no entity chosen yet.
@@ -43,8 +41,9 @@ function parse(hash: string): Route {
       const params = new URLSearchParams(queryPart ?? "");
       return { name: "work-web", slug, focus: params.get("focus") };
     }
+    // R7: the Chronicle is gone. Old links redirect to the graph instead of 404ing.
     if (segs[2] === "chronicle") {
-      return { name: "work-chronicle", slug };
+      return { name: "work-web", slug, focus: null };
     }
     // `#/work/:slug` with no entity chosen — resolves to the pending-entity placeholder.
     return { name: "work-entity", slug, entityId: PENDING_ENTITY };
@@ -68,8 +67,6 @@ export function routePath(route: Route): string {
       return `#/work/${encodeURIComponent(route.slug)}/web${
         route.focus ? `?focus=${encodeURIComponent(route.focus)}` : ""
       }`;
-    case "work-chronicle":
-      return `#/work/${encodeURIComponent(route.slug)}/chronicle`;
   }
 }
 
@@ -90,8 +87,15 @@ export function useHashRoute(): Route {
   // rendering, but the visible URL should reflect where the reader actually landed
   // (DESIGN_SPEC §5: URLs are shareable) — normalise it via replaceState so this doesn't
   // add a spurious history entry or re-fire hashchange.
+  //
+  // R7: a retired `…/chronicle` link normalises the same way. It used to be fixed up
+  // incidentally by the Stemma's focus-mirror effect, which is not the router's job and
+  // stopped happening once that effect was correctly scoped to the `work-web` route —
+  // leaving the reader on the graph with a `/chronicle` URL.
   useEffect(() => {
-    if (route.name === "work-entity" && route.entityId === PENDING_ENTITY) {
+    const pending = route.name === "work-entity" && route.entityId === PENDING_ENTITY;
+    const retired = route.name === "work-web" && /\/chronicle$/.test(window.location.hash);
+    if (pending || retired) {
       const wanted = routePath(route);
       if (window.location.hash !== wanted) {
         window.history.replaceState(null, "", wanted);

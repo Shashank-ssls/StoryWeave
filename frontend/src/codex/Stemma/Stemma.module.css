@@ -123,15 +123,30 @@
   border-radius: var(--radius);
 }
 
+/* R7: `inline-flex` with fixed padding fitted two segments ("Principal"/"Everyone") but
+   not the three the cast dial now needs — the 1280x720 capture showed "Everyone" clipped
+   by the rail's edge, i.e. a control the reader could see but not click. The row now
+   fills the rail and the segments share it, so any number of options stays inside. */
 .segmented {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   border: var(--border);
 }
+/* The rail's cast dial fills its column; the canvas's 1-step/2-step control does not
+   (it sits in a flex row of buttons, where stretching it would push the zoom controls
+   off). Same segment styling, different sizing. */
+.segmentedFull { width: 100%; }
 .segment {
+  /* `1 1 0` gave all three cast options an equal share of the rail and truncated the
+     longest one to "Main cast (" -- measured at 1280x720. Sizing to content and allowing
+     the row to wrap keeps every option's full words readable at any rail width. */
+  flex: 1 1 auto;
+  white-space: nowrap;
+  text-align: center;
   font-family: var(--font-ui);
   font-size: var(--fs-14);
   min-height: var(--control-h);
-  padding: 0 var(--s-5);
+  padding: 0 var(--s-2);
   background: transparent;
   color: var(--dim);
   border: none;
@@ -462,7 +477,69 @@
   .rail.railOpen {
     transform: translateY(0);
   }
+  /* R7 (found by the 390x844 Rule Zero capture): `.panelScrim.panelOpen`'s `display:
+     block` existed ONLY in the 1024-1279 query, so below 1024px the drawer opened with no
+     scrim at all. Tapping outside it did nothing (Playwright: the scrim is display:none,
+     so the click times out), and `rail-toggle` sits in the canvas top bar UNDERNEATH the
+     open drawer, so that was unreachable too. On a phone the only way out was the Escape
+     key. Measured: rail top stayed at 0 after a scrim tap and went to -603 after Escape. */
+  .panelScrim.panelOpen {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: var(--scrim);
+    z-index: 24;
+  }
   .canvas {
     height: 70vh;
   }
 }
+
+/* ---- R7: the always-visible legend -------------------------------------------- */
+/* R4c's screenshots showed a reader cannot tell a filled dot from an outlined one, or
+   a solid line from a dashed one, without being told. The legend is therefore always on
+   screen rather than hidden in the selection panel, and it names the SHAPES and the LINE
+   MEANINGS in the same words the controls use. */
+.legendBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--dim);
+}
+.legendTitle { font-weight: 600; color: var(--ink); }
+.legendItem { display: inline-flex; align-items: center; gap: 7px; }
+.legendGlyph { width: 11px; height: 11px; display: inline-block; }
+.legendGlyph[data-kind="person"] { background: var(--ink); border-radius: 50%; }
+.legendGlyph[data-kind="order"] { border: 1.4px solid var(--ink); border-radius: 50%; }
+.legendGlyph[data-kind="place"] { border: 1.4px solid var(--ink); }
+.legendGlyph[data-kind="thing"] { border: 1.4px solid var(--ink); transform: rotate(45deg); }
+.legendLines { flex: 1 1 260px; min-width: 0; }
+
+/* ---- R7: the low-edge note ---------------------------------------------------- */
+.fewEdges {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 380px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media (max-width: 640px) {
+  .legendBar { font-size: 12px; gap: 4px 12px; padding: 8px 12px; }
+  .legendLines { flex-basis: 100%; }
+}
+
+/* ---- R7: the ego list in the selection panel ---------------------------------- */
+.egoList { list-style: none; margin: 0 0 8px; padding: 0; }
+.egoRow { padding: 8px 0; border-bottom: 1px solid var(--line); }
+.egoRow:last-child { border-bottom: none; }
+.egoHead { display: flex; align-items: baseline; gap: 8px; }
+.egoRelation { color: var(--dim); font-size: 13px; white-space: nowrap; }
+.egoName { color: var(--ink); }
+.egoCite { display: block; margin-top: 4px; font-style: normal; font-size: 12px; color: var(--faint); }

@@ -270,3 +270,25 @@ unambiguous equivalent and is what the ledger now records.
 `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`, or re-run the vendor
 installer. The two Start Menu shortcuts (items 3 and 4) are untouched, so Ollama is still
 launchable from the Start Menu by hand.
+
+---
+
+## Re-audit at the end of phase R7 — 2026-09-29, [MEASURED]
+
+R7 touched the frontend and one SQL method. It installed nothing, downloaded nothing and
+pulled no model, so no ledger item was added.
+
+| item | at the R6 check | at the R7 check | verdict |
+| --- | ---: | ---: | --- |
+| 1 `C:\Users\space\.ollama\` | 2,284 B | **2,284 B** | byte-identical |
+| 2 `%LOCALAPPDATA%\Ollama\` | 276,845 B | **276,845 B** | byte-identical |
+| 5 Startup shortcut | removed | **still absent** | stays removed |
+| 7 `HKCU\Environment\Path` entry | removed | **still absent** | stays removed |
+| 8 `.claude\projects\…` | 121.1 MB | **134.8 MB** | Claude Code harness, grows with the session |
+| 9 `%LOCALAPPDATA%\Temp\claude\…` | 9.02 MB | **4.44 MB** | scratchpad, shrank |
+
+Checked for and did not find any new C: cache this phase: `%LOCALAPPDATA%\pip\Cache`,
+`C:\Users\space\.cache\huggingface`, `%APPDATA%\npm-cache` and
+`%LOCALAPPDATA%\ms-playwright` are all **absent**. The R7 screenshot harness runs
+`playwright-core` against the system Chrome from `.local\pw\` on F:, which is exactly why
+no browser was downloaded to either drive.

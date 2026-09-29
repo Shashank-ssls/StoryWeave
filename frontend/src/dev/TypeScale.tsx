@@ -119,7 +119,6 @@ function TypeRow({ size }: { size: number }): JSX.Element {
 const TAB_ITEMS = [
   { key: "dossier", label: "Dossier" },
   { key: "web", label: "The Stemma" },
-  { key: "chronicle", label: "Chronicle" },
 ];
 
 export default function TypeScale(): JSX.Element {

@@ -14,7 +14,12 @@ import { recordGraphRequests, assertNoGraphRequestAbove, dismissRevealIfShown, G
 
 const SLUG = "the-hollow-crown";
 const KEY = `storyweave:bookmark:${SLUG}`;
-const DRAWN = new Set(["Character", "Organization", "Place", "Item", "Ability"]);
+// R7: Ability is no longer drawable — retrofit rule 2 fixes the drawable ontology at four
+// types and says Ability / Concept / Event / Title are never drawn, which R6 made
+// `/graph` honour. `Glass-sight` (node 5) is still seeded and still fenced (integration
+// rule I2 untouched); the canvas simply does not ask for that type. Same change as
+// `stemma.spec.ts` and `landing.spec.ts`.
+const DRAWN = new Set(["Character", "Organization", "Place", "Item"]);
 const IDENTITY = new Set(["SAME_AS", "ALIAS", "SECRET_IDENTITY", "REINCARNATION", "TRANSMIGRATED_INTO"]);
 
 interface Node { id: string; label: string; type: string; first_seen_chapter: number; revealed_chapter: number }

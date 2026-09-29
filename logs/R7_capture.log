@@ -1,0 +1,306 @@
+﻿
+=== desktop_ch10_default ===
+{
+  "renderedNodes": 10,
+  "renderedEdges": 3,
+  "payloadNodes": 10,
+  "payloadEdges": 4,
+  "dashedEdges": 3,
+  "arrowEdges": 2,
+  "edgeLabels": [
+    "mentors (implied)",
+    "enemy of (implied)"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=10&cast=20&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter X of 40 · change The whole web, as far as you have read Dossier The Stemma How to read this A "
+}
+
+=== desktop_ch10_everyone ===
+{
+  "renderedNodes": 32,
+  "renderedEdges": 9,
+  "payloadNodes": 32,
+  "payloadEdges": 10,
+  "dashedEdges": 8,
+  "arrowEdges": 5,
+  "edgeLabels": [
+    "mentors (implied)",
+    "enemy of (implied)",
+    "killed (implied)",
+    "family (implied)",
+    "serves (implied)",
+    "family"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=10&cast=all&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter X of 40 · change The whole web, as far as you have read Dossier The Stemma How to read this A "
+}
+
+=== desktop_ch20_default ===
+{
+  "renderedNodes": 14,
+  "renderedEdges": 7,
+  "payloadNodes": 14,
+  "payloadEdges": 8,
+  "dashedEdges": 7,
+  "arrowEdges": 5,
+  "edgeLabels": [
+    "mentors (implied)",
+    "family (implied)",
+    "enemy of (implied)",
+    "serves (implied)"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=20&cast=20&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter XX of 40 · change The whole web, as far as you have read Dossier The Stemma How to read this A"
+}
+
+=== desktop_ch20_everyone ===
+{
+  "renderedNodes": 41,
+  "renderedEdges": 13,
+  "payloadNodes": 41,
+  "payloadEdges": 14,
+  "dashedEdges": 11,
+  "arrowEdges": 9,
+  "edgeLabels": [
+    "mentors (implied)",
+    "family (implied)",
+    "enemy of (implied)",
+    "serves (implied)",
+    "killed (implied)",
+    "family",
+    "mentors"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=20&cast=all&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter XX of 40 · change The whole web, as far as you have read Dossier The Stemma How to read this A"
+}
+
+=== desktop_ch40_default ===
+{
+  "renderedNodes": 20,
+  "renderedEdges": 13,
+  "payloadNodes": 20,
+  "payloadEdges": 18,
+  "dashedEdges": 12,
+  "arrowEdges": 10,
+  "edgeLabels": [
+    "mentors (implied)",
+    "family (implied)",
+    "serves (implied)",
+    "enemy of (implied)",
+    "killed · serves · enemy of (implied)",
+    "mentors",
+    "mentors · serves (implied)"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=40&cast=20&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter 40 of 40 · change The whole web, as far as you have read Dossier The Stemma How to read this A"
+}
+
+=== desktop_ch40_everyone ===
+{
+  "renderedNodes": 53,
+  "renderedEdges": 21,
+  "payloadNodes": 53,
+  "payloadEdges": 27,
+  "dashedEdges": 18,
+  "arrowEdges": 14,
+  "edgeLabels": [
+    "mentors (implied)",
+    "family (implied)",
+    "serves (implied)",
+    "enemy of (implied)",
+    "killed · serves · enemy of (implied)",
+    "mentors",
+    "mentors · serves (implied)",
+    "killed (implied)",
+    "family",
+    "romantic with (implied)",
+    "enemy of · mentors (implied)"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=40&cast=all&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter 40 of 40 · change The whole web, as far as you have read Dossier The Stemma How to read this A"
+}
+  clicked node "Sorrel"
+
+=== desktop_ch40_panel ===
+{
+  "panelNode": true,
+  "egoRows": 12,
+  "egoQuotes": 12,
+  "statedGroup": true,
+  "impliedGroup": true,
+  "panelText": "Sorrel Person · first named in Chapter I The book says in The Undercroft “They salvaged what they could from the Undercroft by lamplight, Sorrel working alongside Vesper and Mira long past exhaustion, and it was in the middle of that grim, dusty labor that Thessaly finally said the rest of what she had been withholding since Marrowfall.” Chapter XXXIV owns ledger “His sister, Ione Ashcombe, stood behind him rather than beside him, which Sorrel — carrying the water-damaged ledger she had been ass"
+}
+
+console errors @desktop: []
+
+=== phone_ch10_default ===
+{
+  "renderedNodes": 10,
+  "renderedEdges": 3,
+  "payloadNodes": 10,
+  "payloadEdges": 4,
+  "dashedEdges": 3,
+  "arrowEdges": 2,
+  "edgeLabels": [
+    "mentors (implied)",
+    "enemy of (implied)"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=10&cast=20&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter X of 40 · change Cast & chapters The whole web, as far as you have read Dossier The Stemma Sho"
+}
+
+=== phone_ch10_everyone ===
+{
+  "renderedNodes": 32,
+  "renderedEdges": 9,
+  "payloadNodes": 32,
+  "payloadEdges": 10,
+  "dashedEdges": 8,
+  "arrowEdges": 5,
+  "edgeLabels": [
+    "mentors (implied)",
+    "enemy of (implied)",
+    "killed (implied)",
+    "family (implied)",
+    "serves (implied)",
+    "family"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=10&cast=all&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter X of 40 · change Cast & chapters The whole web, as far as you have read Dossier The Stemma Sho"
+}
+
+=== phone_ch20_default ===
+{
+  "renderedNodes": 14,
+  "renderedEdges": 7,
+  "payloadNodes": 14,
+  "payloadEdges": 8,
+  "dashedEdges": 7,
+  "arrowEdges": 5,
+  "edgeLabels": [
+    "mentors (implied)",
+    "family (implied)",
+    "enemy of (implied)",
+    "serves (implied)"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=20&cast=20&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter XX of 40 · change Cast & chapters The whole web, as far as you have read Dossier The Stemma Sh"
+}
+
+=== phone_ch20_everyone ===
+{
+  "renderedNodes": 41,
+  "renderedEdges": 13,
+  "payloadNodes": 41,
+  "payloadEdges": 14,
+  "dashedEdges": 11,
+  "arrowEdges": 9,
+  "edgeLabels": [
+    "mentors (implied)",
+    "family (implied)",
+    "enemy of (implied)",
+    "serves (implied)",
+    "killed (implied)",
+    "family",
+    "mentors"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=20&cast=all&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter XX of 40 · change Cast & chapters The whole web, as far as you have read Dossier The Stemma Sh"
+}
+
+=== phone_ch40_default ===
+{
+  "renderedNodes": 20,
+  "renderedEdges": 13,
+  "payloadNodes": 20,
+  "payloadEdges": 18,
+  "dashedEdges": 12,
+  "arrowEdges": 10,
+  "edgeLabels": [
+    "mentors (implied)",
+    "family (implied)",
+    "serves (implied)",
+    "enemy of (implied)",
+    "killed · serves · enemy of (implied)",
+    "mentors",
+    "mentors · serves (implied)"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=40&cast=20&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter 40 of 40 · change Cast & chapters The whole web, as far as you have read Dossier The Stemma Sh"
+}
+
+=== phone_ch40_everyone ===
+{
+  "renderedNodes": 53,
+  "renderedEdges": 21,
+  "payloadNodes": 53,
+  "payloadEdges": 27,
+  "dashedEdges": 18,
+  "arrowEdges": 14,
+  "edgeLabels": [
+    "mentors (implied)",
+    "family (implied)",
+    "serves (implied)",
+    "enemy of (implied)",
+    "killed · serves · enemy of (implied)",
+    "mentors",
+    "mentors · serves (implied)",
+    "killed (implied)",
+    "family",
+    "romantic with (implied)",
+    "enemy of · mentors (implied)"
+  ],
+  "unlabelledEdges": 0,
+  "legendVisible": true,
+  "fewEdgesNote": false,
+  "lastGraphUrl": "/api/v1/works/the-ninth-house/graph?n=40&cast=all&types=Character",
+  "bodyText": "Nothing focused. Choose a name from the rail, or press / to search. StoryWeave The Ninth House Find a name Show Main cast (20) More (50) Everyone Ranked by how much of the book so far is about them. Also show Groups Places Items Off by default: the graph is people unless you ask for more. Read to Chapter 40 of 40 · change Cast & chapters The whole web, as far as you have read Dossier The Stemma Sh"
+}
+  clicked node "Sorrel"
+
+=== phone_ch40_panel ===
+{
+  "panelNode": false,
+  "egoRows": 0,
+  "egoQuotes": 0,
+  "statedGroup": false,
+  "impliedGroup": false,
+  "panelText": ""
+}
+
+console errors @phone: []
+
+wrote F:\Dev\Claude_folder_project_and_stuff\StoryWeave\evidence\retrofit\shots\R7/capture_log.txt

@@ -2,7 +2,7 @@
 // (post-R1) components comes from here — never hardcoded inline — so a future per-work
 // theme (Reliquary, Drowned, Velvet Court — see spec §4.6) can swap this whole object.
 // Every key from the §12 table is present, plus the three tab labels the table doesn't
-// spell out on its own (`web` already names the Stemma tab; `dossierTab`/`chronicleTab`
+// spell out on its own (`web` already names the Stemma tab; `dossierTab`
 // are this phase's own addition to complete the set).
 //
 // Geometry-scaffolding placeholder text in R2's screen shells ("Main content — R4") is
@@ -12,7 +12,6 @@
 export const codexTheme = {
   web: "The Stemma",
   dossierTab: "Dossier",
-  chronicleTab: "Chronicle",
   personsHeading: "Of the Persons",
   fence: "The remaining leaves are sealed. Nothing past Chapter {n} was copied into this book.",
   revealKicker: "Rubric · a hidden name",
@@ -77,14 +76,19 @@ export const codexTheme = {
   goToPrincipal: "Go to the principal character",
   // ---- R5: The Stemma (§6.3, §7.3, §8.3) ----
   findNameLabel: "Find a name",
-  showLabel: "Show",
-  showPeople: "People",
-  showOrders: "Orders & houses",
-  showPlaces: "Places & Relics",
-  castSizeLabel: "Cast size",
-  castPrincipal: "Principal",
-  castEveryone: "Everyone",
-  castCaption: "Minor figures fold into their faction until you ask for them.",
+  // R7: plain words, no house style. Each of these is a SERVER query parameter — the
+  // client never filters a payload (retrofit rule 6) — so what the words promise and
+  // what the canvas draws are the same thing by construction.
+  showLabel: "Also show",
+  showOrders: "Groups",
+  showPlaces: "Places",
+  showItems: "Items",
+  showCaption: "Off by default: the graph is people unless you ask for more.",
+  castSizeLabel: "Show",
+  cast20: "Main cast (20)",
+  cast50: "More (50)",
+  castAll: "Everyone",
+  castCaption: "Ranked by how much of the book so far is about them.",
   readTo: "Read to Chapter {n} of {m}",
   changeLink: "change",
   focusedOn: "Focused on {name} · {steps}",
@@ -102,10 +106,39 @@ export const codexTheme = {
   kindPlace: "Place",
   kindThing: "Relic",
   socialTitle: "{a} and {b}",
-  legendSolid: ["Solid line", "a tie between two"],
+  legendSolid: ["Solid line", "the book states it"],
+  legendDashed: ["Dashed line", "implied by the surrounding text"],
   legendGlow: ["Glowing line", "a revealed identity"],
-  legendFaded: ["Faded", "outside your focus"],
-  panelHint: "Click a name to focus; click a line to read its evidence.",
+  panelHint: "Click a name to focus; click a line to read the sentence.",
+
+  // ---- R7: the always-visible legend and the low-edge note ----
+  legendTitle: "How to read this",
+  legendShapes: [
+    ["person", "A person"],
+    ["order", "A group or house"],
+    ["place", "A place"],
+    ["thing", "An object"],
+  ],
+  legendLines: "Solid = the book states it; dashed = implied by context. Click any line to read the sentence.",
+  fewEdgesLabel: "Early days",
+  fewEdgesTitle: "Few stated connections yet",
+  fewEdgesBody:
+    "By Chapter {n} the book has named these people but not yet said much about how they " +
+    "are connected. Read on, or switch to Everyone to see more of the cast.",
+  // The stricter case, measured at chapter 1: the main-cast dial ranks by how much of the
+  // book so far is about someone, and nobody clears that bar in the opening chapters, so
+  // the default view is genuinely empty rather than merely sparse. Saying "these people"
+  // when none are drawn would be a small lie on the most common first screen.
+  emptyCastLabel: "Early days",
+  emptyCastTitle: "No main cast yet",
+  emptyCastBody:
+    "By Chapter {n} nobody has appeared often enough to count as the main cast. " +
+    "Choose Everyone to see whoever the book has named so far.",
+  statedGroup: "The book says",
+  impliedGroup: "Implied by context",
+  egoEmpty: "No connections recorded for {name} by Chapter {n}.",
+  egoFailed: "Could not load connections.",
+  quoteFrom: "Chapter {n}",
   openDossierOf: "Open {name}'s dossier",
   topTies: "Ties",
   tooltipTie: "{rel} · Chapter {n}",
@@ -144,22 +177,6 @@ export const codexTheme = {
   revealNextPage: "Next reveal",
   revealPrevPage: "Previous reveal",
 
-  // ---- R7: Chronicle (§6.4) ----
-  chronicleSubtitle: "the chronicle, as far as you have read",
-  chronicleCastSizeLabel: "Cast size",
-  chronicleSealed: "sealed / never sent here",
-  chronicleBookmarkLabel: "Chapter {n} · bookmark",
-  chronicleNoReveals: "No identities revealed yet.",
-  chronicleReveal: "{kicker} · Chapter {n}",
-  chronicleExplain: "Two threads you followed separately since Chapter {a} and Chapter {b} are one person.",
-  chronicleExplainDeepen: "What began in Chapter {a} goes further than you knew.",
-  chronicleReadOn: "Read on to Chapter {n}",
-  chroniclePrevReveal: "Previous reveal",
-  chronicleNextReveal: "Next reveal",
-  chronicleRevealOf: "{i} of {n}",
-  chronicleTieTooltip: "{rel} · Chapter {n}",
-  chronicleIdentityTooltip: "{kicker} · Chapter {n}",
-
   // ---- R8: Landing & states (§6.1, §6.7) ----
   landingLede:
     "StoryWeave remembers every name, tie and hidden identity a reader has met so far — " +
@@ -196,7 +213,6 @@ export const codexTheme = {
   // ---- R9: responsive drawers (§11, 1024-1279 panel drawer / <1024 rail drawer) ----
   showStemmaToggle: "Show the Stemma",
   showSelectionToggle: "Show selection",
-  showChronicleDetail: "Show details",
   castMenuToggle: "Cast & chapters",
 
   // ---- R9: screen-reader mirror of the focused neighbourhood (§11) ----
@@ -210,7 +226,6 @@ export const codexTheme = {
   shortcutRows: [
     { keys: "g d", label: "Go to Dossier" },
     { keys: "g w", label: "Go to the Stemma" },
-    { keys: "g c", label: "Go to Chronicle" },
     { keys: "[ / ]", label: "Previous / next chapter" },
     { keys: "/", label: "Search" },
     { keys: "Esc", label: "Close or unfocus" },

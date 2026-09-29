@@ -62,9 +62,15 @@ test.describe("Reduced motion (§4.5)", () => {
       await new Promise((r) => setTimeout(r, 1500));
       await route.continue();
     });
-    await page.goto(`/#/work/${SLUG}/chronicle`);
+    // R7: the 3-dot loading glyph lives in the landing page's try-it panel (StateCard
+    // `loading`) — the Stemma does not render one, and the Chronicle that used to carry
+    // one was removed this phase. Testing it where it actually exists.
+    await page.goto("/#/");
     await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "4"] as const);
     await page.reload();
+    // Wait for the loading CARD first: the glyph lives inside it, and asserting on the
+    // spans alone raced the card's own appearance under full-suite load.
+    await expect(page.locator('[data-testid="try-it-loading"]')).toBeVisible();
     const dots = page.locator('[data-testid="loading-dots"] span');
     await expect(dots).toHaveCount(3);
     const styles = await dots.evaluateAll((els) =>
@@ -72,7 +78,7 @@ test.describe("Reduced motion (§4.5)", () => {
     );
     for (const s of styles) expect(s.animationName).toBe("none");
     expect(new Set(styles.map((s) => s.background)).size).toBe(3); // ink, dim, faint — three distinct colors, held still
-    await expect(page.locator('[data-testid="chronicle-root"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('[data-testid="landing-mini-graph"]')).toBeVisible({ timeout: 10_000 });
   });
 
   test("loading glyph fades in sequence (staggered) without reduced motion", async ({ page }) => {
@@ -80,9 +86,15 @@ test.describe("Reduced motion (§4.5)", () => {
       await new Promise((r) => setTimeout(r, 1500));
       await route.continue();
     });
-    await page.goto(`/#/work/${SLUG}/chronicle`);
+    // R7: the 3-dot loading glyph lives in the landing page's try-it panel (StateCard
+    // `loading`) — the Stemma does not render one, and the Chronicle that used to carry
+    // one was removed this phase. Testing it where it actually exists.
+    await page.goto("/#/");
     await page.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, "4"] as const);
     await page.reload();
+    // Wait for the loading CARD first: the glyph lives inside it, and asserting on the
+    // spans alone raced the card's own appearance under full-suite load.
+    await expect(page.locator('[data-testid="try-it-loading"]')).toBeVisible();
     const dots = page.locator('[data-testid="loading-dots"] span');
     await expect(dots).toHaveCount(3);
     const info = await dots.evaluateAll((els) =>
@@ -96,6 +108,6 @@ test.describe("Reduced motion (§4.5)", () => {
       expect(s.duration).toBe("1.2s");
     }
     expect(new Set(info.map((s) => s.delay)).size).toBe(3); // each dot's fade starts at a different moment
-    await expect(page.locator('[data-testid="chronicle-root"]')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('[data-testid="landing-mini-graph"]')).toBeVisible({ timeout: 10_000 });
   });
 });

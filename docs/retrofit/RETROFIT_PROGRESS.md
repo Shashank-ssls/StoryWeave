@@ -907,3 +907,95 @@ Verdict criterion, fixed now so it cannot drift: the ch40 default view is **show
 a non-technical viewer can read at least one relation label and follow it to two named
 people without being told what the shapes mean. If they cannot, the answer is no and the
 screenshots say why.
+
+### R7 result — [MEASURED]
+
+Full write-up: `evidence/retrofit/R7_RESULT.md`. Screenshots:
+`evidence/retrofit/shots/R7/` (15 PNGs + `capture_log.txt`).
+
+**The dial binds and says what it means.** At ch40 "Main cast (20)" serves exactly 20
+Characters (R6: 12). Everyone: 53 dots / 27 lines. Fence after the change: **0 violations
+over 28,869 elements across 12,660 queries**, both controls firing.
+
+**Every line carries words.** 0 unlabelled edges in all six captured views, at both
+1280x720 and 390x844. `tieLabel`'s "linked" fallback is gone — after R4 changed the
+relation vocabulary it would have labelled the ENTIRE retrofit graph "linked".
+
+**Blind predictions, both hit:** INFERRED share of lines 100% at ch10 (3/3) and 100% at
+ch20 (7/7), inside the pre-registered 70-100%. That band being hit is honest, not good:
+at chapters 10 and 20 the default view contains no stated relationship at all.
+
+**The acceptance criterion "rendered element count == payload count" was wrong as
+written**, and is recorded as such rather than as a pass. Dots match exactly everywhere;
+lines do not, because §7.3 merges parallel edges into one line per pair (18 payload edges
+-> 13 lines at ch40). Nothing is dropped — and R7 fixed the merge silently hiding
+relations, so a merged line now names all of them and takes the weakest grade of what it
+merged.
+
+**Rule Zero found six defects no test caught, five of them pre-existing:** the camera was
+never fitted (11 of 20 nodes off-screen); fitting it dropped the zoom below the far-tier
+threshold and blanked every name; the cast dial was truncated to "Main cast ("; on a phone
+the chapter dialog's confirm button sat 20px below the viewport; the drawer scrim (z-index
+24-25) sat on top of that modal (z-index 20) and swallowed its clicks; and below 1024px
+the drawer had no scrim at all, so it could not be closed by tapping outside — the only
+exit was the Escape key. All fixed, each with the measurement in the comment.
+
+**Verdict: the ch40 default view is showable**, by the criterion fixed in the
+pre-registration — `Mira —serves (implied)→ Vesper` reads end to end from the screenshot
+alone, with the legend on the same screen. Caveat: four labels collide at the centre of the
+graph, and 12 of 13 lines are dashed, so a presenter should say out loud that dashed means
+implied.
+
+**Left alone on purpose, recommended for R8:** `/ego` is not scoped to the requested node
+types, so with the canvas on Characters-only the side panel still leads with a Place and an
+Item and pushes the people below the fold. Changing an API contract after seeing a
+screenshot is the move R6's dots miss was left alone to avoid.
+
+**Timeline removed** (grep proof in the result doc): `Chronicle/`, `chronicleModel.ts`,
+`chronicle.spec.ts`, the route, the tab, `g c`, fourteen theme strings, one CSS token, one
+npm script and `ensureHistory`. Old chronicle links redirect to the graph, with a test.
+
+### R7, continued — the Playwright suite, and the layout caveats closed
+
+The first R7 session stopped on a tool outage with the frontend uncommitted and the
+Playwright suite never run end to end. Running it changed the picture.
+
+| quantity | value |
+| --- | --- |
+| Playwright, before | **13 failed / 88 passed** |
+| Playwright, after | **101 passed / 0 failed** (two consecutive clean runs) |
+| `/graph` requests on a first visit | 3 -> **1** (`fence.spec` F1 was counting a real bug) |
+| ch40 default view | **20 dots / 13 lines**, all 20 names legible, nothing clipped |
+| relation labels drawn at ch40 | **4 of 13**; the rest deferred to zoom/focus |
+| INFERRED share of ch40 lines | **12 of 13** — unchanged, no grade touched |
+| effective label size, real book | ch10 16.3px · ch20 15.1px · ch40 13.2px |
+| fit zoom after `orientToViewport` | ch20 0.688 -> **0.889**, ch40 0.745 -> **0.774** |
+
+**Three R7 bugs the suite caught that no screenshot could:** three `/graph` requests on a
+first visit (a child's effects run before its parent's initial load); a tab switch during a
+forward move silently losing the move (the view change aborted the in-flight fetch); and
+`diffGraphs` emitting two reveals for one entity pair.
+
+**One R6 regression it caught:** `/graph` served **zero nodes** for any work with no
+salience ranking — the seeded Hollow Crown demo returned 0 nodes at `n=4` while `cast=all`
+returned 6. A ranking that does not exist means the dial cannot be applied. The companion
+rule is deliberate and tested: a ranking that *exists* but excludes the requested types
+still binds, which is why chapter 1 of the Ninth House legitimately shows "No main cast
+yet" — 13 salience rows there, none of them a Character.
+
+**Centre-collision caveat: closed.** Three levers measured — cola's `boundingBox` did
+nothing, shorter edges bought 0.7px, and rotating a portrait layout into a landscape canvas
+bought 1.8px and shipped. Two further defects fell out of the same screenshots: unconnected
+nodes drifting off-screen (now parked in a grid) and the declutter pass mis-measuring edge
+label boxes.
+
+**Implied-lines caveat: reported, not changed.** 12 of 13 default lines at ch40 are
+INFERRED. R5 measured why (pronouns); R7 draws them dashed and says "(implied)".
+
+**Correction to an earlier figure in this log and in R7_RESULT.md:** the pytest total was
+written as "322 passed". That was inferred from progress dots rather than read from the
+summary line. The measured figure is **318 passed, 6 skipped**. Corrected in both places
+rather than left standing.
+
+Nine defects total are tabulated in `evidence/retrofit/R7_RESULT.md` §14 — eight UI
+defects found by looking, one server regression found by testing.

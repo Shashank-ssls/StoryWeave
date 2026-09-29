@@ -1013,7 +1013,11 @@ class Repository:
         (rule 7), so no future information enters the ordering.
         """
         placeholders = ", ".join("?" for _ in types) or "''"
-        rank_by_type = cast_size is not None and self.has_node_salience_table()
+        rank_by_type = (
+            cast_size is not None
+            and self.has_node_salience_table()
+            and self.has_salience_for(work_id, chapter)
+        )
         params: list[object] = [chapter] if rank_by_type else []
         params += [work_id, chapter]
         params.extend(types)
@@ -1088,6 +1092,33 @@ class Repository:
         return [Edge(**dict(r)) for r in rows]
 
     # --- salience (retrofit R6, DISPLAY data) ----------------------------- #
+
+    def has_salience_for(self, work_id: int, chapter: int) -> bool:
+        """Whether a salience ranking exists for this work at this chapter.
+
+        The table can exist while a particular work has no rows in it -- a seeded demo
+        that never ran `compute_salience`, or any work analysed before R6. Without this
+        check the cast dial JOINs against nothing and the DEFAULT view serves **zero
+        nodes**: R7 measured `/graph?n=4` returning 0 nodes for the Hollow Crown demo
+        while `cast=all` returned 6. A ranking that does not exist must not be read as
+        "nobody qualifies"; it means the dial cannot be applied, so it is not applied.
+
+        Deliberately asks only about the CHAPTER, not about the requested node types. A
+        ranking that exists but contains none of those types still binds, and the view is
+        legitimately empty: the ranker has run and judged nobody of that type significant
+        yet. [MEASURED] at chapter 1 of `ninth_house_r6.db` -- 13 salience rows, none of
+        them a Character, against 4 fenced Characters -- which is why the UI says "No main
+        cast yet" there rather than quietly overriding the ranker.
+        """
+        if not self.has_node_salience_table():
+            return False
+        row = self.conn.execute(
+            """SELECT 1 FROM node_salience s
+                 JOIN nodes n ON n.id = s.node_id
+                WHERE n.work_id = ? AND s.chapter = ? LIMIT 1""",
+            (work_id, chapter),
+        ).fetchone()
+        return row is not None
 
     def has_node_salience_table(self) -> bool:
         """Whether this database carries R6's `node_salience` table.

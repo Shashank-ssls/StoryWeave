@@ -49,7 +49,6 @@
   --rail-left: 290px;
   --rail-right-dossier: 400px;
   --rail-right-web: 350px;
-  --rail-right-chronicle: 330px;
   --control-h: 44px;
   --control-h-lg: 52px;
 
@@ -84,7 +83,7 @@ button, input, select { font-family: var(--font-ui); border-radius: var(--radius
 blockquote { font-style: italic; color: var(--dim); margin: 0; }
 
 /* Scrollbars stay fully functional (wheel, keyboard, drag, touch) everywhere — the
-   scrollable rails, the Chronicle's horizontal chart, the page itself — but never draw
+   scrollable rails, the page itself — but never draw
    their own chrome, so nothing competes with the manuscript aesthetic. Applies globally,
    not per-component, so no scrollable region can be missed. */
 * {

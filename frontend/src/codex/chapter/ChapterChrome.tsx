@@ -6,16 +6,13 @@ import { roman } from "./roman";
 import { useChapter } from "./ChapterProvider";
 import ChapterDialog from "./ChapterDialog";
 import styles from "./ChapterChrome.module.css";
+import { isTypingTarget } from "../typingTarget";
 
 // The per-work overlays that hang off the chapter model: the forward-loading wash
 // (§8.1 step 1), the error banner (§6.7), the two toasts (§8.1), the dialog (§6.6) and the
 // `[` / `]` keys (§8.5). Mounted once inside ChapterProvider by CodexApp so every in-work
 // screen gets all of it without wiring anything itself.
 
-function isTypingTarget(t: EventTarget | null): boolean {
-  if (!(t instanceof HTMLElement)) return false;
-  return t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable;
-}
 
 export default function ChapterChrome(): JSX.Element {
   const m = useChapter();
