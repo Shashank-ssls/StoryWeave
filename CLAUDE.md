@@ -45,6 +45,33 @@ backbone filter, coref, ONNX) to later work.
 10. **Rule Zero (frontend):** screenshot and inspect your own UI output before
     declaring any frontend step green.
 
+### Amendment to rule 4 (R7, user-approved 2026-09-29) — served grades
+
+Rule 4 said shipped edges are grade STATED. **It now reads: the graph serves STATED and
+INFERRED edges.** Stored-and-rejected proposals are still never served, and every served
+edge still carries its verbatim quote. Three guards come with the change:
+
+1. **`SAME_AS` is served only when STATED.** An identity claim is the most damaging thing
+   to get wrong, so the identity family keeps the strict rule.
+2. **The grade is a DISPLAY clause, applied after the fence**, exactly like cast size and
+   node types. It is not a fence change and must never be merged into the fence clause
+   (retrofit rule 1).
+3. **INFERRED is visibly different** in the UI: dashed line, label suffixed "(implied)".
+
+**The measured cost, from `evidence/retrofit/R5_RESULT.md` §3** — this amendment is a
+priced decision, not a preference:
+
+| pooled `cumulative`, 12-relation key | TP | FP |
+| --- | ---: | ---: |
+| STATED only | 0 | 10 |
+| STATED + INFERRED | **1** | **25** |
+
+So admitting INFERRED buys one true positive and costs fifteen additional false positives.
+It is accepted because the alternative measured worse as a product: at chapter 40 the
+STATED-only default view is **1 edge across 20 characters** (R5 §4), which R4c's
+screenshots showed reads as a broken app rather than a sparse one. The dashed styling is
+what keeps the weaker evidence honest on screen.
+
 ## Local-only environment (HARD RULE — nothing on C:)
 Every download, cache, model, browser, temp file and tool install stays inside
 the repo on F:. Before ANY install, download, model pull or pipeline run:
