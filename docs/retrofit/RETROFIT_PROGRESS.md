@@ -614,3 +614,59 @@ unlabelled lines; the side panel calls every tie "linked", never naming the rela
 
 ruff clean · mypy clean · pytest green · C: checked against the ledger: **no new items**
 (`.cache` still 135.76 MB; npm cache and playwright-core both on F:, `.local\pw` 12.8 MB).
+
+---
+
+## R5 — PRE-REGISTRATION (written before the R5 run, never edited)
+
+### Baseline to beat, measured on `ninth_house_r4c.db`
+
+| quantity | R4c |
+| --- | ---: |
+| ring-1 edges at ch40, **STATED** | **1** (a single `SERVES`) |
+| ring-1 edges at ch40, any grade | 4 |
+| default-view edges at ch40 (Characters, cast 20, STATED) | **0** |
+| STATED micro-F1, 12-relation key | 0.0000 |
+
+### Predictions — [PREDICTED]
+
+| quantity | predicted band |
+| --- | --- |
+| ring-1 edges at ch40, STATED | **5 – 25** |
+| default-view edges at ch40 | **3 – 15** |
+| STATED micro-F1, 12-relation key | **0.05 – 0.30** |
+| **STATED precision** (the stop condition is < 0.5) | **0.50 – 0.90**, i.e. expected to clear the floor |
+| diagnostic: INFERRED that would become STATED under a "named antecedent in the 2 context sentences" rule | **5 – 20** |
+
+Reasoning, one line: the book states kinship, service and alliance in plain prose that a
+reading model can label but a span-scoring model cannot ("Lord Fennick Oswald and his
+sister Brenna Oswald"), so recall should finally move; precision should stay high because
+the validator is unchanged and STATED still demands both participants' labels inside a
+verbatim quote, which is the same gate that held R4's false positives to 3.
+
+### Run parameters, all fixed before the run
+
+| parameter | value |
+| --- | --- |
+| model | `qwen2.5:7b` (temperature 0, `num_predict` 512) |
+| candidates | sentences naming >= 2 distinct Character/Organization entities, fenced at the sentence's chapter |
+| context given | the 2 preceding sentences, for pronouns only; quoting from context is forbidden in the prompt |
+| **per-chapter cap** | **8** |
+| few-shot source chapters | **2 and 13 only** — both outside the scored set {9, 17, 37} |
+| cache | `.local\llm_cache`, keyed by (model, prompt hash) |
+
+**Measured before fixing the cap:** 118 candidate sentences across 39 chapters, per
+chapter min 1 / median 3 / **max 6**. The cap of 8 is therefore above the maximum and
+**binds on nothing in this corpus** — it exists as an overrun guard, not as a filter, and
+that is stated so no one later reads the cap as a tuning knob. Timing probe: 109 s for the
+first call (model load) then ~2.2 s each, so the full run is ~7 minutes, inside the 45
+minute budget.
+
+**One deviation from `docs/retrofit/R5_llm_recall_pass.md`**, recorded in advance: its
+task 1 also requires a relation CUE WORD in the candidate sentence. This run omits that
+requirement. The cue lists were written for R4's GRADE rule, and requiring them here would
+show the LLM only sentences the cue vocabulary already covers — precisely the recall R4
+measured as insufficient.
+
+The validator is unchanged and there is no bypass flag. A proposal whose head or tail is
+only a pronoun will fail the both-names test and be stored as INFERRED, never served.
