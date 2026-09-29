@@ -28,6 +28,7 @@ coverage, guarded by the permanent P0 regression in ``tests/test_fence.py``.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from storyweave.db.models import Arc, Edge, EntityLabel, Node, NodeProperty
@@ -48,6 +49,42 @@ def visible_edges(repo: Repository, work_id: int, chapter: int) -> list[Edge]:
     Tier-3 identity edges are fenced by exactly this rule — no special-casing.
     """
     return repo.list_edges_revealed(work_id, chapter)
+
+
+#: The grades the graph serves (rule 4 as amended in R7). SAME_AS is additionally
+#: restricted to STATED inside the query itself.
+SERVED_GRADES: tuple[str, ...] = ("STATED", "INFERRED")
+
+#: The cast sizes the dial offers. None means "everyone the fence allows".
+CAST_SIZES: dict[str, int | None] = {"20": 20, "50": 50, "all": None}
+
+
+def visible_payload_nodes(
+    repo: Repository, work_id: int, chapter: int,
+    cast_size: int | None, types: Sequence[str],
+) -> list[Node]:
+    """Retrofit R6: the fenced, ranked, type-filtered cast. The sanctioned entry point."""
+    return repo.graph_payload_nodes(work_id, chapter, cast_size, types)
+
+
+def visible_payload_edges(
+    repo: Repository, work_id: int, chapter: int,
+    node_ids: Sequence[int], grades: Sequence[str] = SERVED_GRADES,
+) -> list[Edge]:
+    """Retrofit R6: fenced edges between drawn nodes, filtered by served grade."""
+    return repo.graph_payload_edges(work_id, chapter, node_ids, grades)
+
+
+def visible_cast_ranked(
+    repo: Repository, work_id: int, chapter: int, limit: int | None = None
+) -> list[Node]:
+    """The fenced salience ranking at ``chapter``. A node unrevealed at n is absent."""
+    return repo.list_salience_ranked(work_id, chapter, limit)
+
+
+def visible_node_count(repo: Repository, work_id: int, chapter: int) -> int:
+    """Fenced node count (retrofit R6 fixes defect D3: the status count leaked totals)."""
+    return repo.count_nodes_revealed(work_id, chapter)
 
 
 def visible_graph_nodes(repo: Repository, work_id: int, chapter: int) -> list[Node]:

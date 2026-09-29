@@ -1,0 +1,38 @@
+﻿==========================================================================
+R6 SALIENCE vs the annotation's `significant` flag
+==========================================================================
+
+Features (equal weight, fixed before scoring): lifetime_mentions,
+recent_mentions, chapter_spread, has_proper_name, speaks_dialogue.
+Edge degree is NOT a feature -- R1 measured why.
+
+--- chapter 9 --- 8 ranked nodes the reference knows, 5 of them significant
+    AUC=0.6667  P@10=0.6250  P@20=0.6250  MAP=0.7100
+    top 10: Sorrel, Undercroft*, Bone Market*, Corwin*, Salt Quarter*, Salt Quarter watch*, eastern docks, market row
+
+--- chapter 17 --- 10 ranked nodes the reference knows, 10 of them significant
+    AUC=nan  P@10=1.0000  P@20=1.0000  MAP=1.0000
+    top 10: Sorrel*, Corwin*, Tobin Vell*, Ione*, House Ashcombe*, House Vell*, Chancery*, Council*, Aldenreach*, House Oswald*
+
+--- chapter 37 --- 7 ranked nodes the reference knows, 7 of them significant
+    AUC=nan  P@10=1.0000  P@20=1.0000  MAP=1.0000
+    top 10: Sorrel*, Thessaly*, Undercroft*, Choir*, Thornmere*, Mira*, Grey Road*
+
+--- pooled (mean over the three annotated chapters) ---
+    AUC    0.6667   (defined at 1/3 chapters)
+    P@10   0.8750
+    P@20   0.8750
+    MAP    0.9033
+
+    CAVEAT: at chapter(s) [17, 37] every matched reference entity is
+    flagged `significant`, so there are no negatives. AUC is undefined
+    there, and P@k cannot score below 1.0 however the nodes are ordered --
+    those chapters inflate the pooled precision and cannot discriminate.
+
+--- v1's degree-based ranking, for comparison ---
+    P@10 (R0)          0.4000
+    MAP (R0)           0.4414
+    P@10 (after R1)    0.3000
+    MAP (after R1)     0.3668
+
+(* marks a node the reference flags as significant)

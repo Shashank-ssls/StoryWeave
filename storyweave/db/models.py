@@ -484,6 +484,24 @@ class Edge(BaseModel):
     subtype: str | None = None  # the original name for the SAME_AS family
 
 
+class NodeSalience(BaseModel):
+    """One node's importance rank at one chapter (retrofit R6).
+
+    A row per (node, chapter) on purpose. The rank at chapter n is computed only from
+    chapters <= n (retrofit rule 7), so a single book-wide rank would be wrong twice: it
+    would be a spoiler side channel telling the reader who matters later, and it could
+    not answer "who are the main twenty at chapter 5?" at all.
+
+    This is DISPLAY data, never safety data. The payload query filters on ``rank`` in a
+    clause that comes after the fence and is commented as a display clause.
+    """
+
+    node_id: int
+    chapter: int
+    score: float
+    rank: int
+
+
 class LabelKind(StrEnum):
     """What kind of name an :class:`EntityLabel` is."""
 
@@ -560,6 +578,7 @@ __all__ = [
     "ExtractionMethod",
     "Mention",
     "Node",
+    "NodeSalience",
     "NodeProperty",
     "NodeType",
     "RelationTier",

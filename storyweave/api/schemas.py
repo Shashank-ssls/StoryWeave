@@ -167,6 +167,33 @@ class EntityDetailResponse(BaseModel):
     properties: list[PropertyModel]
 
 
+class EgoNeighbourModel(BaseModel):
+    """One 1-hop neighbour of an entity, with the evidence for the tie (retrofit R6).
+
+    ``relation``, ``grade`` and ``quote`` are all present because the side panel's job is
+    to answer "how are these two related, and where does the book say so?". v1's panel
+    said only "linked", which R4c's screenshots showed is not an answer.
+    """
+
+    entity_id: int
+    name: str
+    type: str
+    relation: str
+    grade: str | None
+    directed: bool
+    outgoing: bool
+    quote: str | None
+    quote_chapter: int | None
+    weight: int
+
+
+class EgoResponse(BaseModel):
+    slug: str
+    n: int
+    entity: EntityModel
+    neighbours: list[EgoNeighbourModel]
+
+
 # --- arcs (D6, integration phase) ------------------------------------------ #
 
 
@@ -237,6 +264,18 @@ class GraphEdgeData(BaseModel):
     revealed_chapter: int
     extraction_method: str
     evidence_span: str | None = None
+    # --- retrofit R4 fields, surfaced by R6 ---
+    # These were being SILENTLY DROPPED: the serializer emitted them and this response
+    # model, which has no extra fields, removed them again. `grade` and `quote` are not
+    # optional extras -- rule 4 as amended requires every served edge to carry its
+    # verbatim quote, and the UI cannot draw STATED and INFERRED differently without the
+    # grade. All default, so a pre-R4 database still validates.
+    weight: int = 1
+    grade: str | None = None
+    quote: str | None = None
+    quote_chapter: int | None = None
+    kin_role: str | None = None
+    subtype: str | None = None
 
 
 class GraphNode(BaseModel):

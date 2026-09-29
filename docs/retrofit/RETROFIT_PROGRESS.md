@@ -20,6 +20,7 @@ No phase starts until the previous one is green, committed and pushed.
 | R4c | relex grounded on known entities | **green (negative result)** | `b5469a2` | [MEASURED] ring-1 ch40 **4** (predicted 4–25) · ring-2 ch40 **64** (predicted 60–150) · STATED micro-F1 **0.0000** (predicted 0.05–0.25, **MISSED**) · `input_spans` accepted but **IGNORED** (byte-identical entity list, both NER modes) → snapping fallback · 30 spans snapped, `ENDPOINT_NOT_STORED` 137→115, edges 64→68, STATED 37→40 · recall accounting **unchanged in every stage** · **default view ch40 = 0 edges, 20/20 isolated** · 125 ungrounded endpoints are pronouns/common nouns (`She`×14), i.e. coreference not recall | 2026-09-29 |
 | R5 | LLM recall pass (now required) | **green (negative; STOP CONDITION)** | `b60902b` | [MEASURED] **all 5 pre-registered bands missed** · STATED micro-F1 **0.0000**, **STATED precision 0.0000 < 0.5 → stop** · ring-1 ch40 **4 → 35** (any grade) but only **4 STATED** · default-view ch40 **0 → 1** (threshold 10) · 118 calls → 83 proposals → **33 edges, 30 INFERRED / 3 STATED** · validator caught 5 invented relations + 3 paraphrased quotes (**both first-ever non-zero**) · recall accounting moved by **one** relation (NO_PROPOSAL → GRADE_INFERRED) · antecedent diagnostic **2** of 33 (band 5–20), not shipped · few-shot contamination found + re-run | 2026-09-29 |
 | R5 | LLM recall pass (optional) | not started | — | — | — |
+| R6 | salience per chapter + 4-clause query + ego API (fixes D3) | **green** | `PENDING` | [MEASURED] **cast dial binds**: ch40 (12,7)/(24,21)/(53,27) for 20/50/all — v1's was a no-op · **D3 fixed**: status count 17/86/191 by chapter, was a constant · salience **P@10 0.8750, MAP 0.9033** vs v1 degree 0.4000/0.4414 — but **AUC 0.6667 defined at only 1 of 3 chapters** · dots ch10/20/40 **10/7/12** (predicted 8–20/15–20/20 → two missed, mechanism in §3, NOT re-ordered to fit) · fence **0 / 28,046** over 12,660 queries, controls fire · found the API silently dropping `grade`+`quote` from every edge | 2026-09-29 |
 | R6 | salience per chapter + 4-clause query + ego API (fixes D3) | not started | — | — | — |
 | R7 | frontend readability, timeline removed | not started | — | — | — |
 | R8 | evaluation + projection check | not started | — | — | — |
@@ -796,3 +797,70 @@ display: grade IN ('STATED','INFERRED'), SAME_AS STATED only -- display
 ```
 
 The fence clauses come first and are never merged with the display clauses (rule 1).
+
+---
+
+## R6 — salience + four-clause query + ego API · green, 2026-09-29
+
+Full evidence: `evidence/retrofit/R6_RESULT.md`. Logs: `evidence/retrofit/logs/R6_*.log`.
+
+### Against the pre-registration (`4114cd8`)
+
+| quantity | pre-registered | measured |
+| --- | --- | ---: |
+| salience AUC | 0.70 – 0.92 | **0.6667** (ch9 only) |
+| salience P@10 | 0.55 – 0.85 | **0.8750** |
+| dots ch10 | 8 – 20 | **10** |
+| dots ch20 | 15 – 20 | **7** |
+| dots ch40 | 20 | **12** |
+
+### What works now that did not
+
+- **The cast dial binds.** ch40: (12,7) / (24,21) / (53,27) for cast 20 / 50 / all. v1's
+  filter was client-side and changed nothing (defect D3).
+- **The status count is fenced.** 17 / 86 / 191 at n=1 / 10 / 40; v1 returned the
+  book-wide total at every chapter. The regression test asserts the fenced count DIFFERS
+  from `count_nodes`, so reverting goes red.
+- **The ego endpoint answers the question v1's panel could not** — relation, grade and
+  quote per neighbour, 404 on an unrevealed id.
+- **Ranking beats v1 on the same key**: P@10 0.8750 / MAP 0.9033 vs 0.4000 / 0.4414,
+  with edge degree deliberately excluded because R1 measured it collapsing.
+
+### The caveat that matters more than the headline
+
+**At ch17 and ch37 every matched reference entity is flagged `significant`** — no
+negatives, so AUC is undefined and P@k cannot score below 1.0 however the nodes are
+ordered. The only informative chapter is ch9, at P@10 0.6250 and AUC 0.6667. Matched sets
+are 8/10/7 nodes. The ranking is clearly better than v1's; the key is too small to say by
+how much.
+
+### Why the dots missed, and why I did not "fix" it
+
+The pre-registered clause order is **cast rank → node type**, and the rank is global
+across types, so "cast 20" means the top twenty ENTITIES and the type clause then removes
+the non-Characters. At ch40 only 12 of the top 20 are Characters. I predicted 20 assuming
+rank-within-requested-types. **The behaviour was left alone**: the clause order was
+specified, and re-ordering it after seeing a number I disliked is the exact move
+pre-registration exists to prevent. It is still a real usability defect of the D3 family —
+the dial's number matches nothing on screen. **Recommendation for R7: rank within the
+requested type set.** One window function; your call.
+
+### Two bugs found in existing code
+
+1. **The API was silently dropping `grade` and `quote` from every edge** — the serializer
+   emitted them and `GraphEdgeData` removed them again. The amended rule 4 requires the
+   quote, and R7 cannot draw dashed INFERRED lines without the grade.
+2. **`/status` had no chapter parameter**, which is why D3 was invisible: nothing to fence
+   against.
+
+### One deliberate contract change
+
+`/graph` now DEFAULTS to Characters-only at cast 20 (rule 2). Six tests asserting the old
+default now request the whole drawable graph explicitly, with a comment; what they assert
+is unchanged. `graph_json`'s own defaults still serve everything drawable, so the display
+policy lives only in the API.
+
+### Gates
+
+ruff clean · mypy 79 files · pytest **305 passed, 6 skipped** (287 → 305) ·
+fence **0 / 28,046**, controls fire · C: byte-identical to the ledger.

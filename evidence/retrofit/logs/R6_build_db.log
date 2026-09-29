@@ -1,0 +1,26 @@
+﻿source : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\retrofit\ninth_house_r5.db
+output : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\retrofit\ninth_house_r6.db
+features (equal weight): lifetime_mentions, recent_mentions, chapter_spread, has_proper_name, speaks_dialogue
+edge degree is deliberately NOT a feature (R1 measured why)
+
+work id=1: 4020 salience rows over 40 chapters
+
+eligible cast per chapter (the significance gate):
+  ch  1: 13
+  ch  5: 39
+  ch 10: 64
+  ch 20: 107
+  ch 30: 131
+  ch 40: 166
+
+top 10 at chapter 40:
+  Sorrel
+  Cassian
+  Corwin
+  Undercroft
+  Thessaly
+  Vesper
+  Choir
+  Ninth House
+  House Vell
+  Council

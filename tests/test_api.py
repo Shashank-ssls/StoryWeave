@@ -343,10 +343,13 @@ def test_entities_are_fenced(client: tuple[TestClient, dict[str, int]]) -> None:
 
 def test_graph_is_fenced(client: tuple[TestClient, dict[str, int]]) -> None:
     c, _ = client
-    at1 = c.get("/api/v1/works/demo/graph?n=1").json()
+    # R6 changed the endpoint DEFAULTS (Characters only, cast 20). This test is about
+    # the fence, so it asks for the whole drawable graph explicitly.
+    whole = "cast=all&types=Character,Organization,Place,Item"
+    at1 = c.get(f"/api/v1/works/demo/graph?n=1&{whole}").json()
     assert len(at1["elements"]["nodes"]) == 1
     assert at1["elements"]["edges"] == []
-    at2 = c.get("/api/v1/works/demo/graph?n=2").json()
+    at2 = c.get(f"/api/v1/works/demo/graph?n=2&{whole}").json()
     assert len(at2["elements"]["nodes"]) == 2
     assert at2["elements"]["edges"][0]["data"]["relation"] == "SECRET_IDENTITY"
 

@@ -13,6 +13,7 @@ arrives in later phases.
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Sequence
 from pathlib import Path
 from types import TracebackType
 
@@ -31,6 +32,7 @@ from storyweave.db.models import (
     Mention,
     Node,
     NodeProperty,
+    NodeSalience,
     NodeType,
     RelationGrade,
     RelationTier,
@@ -229,6 +231,19 @@ CREATE TABLE IF NOT EXISTS entity_labels (
     UNIQUE (entity_id, label, kind)
 );
 
+-- Salience (retrofit R6): a DISPLAY rank per (node, chapter), computed only from
+-- chapters <= that chapter (rule 7). Not a fence surface: nothing here decides what is
+-- SAFE to show, only what is WORTH showing. Cascades with the node.
+CREATE TABLE IF NOT EXISTS node_salience (
+    node_id   INTEGER NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    chapter   INTEGER NOT NULL,
+    score     REAL NOT NULL,
+    rank      INTEGER NOT NULL,
+    PRIMARY KEY (node_id, chapter)
+);
+
+CREATE INDEX IF NOT EXISTS idx_salience_chapter_rank ON node_salience(chapter, rank);
+
 CREATE INDEX IF NOT EXISTS idx_labels_entity      ON entity_labels(entity_id);
 CREATE INDEX IF NOT EXISTS idx_labels_revealed    ON entity_labels(revealed_chapter);
 CREATE INDEX IF NOT EXISTS idx_arcs_work         ON arcs(work_id);
@@ -273,6 +288,8 @@ class Repository:
         self._has_labels: bool | None = None
         #: cache for has_edge_r4_columns(); None = not yet probed
         self._has_edge_r4: bool | None = None
+        #: cache for has_node_salience_table(); None = not yet probed
+        self._has_salience: bool | None = None
 
     # --- lifecycle ------------------------------------------------------- #
 
@@ -288,6 +305,7 @@ class Repository:
         self.conn.commit()
         self._has_labels = None  # the schema may have just added entity_labels
         self._has_edge_r4 = None  # ... and the R4 edge columns
+        self._has_salience = None  # ... and the R6 salience table
 
     #: The seven columns retrofit R4 adds to `edges`, with their DDL fragments.
     _EDGE_R4_COLUMNS: tuple[tuple[str, str], ...] = (
@@ -961,6 +979,172 @@ class Repository:
             "SELECT * FROM entity_labels WHERE entity_id = ? ORDER BY id", (entity_id,)
         ).fetchall()
         return [_label_from_row(r) for r in rows]
+
+    # --- the payload query (retrofit R6): FOUR clauses, in order ---------- #
+
+    def graph_payload_nodes(
+        self,
+        work_id: int,
+        chapter: int,
+        cast_size: int | None,
+        types: Sequence[str],
+    ) -> list[Node]:
+        """The nodes the graph draws: fence first, then two display clauses.
+
+        Clause order is the point of this method and is fixed by retrofit rule 1:
+
+        1. **FENCE (safety)** -- ``revealed_chapter <= :n``.
+        2. **DISPLAY** -- salience rank <= cast size (the cast dial; v1's was a
+           client-side no-op, defect D3).
+        3. **DISPLAY** -- node type in the requested overlays.
+
+        The fence clause is never merged with the display clauses. Reading this SQL you
+        can always tell whether a node is missing because it would be a spoiler or
+        because the reader turned an overlay off.
+        """
+        placeholders = ", ".join("?" for _ in types) or "''"
+        params: list[object] = [work_id, chapter]
+        rank_join = ""
+        rank_clause = ""
+        if cast_size is not None and self.has_node_salience_table():
+            rank_join = "JOIN node_salience s ON s.node_id = n.id"
+            # DISPLAY (presentation): the cast dial. Appended AFTER the fence clause
+            # below, never merged into it.
+            rank_clause = "\n                    AND s.chapter = ? AND s.rank <= ?"
+            params.extend([chapter, cast_size])
+        params.extend(types)
+        rows = self.conn.execute(
+            f"""SELECT n.* FROM nodes n {rank_join}
+                  WHERE n.work_id = ?
+                    -- FENCE (safety): the reader may not see beyond chapter :n.
+                    AND n.revealed_chapter <= ?{rank_clause}
+                    -- DISPLAY (presentation): the requested node types.
+                    AND n.type IN ({placeholders})
+                  ORDER BY n.id""",
+            params,
+        ).fetchall()
+        return [Node(**{k: r[k] for k in r.keys() if k in Node.model_fields}) for r in rows]
+
+    def graph_payload_edges(
+        self, work_id: int, chapter: int, node_ids: Sequence[int], grades: Sequence[str]
+    ) -> list[Edge]:
+        """The edges the graph draws: fence first, then the grade display clause.
+
+        1. **FENCE (safety)** -- the edge and BOTH endpoints revealed by ``:n``.
+        2. **DISPLAY** -- the endpoints survived the node display clauses above.
+        3. **DISPLAY** -- grade in the served set, with ``SAME_AS`` restricted to
+           STATED (rule 4 as amended in R7: an identity claim is the most damaging
+           thing to get wrong, so the identity family keeps the strict rule).
+
+        A pre-R4 database has no ``grade`` column; there the grade clause is skipped and
+        every fenced edge is served, which is what the frozen baseline needs.
+        """
+        if not node_ids:
+            return []
+        ids = ", ".join("?" for _ in node_ids)
+        params: list[object] = [work_id, chapter, chapter, chapter, *node_ids, *node_ids]
+        grade_clause = ""
+        if self.has_edge_r4_columns() and grades:
+            placeholders = ", ".join("?" for _ in grades)
+            # DISPLAY (evidence strength): the served grades, and SAME_AS only when
+            # STATED. `grade IS NULL` keeps a pre-R4 database serving: those rows carry
+            # no grade at all, and dropping them would blank the frozen baseline.
+            grade_clause = (
+                f"\n                   AND (e.grade IN ({placeholders}) OR e.grade IS NULL)"
+                "\n                   AND (e.relation <> 'SAME_AS' OR e.grade = 'STATED')"
+            )
+            params.extend(grades)
+        rows = self.conn.execute(
+            f"""SELECT e.* FROM edges e
+                  JOIN nodes hs ON e.source_id = hs.id
+                  JOIN nodes ts ON e.target_id = ts.id
+                 WHERE e.work_id = ?
+                   -- FENCE (safety): edge and BOTH endpoints revealed by :n.
+                   AND e.revealed_chapter <= ?
+                   AND hs.revealed_chapter <= ?
+                   AND ts.revealed_chapter <= ?
+                   -- DISPLAY (presentation): both endpoints survived the node clauses.
+                   AND e.source_id IN ({ids})
+                   AND e.target_id IN ({ids}){grade_clause}
+                 ORDER BY e.id""",
+            params,
+        ).fetchall()
+        return [Edge(**dict(r)) for r in rows]
+
+    # --- salience (retrofit R6, DISPLAY data) ----------------------------- #
+
+    def has_node_salience_table(self) -> bool:
+        """Whether this database carries R6's `node_salience` table.
+
+        Same role as `has_entity_labels_table`: a pre-R6 database (the frozen baseline)
+        must still open and serve, so callers fall back to serving the whole cast.
+        """
+        if self._has_salience is None:
+            row = self.conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='node_salience'"
+            ).fetchone()
+            self._has_salience = row is not None
+        return self._has_salience
+
+    def add_node_salience_bulk(self, rows: list[NodeSalience]) -> int:
+        self.conn.executemany(
+            """INSERT OR REPLACE INTO node_salience (node_id, chapter, score, rank)
+               VALUES (?, ?, ?, ?)""",
+            [(r.node_id, r.chapter, r.score, r.rank) for r in rows],
+        )
+        self.conn.commit()
+        return len(rows)
+
+    def clear_node_salience(self, work_id: int) -> None:
+        if not self.has_node_salience_table():
+            return
+        self.conn.execute(
+            "DELETE FROM node_salience WHERE node_id IN "
+            "(SELECT id FROM nodes WHERE work_id = ?)",
+            (work_id,),
+        )
+        self.conn.commit()
+
+    def list_salience_ranked(
+        self, work_id: int, chapter: int, limit: int | None = None
+    ) -> list[Node]:
+        """The fenced cast at ``chapter``, in rank order, optionally capped.
+
+        The FENCE comes first and the rank is a DISPLAY clause after it (rule 1). The
+        rank table is itself per-chapter, so it cannot carry future information.
+        """
+        if not self.has_node_salience_table():
+            return self.list_graph_nodes_revealed(work_id, chapter)
+        sql = """SELECT n.* FROM nodes n
+                   JOIN node_salience s ON s.node_id = n.id
+                  WHERE n.work_id = ?
+                    -- FENCE (safety): the reader may not see beyond chapter :n.
+                    AND n.revealed_chapter <= ?
+                    -- DISPLAY (presentation): this chapter's importance ranking.
+                    AND s.chapter = ?
+                  ORDER BY s.rank"""
+        params: list[object] = [work_id, chapter, chapter]
+        if limit is not None:
+            sql += " LIMIT ?"
+            params.append(limit)
+        rows = self.conn.execute(sql, params).fetchall()
+        return [Node(**{k: r[k] for k in r.keys() if k in Node.model_fields}) for r in rows]
+
+    def count_nodes_revealed(self, work_id: int, chapter: int) -> int:
+        """Fenced node count (retrofit R6 fixes defect D3).
+
+        `count_nodes` counts every row regardless of chapter, so the status endpoint was
+        reporting a total that includes entities the reader has not met. That is a
+        number leak: it tells a reader at chapter 3 how large the cast eventually gets.
+        """
+        row = self.conn.execute(
+            """SELECT COUNT(*) AS n FROM nodes
+                WHERE work_id = ?
+                  -- FENCE (safety): never count past the reader's chapter.
+                  AND revealed_chapter <= ?""",
+            (work_id, chapter),
+        ).fetchone()
+        return int(row["n"])
 
     # --- fenced reads (the spoiler fence enforced at the SQL level) ------- #
     # These are the SANCTIONED queries that query/fence.py wraps. Visibility keys on

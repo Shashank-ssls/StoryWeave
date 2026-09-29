@@ -29,6 +29,8 @@ from storyweave.api.schemas import (
     ChapterPreview,
     CitationModel,
     EdgeModel,
+    EgoNeighbourModel,
+    EgoResponse,
     EntitiesResponse,
     EntityDetailResponse,
     EntityModel,
@@ -46,7 +48,11 @@ from storyweave.api.schemas import (
     WorksResponse,
 )
 from storyweave.config import get_settings
-from storyweave.db.models import Work
+from storyweave.db.models import (
+    GRAPH_NODE_TYPES,
+    SYMMETRIC_R4_RELATIONS,
+    Work,
+)
 from storyweave.db.repository import Repository
 from storyweave.demo.seed import DEMO_SLUG
 from storyweave.graph.serialize import graph_json
@@ -148,10 +154,19 @@ def ingest_work(body: IngestRequest, repo: RepoDep) -> IngestResponse:
 
 
 @router.get("/works/{slug}/status", response_model=AnalysisStatusResponse)
-def work_status(slug: str, repo: RepoDep) -> AnalysisStatusResponse:
-    """Analysis progress for in-app ingest; node_count > 0 means the graph is viewable."""
+def work_status(
+    slug: str,
+    repo: RepoDep,
+    n: Annotated[int, Query(ge=0, description="Reading position N; defaults to 1.")] = 1,
+) -> AnalysisStatusResponse:
+    """Analysis progress for in-app ingest; node_count > 0 means the graph is viewable.
+
+    Retrofit R6 fixes defect D3: the count goes THROUGH THE FENCE. It used to be
+    `count_nodes`, every row regardless of chapter, which told a reader at chapter 3 how
+    large the cast eventually becomes. That is a number leak even though no name escapes.
+    """
     work = repo.get_work_by_slug(slug)
-    node_count = repo.count_nodes(work.id) if work and work.id else 0
+    node_count = fence.visible_node_count(repo, work.id, n) if work and work.id else 0
     status = jobs.get_status(slug)
     # A pre-seeded work (e.g. the demo) has no job; it is ready iff it already has nodes.
     state = status.state if status else ("ready" if node_count > 0 else "unknown")
@@ -263,10 +278,79 @@ def get_arcs(slug: str, n: ChapterParam, repo: RepoDep) -> ArcsResponse:
 
 
 @router.get("/works/{slug}/graph", response_model=GraphResponse)
-def get_graph(slug: str, n: ChapterParam, repo: RepoDep) -> GraphResponse:
+def get_graph(
+    slug: str,
+    n: ChapterParam,
+    repo: RepoDep,
+    cast: Annotated[str, Query(pattern="^(20|50|all)$")] = "20",
+    types: Annotated[str, Query(max_length=120)] = "Character",
+) -> GraphResponse:
+    """The fenced graph payload at chapter ``n``.
+
+    ``cast`` and ``types`` are DISPLAY parameters: they are applied in SQL after the
+    fence, never merged with it (retrofit rule 1), and the client does no filtering of
+    its own (rule 6) -- changing either re-requests this endpoint. Default is the main
+    twenty Characters, which is retrofit rule 2's default graph.
+    """
     work = _require_work(repo, slug)
-    payload = graph_json(repo, work.id or 0, n)  # fenced projection
+    requested = [x.strip() for x in types.split(",") if x.strip()]
+    allowed = {t.value for t in GRAPH_NODE_TYPES}
+    chosen = [x for x in requested if x in allowed] or ["Character"]
+    payload = graph_json(
+        repo, work.id or 0, n, cast_size=fence.CAST_SIZES[cast], types=chosen
+    )
     return GraphResponse(slug=slug, n=n, elements=GraphElements.model_validate(payload["elements"]))
+
+
+@router.get("/works/{slug}/entity/{entity_id}/ego", response_model=EgoResponse)
+def get_ego(
+    slug: str,
+    entity_id: int,
+    n: ChapterParam,
+    repo: RepoDep,
+    limit: Annotated[int, Query(ge=1, le=50)] = 12,
+) -> EgoResponse:
+    """One entity and its 1-hop neighbours at chapter ``n``, each with its quote.
+
+    404 when the entity is not revealed at ``n`` -- an unrevealed entity must not be
+    distinguishable from one that does not exist, or the 404/200 split itself leaks.
+    Neighbours are capped by salience rank so a hub does not return the whole cast.
+    """
+    work = _require_work(repo, slug)
+    work_id = work.id or 0
+    node = next((x for x in fence.visible_nodes(repo, work_id, n) if x.id == entity_id), None)
+    if node is None:
+        raise HTTPException(status_code=404, detail="entity not found or not yet revealed")
+
+    visible = {x.id: x for x in fence.visible_nodes(repo, work_id, n) if x.id is not None}
+    rank = {x.id: i for i, x in enumerate(fence.visible_cast_ranked(repo, work_id, n))}
+    names = fence.visible_display_names(repo, work_id, n)
+
+    neighbours: list[EgoNeighbourModel] = []
+    for edge in fence.visible_payload_edges(repo, work_id, n, list(visible)):
+        if entity_id not in (edge.source_id, edge.target_id):
+            continue
+        outgoing = edge.source_id == entity_id
+        other_id = edge.target_id if outgoing else edge.source_id
+        other = visible.get(other_id)
+        if other is None:
+            continue
+        neighbours.append(EgoNeighbourModel(
+            entity_id=other_id,
+            name=names.get(other_id, other.name),
+            type=other.type.value,
+            relation=edge.relation,
+            grade=edge.grade.value if edge.grade is not None else None,
+            directed=edge.relation not in {r.value for r in SYMMETRIC_R4_RELATIONS},
+            outgoing=outgoing,
+            quote=edge.quote or edge.evidence_span,
+            quote_chapter=edge.quote_chapter,
+            weight=edge.weight,
+        ))
+    neighbours.sort(key=lambda x: (rank.get(x.entity_id, 10**6), x.entity_id))
+    return EgoResponse(
+        slug=slug, n=n, entity=EntityModel.from_node(node), neighbours=neighbours[:limit]
+    )
 
 
 @router.get("/works/{slug}/entity/{entity_id}", response_model=EntityDetailResponse)

@@ -26,6 +26,7 @@ and it now returns a ``MultiDiGraph`` so that even that caller stops losing rows
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
 
 import networkx as nx
@@ -33,6 +34,14 @@ import networkx as nx
 from storyweave.db.models import Edge, Node
 from storyweave.db.repository import Repository
 from storyweave.query import fence
+
+#: What `graph_json` serves when the caller asks for nothing in particular: every
+#: drawable type, no cast cap. The DISPLAY defaults that shape the reader's first screen
+#: (Characters only, main twenty -- retrofit rule 2) belong to the API endpoint, which
+#: passes them explicitly. Keeping them out of the serializer means analysis callers and
+#: the fence harness still see the whole fenced, drawable graph, and the display policy
+#: lives in exactly one place instead of two.
+DEFAULT_TYPES: tuple[str, ...] = ("Character", "Organization", "Place", "Item")
 
 
 def _node_payload(
@@ -84,7 +93,12 @@ def _edge_payload(edge: Edge) -> dict[str, Any]:
 
 
 def _fenced_elements(
-    repo: Repository, work_id: int, chapter: int
+    repo: Repository,
+    work_id: int,
+    chapter: int,
+    cast_size: int | None = None,
+    types: Sequence[str] = DEFAULT_TYPES,
+    grades: Sequence[str] = fence.SERVED_GRADES,
 ) -> tuple[list[Node], list[Edge], dict[str, Any]]:
     """The fenced nodes, the fenced drawable edges, and the shared node attributes.
 
@@ -109,13 +123,12 @@ def _fenced_elements(
             }
         )
 
-    nodes = fence.visible_graph_nodes(repo, work_id, chapter)
-    drawn = {node.id for node in nodes}
-    edges = [
-        edge
-        for edge in fence.visible_edges(repo, work_id, chapter)
-        if edge.source_id in drawn and edge.target_id in drawn
-    ]
+    # Retrofit R6: the four-clause query does the selecting, in SQL, in this order --
+    # fence, then cast rank, then node type, then served grade. Nothing is filtered in
+    # Python afterwards, so what the client receives IS what the query returned.
+    nodes = fence.visible_payload_nodes(repo, work_id, chapter, cast_size, types)
+    drawn = [node.id for node in nodes if node.id is not None]
+    edges = fence.visible_payload_edges(repo, work_id, chapter, drawn, grades)
     shared = {
         "display_names": display_names,
         "labels_by_node": labels_by_node,
@@ -124,13 +137,19 @@ def _fenced_elements(
     return nodes, edges, shared
 
 
-def build_graph(repo: Repository, work_id: int, chapter: int) -> nx.MultiDiGraph:
+def build_graph(repo: Repository, work_id: int, chapter: int,
+    cast_size: int | None = None,
+    types: Sequence[str] = DEFAULT_TYPES,
+    grades: Sequence[str] = fence.SERVED_GRADES,
+) -> nx.MultiDiGraph:
     """A fenced NetworkX view of the work at chapter N, for ANALYSIS (not serving).
 
     ``MultiDiGraph``, not ``DiGraph``: two different relations between the same pair are
     two different facts, and a simple digraph silently keeps only the last one (D1/D2).
     """
-    nodes, edges, shared = _fenced_elements(repo, work_id, chapter)
+    nodes, edges, shared = _fenced_elements(
+        repo, work_id, chapter, cast_size, types, grades
+    )
     graph: nx.MultiDiGraph = nx.MultiDiGraph()
     for node in nodes:
         graph.add_node(node.id, **_node_payload(node, **shared))
@@ -163,13 +182,19 @@ def to_cytoscape(graph: nx.DiGraph | nx.MultiDiGraph) -> dict[str, Any]:
     return {"elements": {"nodes": nodes, "edges": edges}}
 
 
-def graph_json(repo: Repository, work_id: int, chapter: int) -> dict[str, Any]:
+def graph_json(repo: Repository, work_id: int, chapter: int,
+    cast_size: int | None = None,
+    types: Sequence[str] = DEFAULT_TYPES,
+    grades: Sequence[str] = fence.SERVED_GRADES,
+) -> dict[str, Any]:
     """The fenced Cytoscape payload at chapter N, built straight from the rows.
 
     One fenced, drawable row in -> exactly one payload edge out. No intermediate graph
     object exists to collapse anything (defects D1 and D2).
     """
-    nodes, edges, shared = _fenced_elements(repo, work_id, chapter)
+    nodes, edges, shared = _fenced_elements(
+        repo, work_id, chapter, cast_size, types, grades
+    )
     return {
         "elements": {
             "nodes": [

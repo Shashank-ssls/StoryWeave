@@ -113,6 +113,30 @@ SURFACES: tuple[Surface, ...] = (
         "id must 404 rather than serve; a 200 on an unrevealed id is itself a violation.",
     ),
     Surface(
+        "GET /works/{slug}/entity/{id}/ego?n=",
+        True,
+        ("ego_entity", "ego_neighbour"),
+        "Retrofit R6. Requested for EVERY node id at every chapter: an unrevealed id "
+        "must 404, and every neighbour returned must itself be revealed by n.",
+    ),
+    Surface(
+        "GET /works/{slug}/status?n=",
+        True,
+        ("status_count",),
+        "Retrofit R6 (defect D3). The count is not an element with a reveal stamp, so "
+        "the rule checked is arithmetic: node_count at n must never exceed the number "
+        "of nodes whose revealed_chapter <= n. v1 returned the book-wide total, which "
+        "told a chapter-3 reader how large the cast eventually gets.",
+    ),
+    Surface(
+        "salience ranking (repository.list_salience_ranked)",
+        True,
+        ("salience_rank",),
+        "Retrofit R6. Not an HTTP surface: the cast dial reads it, so a node unrevealed "
+        "at n must not appear in ANY rank list at n, or the ordering itself leaks who "
+        "matters later.",
+    ),
+    Surface(
         "GET /works/{slug}/arcs?n=",
         True,
         ("arc_name",),
@@ -355,6 +379,61 @@ def check_graph(
     return out
 
 
+def check_ego(
+    payload: dict[str, Any], slug: str, n: int, tally: Tally, revealed_by: dict[int, int]
+) -> list[Violation]:
+    """Retrofit R6: the ego view must not name an unrevealed entity or tie."""
+    out: list[Violation] = []
+    endpoint = "GET /works/{slug}/entity/{id}/ego"
+    entity = payload["entity"]
+    tally.count("ego_entity")
+    if entity["revealed_chapter"] > n:
+        out.append(Violation(
+            slug, n, endpoint, "ego_entity", str(entity["id"]),
+            entity["revealed_chapter"], f"ego of {entity['name']!r} served at n={n}",
+        ))
+    for nb in payload["neighbours"]:
+        tally.count("ego_neighbour")
+        reveal = revealed_by.get(nb["entity_id"])
+        if reveal is not None and reveal > n:
+            out.append(Violation(
+                slug, n, endpoint, "ego_neighbour", str(nb["entity_id"]), reveal,
+                f"neighbour {nb['name']!r} of entity {entity['id']} revealed at {reveal}",
+            ))
+    return out
+
+
+def check_status(
+    payload: dict[str, Any], slug: str, n: int, tally: Tally, revealed_by: dict[int, int]
+) -> list[Violation]:
+    """Retrofit R6 / defect D3: the count must not exceed what the fence allows."""
+    tally.count("status_count")
+    allowed = sum(1 for reveal in revealed_by.values() if reveal <= n)
+    served = int(payload["node_count"])
+    if served > allowed:
+        return [Violation(
+            slug, n, "GET /works/{slug}/status", "status_count", "node_count",
+            served, f"status reported {served} nodes at n={n}, fence allows {allowed}",
+        )]
+    return []
+
+
+def check_salience(
+    ranked_ids: list[int], slug: str, n: int, tally: Tally, revealed_by: dict[int, int]
+) -> list[Violation]:
+    """Retrofit R6: a node unrevealed at n must not appear in the rank list at n."""
+    out: list[Violation] = []
+    for node_id in ranked_ids:
+        tally.count("salience_rank")
+        reveal = revealed_by.get(node_id)
+        if reveal is not None and reveal > n:
+            out.append(Violation(
+                slug, n, "salience ranking", "salience_rank", str(node_id), reveal,
+                f"node {node_id} ranked at n={n} but revealed at {reveal}",
+            ))
+    return out
+
+
 def check_entity_detail(
     payload: dict[str, Any], slug: str, n: int, tally: Tally
 ) -> list[Violation]:
@@ -458,6 +537,12 @@ def sweep_work(
         response.raise_for_status()
         violations += check_arcs(response.json(), slug, bound, tally)
 
+        # Retrofit R6: the status count is an arithmetic fence surface (defect D3).
+        response = client.get(f"{base}/status", params={"n": chapter})
+        tally.queries += 1
+        response.raise_for_status()
+        violations += check_status(response.json(), slug, bound, tally, revealed_at)
+
         # Every node id, not only the revealed ones: an unrevealed id must 404.
         for node_id in node_ids:
             response = client.get(f"{base}/entity/{node_id}", params={"n": chapter})
@@ -466,6 +551,14 @@ def sweep_work(
                 continue
             response.raise_for_status()
             violations += check_entity_detail(response.json(), slug, bound, tally)
+
+            # Retrofit R6: the ego view of the same id.
+            response = client.get(f"{base}/entity/{node_id}/ego", params={"n": chapter})
+            tally.queries += 1
+            if response.status_code == 404:
+                continue
+            response.raise_for_status()
+            violations += check_ego(response.json(), slug, bound, tally, revealed_at)
     return violations
 
 
@@ -652,6 +745,16 @@ def measure(db: Path) -> tuple[list[Violation], Tally, dict[str, int]]:
             violations += sweep_work(
                 client, resolver, work.slug, sweep, node_ids, revealed_at, tally
             )
+            # Retrofit R6: salience is not an HTTP surface, but the cast dial reads it,
+            # so it is swept here directly against the same reveal map.
+            for chapter in sweep:
+                ranked = [
+                    node.id or 0
+                    for node in repo.list_salience_ranked(work.id, chapter)
+                ]
+                violations += check_salience(
+                    ranked, work.slug, chapter, tally, revealed_at
+                )
         return violations, tally, per_work
     finally:
         repo.close()

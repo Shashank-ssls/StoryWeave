@@ -46,7 +46,15 @@ def client(tmp_path: Path) -> Iterator[TestClient]:
 
 
 def _graph(client: TestClient, n: int) -> dict[str, Any]:
-    resp = client.get(f"/api/v1/works/{DEMO_SLUG}/graph", params={"n": n})
+    # Retrofit R6 changed the endpoint's DEFAULTS, deliberately: the reader's first
+    # screen is now Characters only at cast 20 (retrofit rule 2). These tests are about
+    # the fence and the seeded ontology, not about the default view, so they ask for the
+    # whole drawable graph explicitly. What they assert is unchanged.
+    resp = client.get(
+        f"/api/v1/works/{DEMO_SLUG}/graph",
+        params={"n": n, "cast": "all",
+                "types": "Character,Organization,Place,Item"},
+    )
     assert resp.status_code == 200
     elements: dict[str, Any] = resp.json()["elements"]
     return elements

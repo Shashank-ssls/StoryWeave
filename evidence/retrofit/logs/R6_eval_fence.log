@@ -1,0 +1,88 @@
+﻿python : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv\Lib\site-packages\fastapi\testclient.py:1: 
+StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+At line:1 char:313
++ ...  .\dev.ps1; python tools/eval_fence.py --db data/retrofit/ninth_house ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...ttpx2` instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  from starlette.testclient import TestClient as TestClient  # noqa
+=== TESTED SURFACE ===
+  [TESTED    ] GET /works/{slug}/entities?n=
+               element kinds: entity
+               EntityModel carries revealed_chapter directly.
+  [TESTED    ] GET /works/{slug}/graph?n=
+               element kinds: graph_node, graph_edge, graph_node_property
+               Cytoscape elements; node.properties is a bare key->value dict with no reveal stamp on the wire, so it is resolved back to node_properties rows read-only.
+  [TESTED    ] GET /works/{slug}/entity/{id}?n=
+               element kinds: detail_entity, detail_edge, detail_property
+               Requested for EVERY node id of the work at every chapter, so a not-yet-revealed id must 404 rather than serve; a 200 on an unrevealed id is itself a violation.
+  [TESTED    ] GET /works/{slug}/entity/{id}/ego?n=
+               element kinds: ego_entity, ego_neighbour
+               Retrofit R6. Requested for EVERY node id at every chapter: an unrevealed id must 404, and every neighbour returned must itself be revealed by n.
+  [TESTED    ] GET /works/{slug}/status?n=
+               element kinds: status_count
+               Retrofit R6 (defect D3). The count is not an element with a reveal stamp, so the rule checked is arithmetic: node_count at n must never exceed the number of nodes whose revealed_chapter <= n. v1 returned the book-wide total, which told a chapter-3 reader how large the cast eventually gets.
+  [TESTED    ] salience ranking (repository.list_salience_ranked)
+               element kinds: salience_rank
+               Retrofit R6. Not an HTTP surface: the cast dial reads it, so a node unrevealed at n must not appear in ANY rank list at n, or the ordering itself leaks who matters later.
+  [TESTED    ] GET /works/{slug}/arcs?n=
+               element kinds: arc_name
+               Arcs carry no revealed_chapter. Their fence rule (F6) is name redaction: an arc with start_chapter > n must send name=null. That rule is what is checked.
+  [not tested] GET /works/{slug}/search?n=&q=
+               element kinds: -
+               NOT TESTED: the vector store directory (.chroma) does not exist in this checkout, so there is no index to query and the route cannot be exercised without first building one. Its fence key is chunk chapter_ordinal <= n.
+  [not tested] GET /works/{slug}/status?n/a
+               element kinds: -
+               NOT TESTED as a leak surface: it returns no story element, only an UNFENCED node_count (repository.count_nodes ignores the chapter). That is a count, not an element carrying revealed_chapter, so it is out of this metric's scope -- recorded here because it is a real side channel the checker does not cover.
+  [not tested] GET /works
+               element kinds: -
+               NOT TESTED: work slug/title/chapter_count only; no reveal-stamped element.
+  [not tested] GET /health
+               element kinds: -
+               NOT TESTED: liveness only; no story content.
+  [not tested] POST /works, POST /works/preview, POST /works/{slug}/chapters, DELETE /works/{slug}
+               element kinds: -
+               NOT TESTED: write/ingest routes. They return counts and echo the caller's own submitted text; they serve no reveal-stamped element from the graph.
+
+=== MEASUREMENT RUN ===
+database: F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\retrofit\ninth_house_r6.db (opened mode=ro)
+  the-ninth-house: chapters 1..40
+total queries issued:    12660
+total elements inspected: 28046
+    arc_name: 200
+    detail_edge: 4092
+    detail_entity: 4860
+    ego_entity: 4860
+    ego_neighbour: 3951
+    entity: 4860
+    graph_edge: 204
+    graph_node: 341
+    graph_node_label: 618
+    salience_rank: 4020
+    status_count: 40
+TOTAL VIOLATIONS: 0
+
+=== NEGATIVE CONTROLS (throwaway copy; measured DB never written) ===
+  injected: 3 synthetic elements revealed at chapter 6, payload fetched at 6, checked against n=5
+    queries=6 elements=84 violations_detected=12
+      entity 52: entity 'Thessaly' revealed at 6 served at n=5
+      entity 53: entity 'Thorne' revealed at 6 served at n=5
+      entity 54: entity 'House Ashcombe' revealed at 6 served at n=5
+      entity 55: entity 'Ashcombe household' revealed at 6 served at n=5
+      entity 56: entity 'Beneath the Bone Market' revealed at 6 served at n=5
+      entity 192: entity 'SYNTHETIC LEAK CANARY' revealed at 6 served at n=5
+      graph_node_label 1:SYNTHETIC LABEL CANARY: label 'SYNTHETIC LABEL CANARY' (epithet) on node 1 is revealed at 6
+      status_count node_count: status reported 57 nodes at n=5, fence allows 0
+      detail_entity 192: entity 'SYNTHETIC LEAK CANARY' served at n=5
+      detail_edge 102: edge RelatedTo on entity 192
+      detail_property 192:canary: property canary='synthetic'
+      ego_entity 192: ego of 'SYNTHETIC LEAK CANARY' served at n=5
+  sabotaged: fenced reads replaced with unfenced ones, payload fetched at n=5 as a client would
+    queries=84 elements=411 violations_detected=198
+      detail_edge: 57
+      entity: 140
+      status_count: 1
+
+DETECTOR VERIFIED TO FIRE: True
+wrote evidence\retrofit\R6_fence.csv (210 rows)
