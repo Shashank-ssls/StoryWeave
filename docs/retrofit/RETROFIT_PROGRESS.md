@@ -864,3 +864,46 @@ policy lives only in the API.
 
 ruff clean · mypy 79 files · pytest **305 passed, 6 skipped** (287 → 305) ·
 fence **0 / 28,046**, controls fire · C: byte-identical to the ledger.
+
+---
+
+## R7 — readable graph, timeline removed (in progress)
+
+### Step 0 — cast rank computed WITHIN the requested node types
+
+Amended after R6 measured 12 of 20 at ch40; R6's pre-registered miss stands unedited.
+
+Clause order is now **fence → node type IN → rank among those types <= cast_size →
+grade**. The rank comes from a `ROW_NUMBER()` window over the rows the fence has already
+admitted, ordered by the salience score that R6 computed from chapters <= n only, so
+rule 7 (no future information in a display filter) still holds and the fence clause is
+untouched and still first.
+
+A consequence worth stating before anyone reads it as a bug: with the dial at 20, asking
+for Characters + Places serves the top 20 of *that* set, so turning an overlay on can
+change which Characters appear. The dial is a budget for the requested view, not a
+per-type quota.
+
+### Step 1 — pre-registration (written before the UI exists; never edited)
+
+**Honesty note, stated up front:** the dots and lines below are **[MEASURED]**, not
+predicted. Verifying that step 0's SQL ran at all meant running `tools/r6_report.py`,
+which prints them, so I had seen these numbers before this section was written. Recording
+them as predictions would be a lie about the order events happened in. Only the rows
+marked [PREDICTED] are genuinely blind.
+
+| quantity | status | value / band |
+| --- | --- | --- |
+| default-view dots ch10 / ch20 / ch40 | [MEASURED] | 10 / 14 / 20 |
+| default-view lines ch10 / ch20 / ch40 | [MEASURED] | 4 / 8 / 18 |
+| INFERRED share of lines, ch40 | [MEASURED] | 94.4% |
+| INFERRED share of lines, ch10 | **[PREDICTED]** | 70 – 100% |
+| INFERRED share of lines, ch20 | **[PREDICTED]** | 70 – 100% |
+| rendered elements == payload elements, every view | **[PREDICTED]** | exact equality |
+| edges whose label is legible at 1280x720, ch40 default | **[PREDICTED]** | >= 80% |
+| chapters (of 10/20/40) whose default view needs the low-edge note | **[PREDICTED]** | 0 |
+
+Verdict criterion, fixed now so it cannot drift: the ch40 default view is **showable** if
+a non-technical viewer can read at least one relation label and follow it to two named
+people without being told what the shapes mean. If they cannot, the answer is no and the
+screenshots say why.

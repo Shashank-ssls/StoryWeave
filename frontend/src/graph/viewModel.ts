@@ -8,7 +8,13 @@
 // `revealed_chapter`, `first_seen_chapter`, `tier`, `relation`).
 
 import type { GraphEdgeData, GraphElements, GraphNodeData } from "../types";
-import { IDENTITY_RELATIONS, RELATION_LABELS } from "../ontology";
+import {
+  DIRECTED_RELATIONS,
+  IDENTITY_RELATIONS,
+  R4_RELATION_INVERSE,
+  R4_RELATION_LABELS,
+  RELATION_LABELS,
+} from "../ontology";
 
 export type NodeKind = "person" | "order" | "place" | "thing";
 export type EdgeKind = "social" | "structural" | "identity";
@@ -37,6 +43,16 @@ export interface VmEdge {
   revealed_chapter: number;
   first_seen_chapter: number;
   evidence_span: string | null;
+  /** R7: "STATED" draws solid, "INFERRED" draws dashed and reads "(implied)". A pre-R4
+   *  payload has no grade at all; those draw solid, as they always did. */
+  grade: string | null;
+  /** The verbatim sentence (rule 4). Falls back to `evidence_span` for pre-R4 rows. */
+  quote: string | null;
+  quoteChapter: number | null;
+  /** How many times the extractor saw this tie; drives line width in 3 steps. */
+  weight: number;
+  /** Arrowheads only on directed relations. */
+  directed: boolean;
 }
 
 export interface ViewModel {
@@ -96,10 +112,41 @@ export const IDENTITY_COPY: Record<string, IdentityCopy> = {
   TRANSMIGRATED_INTO: { sentence: "{a} now lives on as {b}.", kicker: "Transmigration", short: "transmigration" },
 };
 
-/** Short lowercase label for a social/structural tie ("ally of", "in"); unknown → "linked". */
-export function tieLabel(relation: string): string {
+/**
+ * Short lowercase label for a tie, in plain words.
+ *
+ * R7 removes the old `?? "linked"` fallback. "Linked" told the reader nothing the line
+ * itself had not already said, and it was not a rare edge case: R4 replaced v1's
+ * CamelCase vocabulary with R4's SCREAMING_SNAKE one, so after R5 EVERY new relation
+ * missed `RELATION_LABELS` and every label in the graph read "linked". An unrecognised
+ * relation is now humanised (`MENTOR_OF` -> "mentor of") rather than erased, which is
+ * wrong-looking if we ever ship a relation we forgot to name — and visibly so, which is
+ * the point.
+ *
+ * `backwards` reads a directed edge from the target's side ("serves" -> "commands").
+ */
+export function tieLabel(relation: string, backwards = false): string {
+  if (backwards) {
+    const inverse = R4_RELATION_INVERSE[relation];
+    if (inverse) return inverse;
+  }
   if (IDENTITY_RELATIONS.has(relation)) return IDENTITY_COPY[relation]?.short ?? "identity";
-  return RELATION_LABELS[relation] ?? "linked";
+  return R4_RELATION_LABELS[relation] ?? RELATION_LABELS[relation] ?? humanise(relation);
+}
+
+/** Last resort: `MENTOR_OF` -> "mentor of", `AffiliatedWith` -> "affiliated with". */
+export function humanise(relation: string): string {
+  return relation
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .trim();
+}
+
+/** R7: the label a reader sees on the line, with implied evidence marked as such. */
+export function edgeLabel(edge: VmEdge, backwards = false): string {
+  const base = tieLabel(edge.relation, backwards);
+  return edge.grade === "INFERRED" ? `${base} (implied)` : base;
 }
 
 function pairKey(a: string, b: string): string {

@@ -989,40 +989,56 @@ class Repository:
         cast_size: int | None,
         types: Sequence[str],
     ) -> list[Node]:
-        """The nodes the graph draws: fence first, then two display clauses.
+        """The nodes the graph draws: fence first, then three display clauses.
 
         Clause order is the point of this method and is fixed by retrofit rule 1:
 
         1. **FENCE (safety)** -- ``revealed_chapter <= :n``.
-        2. **DISPLAY** -- salience rank <= cast size (the cast dial; v1's was a
-           client-side no-op, defect D3).
-        3. **DISPLAY** -- node type in the requested overlays.
+        2. **DISPLAY** -- node type in the requested overlays.
+        3. **DISPLAY** -- salience rank *among those types* <= cast size (the cast
+           dial; v1's was a client-side no-op, defect D3).
 
         The fence clause is never merged with the display clauses. Reading this SQL you
         can always tell whether a node is missing because it would be a spoiler or
         because the reader turned an overlay off.
+
+        The rank is re-computed over the type-filtered set with a window function
+        rather than read from ``node_salience.rank``. R6 [MEASURED] that the stored
+        rank is global across all four node types, so "main cast 20" showed only 12
+        Characters at chapter 40 -- the number on the dial matched nothing on screen.
+        User decision after that measurement; R6's pre-registered miss stands unedited.
+
+        This is *not* a fence change: the window only re-orders rows that the fence has
+        already admitted, and each row's score was itself computed from chapters <= n
+        (rule 7), so no future information enters the ordering.
         """
         placeholders = ", ".join("?" for _ in types) or "''"
-        params: list[object] = [work_id, chapter]
-        rank_join = ""
-        rank_clause = ""
-        if cast_size is not None and self.has_node_salience_table():
-            rank_join = "JOIN node_salience s ON s.node_id = n.id"
-            # DISPLAY (presentation): the cast dial. Appended AFTER the fence clause
-            # below, never merged into it.
-            rank_clause = "\n                    AND s.chapter = ? AND s.rank <= ?"
-            params.extend([chapter, cast_size])
+        rank_by_type = cast_size is not None and self.has_node_salience_table()
+        params: list[object] = [chapter] if rank_by_type else []
+        params += [work_id, chapter]
         params.extend(types)
-        rows = self.conn.execute(
-            f"""SELECT n.* FROM nodes n {rank_join}
-                  WHERE n.work_id = ?
-                    -- FENCE (safety): the reader may not see beyond chapter :n.
-                    AND n.revealed_chapter <= ?{rank_clause}
-                    -- DISPLAY (presentation): the requested node types.
-                    AND n.type IN ({placeholders})
-                  ORDER BY n.id""",
-            params,
-        ).fetchall()
+        # DISPLAY (presentation): the cast dial, applied to the ranked subquery below.
+        inner = f"""SELECT n.*,
+                           ROW_NUMBER() OVER (ORDER BY s.score DESC, n.id) AS cast_rank
+                      FROM nodes n
+                      JOIN node_salience s ON s.node_id = n.id AND s.chapter = ?
+                      WHERE n.work_id = ?
+                        -- FENCE (safety): the reader may not see beyond chapter :n.
+                        AND n.revealed_chapter <= ?
+                        -- DISPLAY (presentation): the requested node types.
+                        AND n.type IN ({placeholders})"""
+        if rank_by_type:
+            sql = f"SELECT * FROM ({inner}) WHERE cast_rank <= ? ORDER BY id"
+            params.append(cast_size)
+        else:
+            sql = f"""SELECT n.* FROM nodes n
+                       WHERE n.work_id = ?
+                         -- FENCE (safety): the reader may not see beyond chapter :n.
+                         AND n.revealed_chapter <= ?
+                         -- DISPLAY (presentation): the requested node types.
+                         AND n.type IN ({placeholders})
+                       ORDER BY n.id"""
+        rows = self.conn.execute(sql, params).fetchall()
         return [Node(**{k: r[k] for k in r.keys() if k in Node.model_fields}) for r in rows]
 
     def graph_payload_edges(

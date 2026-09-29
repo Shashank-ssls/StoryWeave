@@ -31,6 +31,55 @@ export interface GraphEdgeData {
   revealed_chapter: number;
   extraction_method: string;
   evidence_span: string | null;
+  // R4/R6 fields. All optional because the frozen Hollow Crown payload predates them and
+  // must keep rendering byte-for-byte (integration rule I2).
+  weight?: number;
+  /** "STATED" (the book says it in one sentence) or "INFERRED" (implied by context). */
+  grade?: string | null;
+  /** The verbatim sentence. Rule 4: every served edge carries one. */
+  quote?: string | null;
+  quote_chapter?: number | null;
+  kin_role?: string | null;
+  subtype?: string | null;
+}
+
+/** The cast dial. Mirrors the API's `cast` pattern `^(20|50|all)$`. */
+export type CastSize = "20" | "50" | "all";
+
+/** One row of the ego endpoint: how the focused entity relates to one neighbour.
+ *  Mirrors schemas.py's EgoNeighbourModel exactly. */
+export interface EgoNeighbour {
+  entity_id: number;
+  name: string;
+  type: string;
+  relation: string;
+  grade: string | null;
+  /** False for the symmetric relations, which must not be drawn or read with an arrow. */
+  directed: boolean;
+  /** True when the focused entity is the SOURCE — i.e. read the relation forwards. */
+  outgoing: boolean;
+  quote: string | null;
+  quote_chapter: number | null;
+  weight: number;
+}
+
+export interface EgoEntity {
+  id: number;
+  name: string;
+  type: string;
+  subtype: string | null;
+  importance: number;
+  first_seen_chapter: number;
+  revealed_chapter: number;
+  extraction_method: string;
+  evidence_span: string | null;
+}
+
+export interface EgoResponse {
+  slug: string;
+  n: number;
+  entity: EgoEntity;
+  neighbours: EgoNeighbour[];
 }
 
 export interface GraphElements {

@@ -57,3 +57,47 @@ export const RELATION_LABELS: Record<string, string> = {
   REINCARNATION: "reincarnation of",
   TRANSMIGRATED_INTO: "transmigrated into",
 };
+
+// ---------------------------------------------------------------------------------
+// R4's closed twelve-relation vocabulary (CLAUDE.md retrofit rule 3). These arrive on
+// the wire in SCREAMING_SNAKE; the CamelCase map above is v1's and stays for the frozen
+// Hollow Crown payload, which still carries the old names.
+//
+// R7 removes "linked" from the UI entirely: a reader shown "linked" learns nothing the
+// dot positions did not already tell them. Every served relation therefore has a plain
+// word here, and `tieLabel` humanises anything unexpected rather than falling back.
+
+/** Forward reading, source -> target. Plain words, no jargon. */
+export const R4_RELATION_LABELS: Record<string, string> = {
+  KIN_OF: "family",
+  ROMANTIC_WITH: "romantic with",
+  ALLY_OF: "ally of",
+  ENEMY_OF: "enemy of",
+  SERVES: "serves",
+  MENTOR_OF: "mentors",
+  KILLED: "killed",
+  SAME_AS: "same as",
+  MEMBER_OF: "member of",
+  LEADS: "leads",
+  OWNS: "owns",
+  LOCATED_IN: "in",
+};
+
+/** Reading the same edge backwards, target -> source. Only the directed ones differ. */
+export const R4_RELATION_INVERSE: Record<string, string> = {
+  SERVES: "commands",
+  MENTOR_OF: "trained by",
+  KILLED: "killed by",
+  MEMBER_OF: "has member",
+  LEADS: "led by",
+  OWNS: "owned by",
+  LOCATED_IN: "contains",
+};
+
+/**
+ * Relations that get an arrowhead. The symmetric ones deliberately do not: an arrow on
+ * "ally of" invites the reader to infer a direction the book never stated.
+ */
+export const DIRECTED_RELATIONS = new Set([
+  "SERVES", "MENTOR_OF", "KILLED", "MEMBER_OF", "LEADS", "OWNS", "LOCATED_IN",
+]);
