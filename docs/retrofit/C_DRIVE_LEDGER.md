@@ -8,11 +8,11 @@ written down, so this file is the exception list.
 inspection. Every size and timestamp below is **[MEASURED]**, read off the machine, not
 estimated. Nothing was deleted or modified during the audit.
 
-**Total attributable to this project: 281,361 bytes (0.27 MB) of files, plus 3 shortcuts
-and 1 registry uninstall key.** No service, no scheduled task, no firewall rule, no HKLM
+**Total attributable to this project: 280,593 bytes (0.27 MB) of files, plus 2 Start Menu
+shortcuts and 1 registry uninstall key.** No service, no scheduled task, no firewall rule, no HKLM
 change. The user-PATH entry (item 7) was **removed on 2026-09-29** — see §2.5.
 
-**Open items: 1, 2, 3, 4, 5, 6. Retired: 7.**
+**Open items: 1, 2, 3, 4, 6. Retired: 5, 7.**
 
 > **Honesty note.** Two of the entries below were NOT in my earlier report of the Ollama
 > install, and are recorded here because the audit found them, not because they were
@@ -30,7 +30,7 @@ change. The user-PATH entry (item 7) was **removed on 2026-09-29** — see §2.5
 | 2 | app logs + local sqlite | `C:\Users\space\AppData\Local\Ollama\` | 276,845 B | Ollama tray app + server | 2026-09-29 |
 | 3 | Start Menu folder + shortcut | `%APPDATA%\...\Start Menu\Programs\Ollama\` | 732 B | `OllamaSetup.exe` | 2026-09-29 |
 | 4 | Start Menu shortcut | `%APPDATA%\...\Start Menu\Programs\Ollama.lnk` | 732 B | `OllamaSetup.exe` | 2026-09-29 |
-| 5 | **Startup shortcut (auto-start)** — still ENABLED, see §5 | `%APPDATA%\...\Programs\Startup\Ollama.lnk` | 768 B | `OllamaSetup.exe` | 2026-09-29 |
+| 5 | ~~Startup shortcut (auto-start)~~ — **REMOVED 2026-09-29**, see §5 | `%APPDATA%\...\Programs\Startup\Ollama.lnk` | — | `OllamaSetup.exe` | 2026-09-29 |
 | 6 | Uninstall registry key | `HKCU\...\Uninstall\{44E83376-...}_is1` | key | `OllamaSetup.exe` | 2026-09-29 |
 | 7 | ~~User PATH entry `F:\Tools\Ollama`~~ — **REMOVED 2026-09-29** | `HKCU\Environment\Path` | — | `OllamaSetup.exe` | 2026-09-29 |
 | 8 | Claude Code session data | `C:\Users\space\.claude\projects\F--Dev-...-StoryWeave\` | 118.35 MB | Claude Code harness | 2026-06-21 |
@@ -211,54 +211,40 @@ it leaves behind (`.ollama` and `%LOCALAPPDATA%\Ollama` survive a normal uninsta
 
 ---
 
-## 5. Item 5 — the Startup shortcut: reported disabled, NOT CONFIRMED
+## 5. Item 5 — the Startup shortcut: REMOVED 2026-09-29
 
-**Status 2026-09-29: the user reports disabling it via Task Manager. This audit cannot
-confirm that, and the evidence says it is still enabled.** Recorded as-measured rather
-than as-reported, per retrofit rule 9.
+**Status: removed.** `tools/uninstall_project_c_traces.ps1 -Only 5 -Apply`, after the
+same command dry-ran first. Verified: the file is gone and the Startup folder now holds
+only `desktop.ini`. Items 1, 2, 3, 4, 6 were re-checked immediately afterwards and are
+all still present — the `-Only` scope held.
 
-What was checked, and what it showed:
-
-| probe | result |
-| --- | --- |
-| `StartupApproved\StartupFolder` under **HKCU** | key exists, **0 values** — no Ollama entry |
-| `StartupApproved\StartupFolder` under **HKLM** | key exists, **0 values** |
-| `StartupApproved\Run` / `Run32`, HKCU + HKLM | 3 / 0 / 2 / 1 values, **none matching `*llama*`** |
-| the shortcut file itself | present, attributes `Archive`, `LastWriteTime` still 2026-09-29 11:09:31 (install time, unmodified) |
-
-Disabling a Startup-**folder** item in Task Manager writes a value named for the shortcut
-into `HKCU\...\Explorer\StartupApproved\StartupFolder`, with bit 0 of the first byte set.
-There is no such value, so either the toggle did not apply, or a different item was
-toggled. **Please re-check before relying on it.** The shortcut is therefore still listed
-as an open ledger item.
-
-**Recommendation stands: disable it before R5.**
-
-`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\Ollama.lnk` launches
-`F:\Tools\Ollama\ollama app.exe` at every login. That tray app starts its own server in a
-context where **`OLLAMA_MODELS` is not set** — it is only set per-session by `dev.ps1` —
-so it defaults to `C:\Users\space\.ollama\models`. It already created that folder once on
-2026-09-29 (deleted, §2.1). Left enabled, the first model pull made outside a `dev.ps1`
-shell lands **4.7 GB on C:**, and it also occupies port 11434 so an R5 run may silently
-talk to a server with the wrong model directory.
-
-**The exact step — disabling, not deleting** (reversible, and Task Manager shows it):
-
-> Press **Ctrl+Shift+Esc** → **Startup apps** tab → right-click **Ollama** → **Disable**.
-
-Equivalent from a shell, if you prefer the file moved rather than a toggle flipped:
+Ollama no longer auto-starts at login, so it can no longer come up in a context without
+`OLLAMA_MODELS` set and default to `C:\Users\space\.ollama\models`. Start it deliberately
+instead:
 
 ```powershell
-Rename-Item "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\Ollama.lnk" `
-            "Ollama.lnk.disabled"
-```
-
-Either way, start the server explicitly for R5 instead:
-
-```powershell
-.\dev.ps1                      # sets OLLAMA_MODELS to .local\ollama_models on F:
+.\dev.ps1          # sets OLLAMA_MODELS to .local\ollama_models on F: and PATHs ollama
 ollama serve
 ```
 
-I have **not** applied this myself: it is a C: change outside the single item (7) this
-session was scoped to remove.
+### Why it was removed rather than disabled — [MEASURED]
+
+A Task Manager disable was attempted first and **did not take effect**. Probed before
+removal, across all six approval locations:
+
+| probe | result |
+| --- | --- |
+| `StartupApproved\StartupFolder`, HKCU | key exists, **0 values** |
+| `StartupApproved\StartupFolder`, HKLM | key exists, **0 values** |
+| `StartupApproved\Run` / `Run32`, HKCU + HKLM | 3 / 0 / 2 / 1 values, **none matching `*llama*`** |
+| the shortcut file | present, attributes `Archive`, `LastWriteTime` still 2026-09-29 11:09:31 (install time) |
+
+Disabling a Startup-**folder** item writes a value named for the shortcut into
+`HKCU\...\Explorer\StartupApproved\StartupFolder` with bit 0 of the first byte set. No
+such value existed, so the toggle had not applied. Deleting the shortcut is the
+unambiguous equivalent and is what the ledger now records.
+
+*Restore, if ever wanted:* recreate a shortcut to `F:\Tools\Ollama\ollama app.exe` in
+`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`, or re-run the vendor
+installer. The two Start Menu shortcuts (items 3 and 4) are untouched, so Ollama is still
+launchable from the Start Menu by hand.
