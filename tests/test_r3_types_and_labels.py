@@ -600,13 +600,42 @@ def test_hollow_crown_fixture_is_byte_identical(tmp_path: Path) -> None:
         repo.initialize_schema()
         seed_hollow_crown(repo)
 
+    # The column list is SPELLED OUT rather than `SELECT *`, and this is the one
+    # deviation retrofit R4 makes to this test. R4 adds seven additive columns to
+    # `edges` (weight, grade, quote, ...), so `SELECT *` would change this digest
+    # without a single seeded VALUE changing - it would be pinning the width of the
+    # schema, not the contents of the fixture. Naming the pre-R4 columns pins exactly
+    # what rule I2 is about, and the EXPECTED HASH IS UNCHANGED: the assertion below is
+    # still the value recorded before any R3 code was written, so if any seeded datum
+    # had moved, this would still fail.
+    columns = {
+        "works": "id, slug, title",
+        "nodes": (
+            "id, work_id, type, name, subtype, importance, first_seen_chapter, "
+            "revealed_chapter, extraction_method, evidence_span"
+        ),
+        "edges": (
+            "id, work_id, source_id, target_id, relation, tier, first_seen_chapter, "
+            "revealed_chapter, extraction_method, evidence_span"
+        ),
+        "node_properties": (
+            "id, node_id, key, value, first_seen_chapter, revealed_chapter, "
+            "extraction_method, evidence_span"
+        ),
+        "chapters": "id, work_id, ordinal, title, clean_text, content_hash, source_path",
+        "chunks": (
+            "id, chapter_id, work_id, ordinal, char_start, char_end, text, content_hash"
+        ),
+        "mentions": (
+            "id, work_id, chapter_id, chapter_ordinal, ordinal, surface, type, subtype, "
+            "char_start, char_end, score, extraction_method, node_id"
+        ),
+        "arcs": "id, work_id, ordinal, name, start_chapter, end_chapter",
+    }
     digest = hashlib.sha256()
     with sqlite3.connect(db) as conn:
-        for table in (
-            "works", "nodes", "edges", "node_properties",
-            "chapters", "chunks", "mentions", "arcs",
-        ):
-            for row in conn.execute(f"SELECT * FROM {table} ORDER BY rowid"):
+        for table, cols in columns.items():
+            for row in conn.execute(f"SELECT {cols} FROM {table} ORDER BY rowid"):
                 digest.update(repr(row).encode())
 
     # Recorded before any R3 code was written; see docs/retrofit/RETROFIT_PROGRESS.md.

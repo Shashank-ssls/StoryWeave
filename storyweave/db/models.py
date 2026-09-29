@@ -11,6 +11,7 @@ vocabulary that day-one schema must support.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import IntEnum, StrEnum
 
 from pydantic import BaseModel
@@ -172,6 +173,166 @@ RELATION_TIER: dict[str, RelationTier] = {
 ALL_RELATIONS: tuple[str, ...] = TIER1_RELATIONS + TIER2_RELATIONS + TIER3_RELATIONS
 
 
+# --------------------------------------------------------------------------- #
+# Retrofit R4 — the CLOSED relation list. Twelve relations, two rings.
+#
+# Same shape as R3's two node vocabularies: the STORED vocabulary above is left
+# untouched (so the frozen v1 baseline and the Hollow Crown fixture still load and
+# still satisfy the `edges.relation` CHECK), and this is the vocabulary NEW extraction
+# may write and the payload may serve. `LEGACY_RELATION_MAP` is the single place
+# recording each old relation's fate, exactly as `LEGACY_TYPE_MAP` does for types.
+# --------------------------------------------------------------------------- #
+
+
+class Relation(StrEnum):
+    """The twelve relations the retrofit graph may create (retrofit rule 3)."""
+
+    # Ring 1 — drawn in the default graph.
+    KIN_OF = "KIN_OF"
+    ROMANTIC_WITH = "ROMANTIC_WITH"
+    ALLY_OF = "ALLY_OF"
+    ENEMY_OF = "ENEMY_OF"
+    SERVES = "SERVES"
+    MENTOR_OF = "MENTOR_OF"
+    KILLED = "KILLED"
+    SAME_AS = "SAME_AS"
+    # Ring 2 — overlays only.
+    MEMBER_OF = "MEMBER_OF"
+    LEADS = "LEADS"
+    OWNS = "OWNS"
+    LOCATED_IN = "LOCATED_IN"
+
+
+#: Ring 1: the default graph. Ring 2: overlays only (retrofit rule 3).
+RING1_RELATIONS: tuple[Relation, ...] = (
+    Relation.KIN_OF, Relation.ROMANTIC_WITH, Relation.ALLY_OF, Relation.ENEMY_OF,
+    Relation.SERVES, Relation.MENTOR_OF, Relation.KILLED, Relation.SAME_AS,
+)
+RING2_RELATIONS: tuple[Relation, ...] = (
+    Relation.MEMBER_OF, Relation.LEADS, Relation.OWNS, Relation.LOCATED_IN,
+)
+RELATIONS: tuple[Relation, ...] = RING1_RELATIONS + RING2_RELATIONS
+
+#: A relation's storage tier, so R4 edges keep flowing through the existing `tier`
+#: column and its CHECK. Identity is tier 3; the ring-2 structural relations are tier 1;
+#: everything else is social.
+RELATION_RING: dict[Relation, int] = {
+    **{r: 1 for r in RING1_RELATIONS},
+    **{r: 2 for r in RING2_RELATIONS},
+}
+
+
+class RelationGrade(StrEnum):
+    """How well the evidence quote supports the edge (R4 task 3f).
+
+    STATED: the quote names BOTH participants (a label of each) AND carries a relation
+    cue word. This is the only grade the graph serves. INFERRED: everything else that
+    passed the validator — kept in the database as evidence and for recall diagnostics,
+    never drawn.
+    """
+
+    STATED = "STATED"
+    INFERRED = "INFERRED"
+
+
+@dataclass(frozen=True)
+class RelationSpec:
+    """Domain/range and algebra for one relation (R4 task 1's table, as data)."""
+
+    head: frozenset[NodeType]
+    tail: frozenset[NodeType]
+    symmetric: bool
+    closable: bool
+
+
+_C = NodeType.CHARACTER
+_O = NodeType.ORGANIZATION
+_P = NodeType.PLACE
+_I = NodeType.ITEM
+
+#: The R4 domain/range table, verbatim from docs/retrofit/R4_closed_relations_validator.md.
+DOMAIN_RANGE: dict[Relation, RelationSpec] = {
+    Relation.KIN_OF: RelationSpec(frozenset({_C}), frozenset({_C}), False, False),
+    Relation.ROMANTIC_WITH: RelationSpec(frozenset({_C}), frozenset({_C}), True, True),
+    Relation.ALLY_OF: RelationSpec(frozenset({_C, _O}), frozenset({_C, _O}), True, True),
+    Relation.ENEMY_OF: RelationSpec(frozenset({_C, _O}), frozenset({_C, _O}), True, True),
+    Relation.SERVES: RelationSpec(frozenset({_C}), frozenset({_C, _O}), False, True),
+    Relation.MENTOR_OF: RelationSpec(frozenset({_C}), frozenset({_C}), False, True),
+    Relation.KILLED: RelationSpec(frozenset({_C}), frozenset({_C}), False, False),
+    Relation.SAME_AS: RelationSpec(frozenset({_C}), frozenset({_C}), True, False),
+    Relation.MEMBER_OF: RelationSpec(frozenset({_C}), frozenset({_O}), False, True),
+    Relation.LEADS: RelationSpec(frozenset({_C}), frozenset({_O, _P}), False, True),
+    Relation.OWNS: RelationSpec(frozenset({_C, _O}), frozenset({_I}), False, True),
+    Relation.LOCATED_IN: RelationSpec(
+        frozenset({_C, _O, _P}), frozenset({_P}), False, True
+    ),
+}
+
+#: Relations whose endpoints are stored order-independently (head_id < tail_id).
+SYMMETRIC_R4_RELATIONS: frozenset[Relation] = frozenset(
+    r for r, spec in DOMAIN_RANGE.items() if spec.symmetric
+)
+
+
+class LegacyRelationFate(StrEnum):
+    """What R4 does with each of v1's fifteen stored relation names."""
+
+    MAPS = "MAPS"  # 1:1 (or reversed) onto one of the twelve
+    BECOMES_LABEL = "BECOMES_LABEL"  # belongs in entity_labels, never an edge
+    DROPPED = "DROPPED"  # outside the closed list; logged, never created
+
+
+#: Old relation -> (fate, new relation or None, reverse the endpoints?).
+#: The single audit point for R4 task 2. `subtype` preserves the original name for the
+#: identity family, and `kin_role` preserves it for kinship, so nothing is lost.
+LEGACY_RELATION_MAP: dict[str, tuple[LegacyRelationFate, Relation | None, bool]] = {
+    # -- Tier 1 structural --
+    "MemberOf": (LegacyRelationFate.MAPS, Relation.MEMBER_OF, False),
+    "LeaderOf": (LegacyRelationFate.MAPS, Relation.LEADS, False),
+    "LocatedIn": (LegacyRelationFate.MAPS, Relation.LOCATED_IN, False),
+    "OwnsItem": (LegacyRelationFate.MAPS, Relation.OWNS, False),
+    "HasTitle": (LegacyRelationFate.BECOMES_LABEL, None, False),
+    "AffiliatedWith": (LegacyRelationFate.DROPPED, None, False),
+    "HasAbility": (LegacyRelationFate.DROPPED, None, False),
+    "ParticipatedIn": (LegacyRelationFate.DROPPED, None, False),
+    "RelatedTo": (LegacyRelationFate.DROPPED, None, False),
+    # -- Tier 2 social --
+    "Ally": (LegacyRelationFate.MAPS, Relation.ALLY_OF, False),
+    "Enemy": (LegacyRelationFate.MAPS, Relation.ENEMY_OF, False),
+    "Mentor": (LegacyRelationFate.MAPS, Relation.MENTOR_OF, False),
+    "Student": (LegacyRelationFate.MAPS, Relation.MENTOR_OF, True),  # reversed
+    "Parent": (LegacyRelationFate.MAPS, Relation.KIN_OF, False),
+    "Child": (LegacyRelationFate.MAPS, Relation.KIN_OF, False),
+    "Sibling": (LegacyRelationFate.MAPS, Relation.KIN_OF, False),
+    "Spouse": (LegacyRelationFate.MAPS, Relation.KIN_OF, False),
+    "Family": (LegacyRelationFate.MAPS, Relation.KIN_OF, False),
+    "Romantic": (LegacyRelationFate.MAPS, Relation.ROMANTIC_WITH, False),
+    "Serves": (LegacyRelationFate.MAPS, Relation.SERVES, False),
+    "Killed": (LegacyRelationFate.MAPS, Relation.KILLED, False),
+    "Rival": (LegacyRelationFate.DROPPED, None, False),
+    "Betrayed": (LegacyRelationFate.DROPPED, None, False),
+    "Protects": (LegacyRelationFate.DROPPED, None, False),
+    "Fears": (LegacyRelationFate.DROPPED, None, False),
+    "Respects": (LegacyRelationFate.DROPPED, None, False),
+    # -- Tier 3 identity: all collapse to SAME_AS, original kept as `subtype` --
+    "SAME_AS": (LegacyRelationFate.MAPS, Relation.SAME_AS, False),
+    "SECRET_IDENTITY": (LegacyRelationFate.MAPS, Relation.SAME_AS, False),
+    "REINCARNATION": (LegacyRelationFate.MAPS, Relation.SAME_AS, False),
+    "TRANSMIGRATED_INTO": (LegacyRelationFate.MAPS, Relation.SAME_AS, False),
+    "ALIAS": (LegacyRelationFate.BECOMES_LABEL, None, False),
+}
+
+# Every stored relation name has a recorded fate: a new name cannot be added to the
+# stored vocabulary without deciding what the retrofit graph does with it.
+assert set(LEGACY_RELATION_MAP) == set(ALL_RELATIONS), (
+    "LEGACY_RELATION_MAP must decide the fate of every stored relation"
+)
+# The twelve are reachable: each is either a map target or SAME_AS's family.
+assert set(RELATIONS) >= {
+    new for _fate, new, _rev in LEGACY_RELATION_MAP.values() if new is not None
+}
+
+
 class ExtractionMethod(StrEnum):
     """Provenance: how an element entered the graph.
 
@@ -290,6 +451,19 @@ class Node(BaseModel):
 
 
 class Edge(BaseModel):
+    """One relation between two nodes, with its reveal stamps and its evidence.
+
+    The seven fields below ``evidence_span`` are retrofit R4 and all default, so a row
+    from a pre-R4 database (the frozen v1 baseline, the Hollow Crown fixture) still
+    validates unchanged — exactly the R3 `entity_labels` precedent.
+
+    ``weight`` is why R4 has no duplicate edges: repeat evidence for the same
+    (work, relation, head, tail) increments the weight and keeps the EARLIEST quote,
+    rather than inserting a second row. ``quote`` is the verbatim citation the validator
+    checked against clean text; ``grade`` says whether that quote names both
+    participants (retrofit rule 4).
+    """
+
     id: int | None = None
     work_id: int
     source_id: int
@@ -300,6 +474,14 @@ class Edge(BaseModel):
     revealed_chapter: int
     extraction_method: ExtractionMethod
     evidence_span: str | None = None
+    # --- retrofit R4 ---
+    weight: int = 1
+    grade: RelationGrade | None = None
+    quote: str | None = None
+    quote_chapter: int | None = None
+    kin_role: str | None = None  # "father", "niece", ... for KIN_OF
+    surface_term: str | None = None  # the cue word actually found in the quote
+    subtype: str | None = None  # the original name for the SAME_AS family
 
 
 class LabelKind(StrEnum):
@@ -355,6 +537,17 @@ class NodeProperty(BaseModel):
 
 __all__ = [
     "ALL_RELATIONS",
+    "DOMAIN_RANGE",
+    "LEGACY_RELATION_MAP",
+    "RELATIONS",
+    "RELATION_RING",
+    "RING1_RELATIONS",
+    "RING2_RELATIONS",
+    "SYMMETRIC_R4_RELATIONS",
+    "LegacyRelationFate",
+    "Relation",
+    "RelationGrade",
+    "RelationSpec",
     "RELATION_TIER",
     "SUBTYPES",
     "TIER1_RELATIONS",

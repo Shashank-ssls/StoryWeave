@@ -1,0 +1,102 @@
+﻿python : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv\Lib\site-packages\fastapi\testclient.py:1: 
+StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+At line:1 char:313
++ ...  .\dev.ps1; python tools/eval_fence.py --db data/retrofit/ninth_house ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...ttpx2` instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  from starlette.testclient import TestClient as TestClient  # noqa
+=== TESTED SURFACE ===
+  [TESTED    ] GET /works/{slug}/entities?n=
+               element kinds: entity
+               EntityModel carries revealed_chapter directly.
+  [TESTED    ] GET /works/{slug}/graph?n=
+               element kinds: graph_node, graph_edge, graph_node_property
+               Cytoscape elements; node.properties is a bare key->value dict with no reveal stamp on the wire, so it is resolved back to node_properties rows read-only.
+  [TESTED    ] GET /works/{slug}/entity/{id}?n=
+               element kinds: detail_entity, detail_edge, detail_property
+               Requested for EVERY node id of the work at every chapter, so a not-yet-revealed id must 404 rather than serve; a 200 on an unrevealed id is itself a violation.
+  [TESTED    ] GET /works/{slug}/arcs?n=
+               element kinds: arc_name
+               Arcs carry no revealed_chapter. Their fence rule (F6) is name redaction: an arc with start_chapter > n must send name=null. That rule is what is checked.
+  [not tested] GET /works/{slug}/search?n=&q=
+               element kinds: -
+               NOT TESTED: the vector store directory (.chroma) does not exist in this checkout, so there is no index to query and the route cannot be exercised without first building one. Its fence key is chunk chapter_ordinal <= n.
+  [not tested] GET /works/{slug}/status?n/a
+               element kinds: -
+               NOT TESTED as a leak surface: it returns no story element, only an UNFENCED node_count (repository.count_nodes ignores the chapter). That is a count, not an element carrying revealed_chapter, so it is out of this metric's scope -- recorded here because it is a real side channel the checker does not cover.
+  [not tested] GET /works
+               element kinds: -
+               NOT TESTED: work slug/title/chapter_count only; no reveal-stamped element.
+  [not tested] GET /health
+               element kinds: -
+               NOT TESTED: liveness only; no story content.
+  [not tested] POST /works, POST /works/preview, POST /works/{slug}/chapters, DELETE /works/{slug}
+               element kinds: -
+               NOT TESTED: write/ingest routes. They return counts and echo the caller's own submitted text; they serve no reveal-stamped element from the graph.
+
+=== MEASUREMENT RUN ===
+database: F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\retrofit\ninth_house_r4.db (opened mode=ro)
+  the-ninth-house: chapters 1..40
+total queries issued:    7640
+total elements inspected: 24450
+    arc_name: 200
+    detail_edge: 2674
+    detail_entity: 4758
+    entity: 4758
+    graph_edge: 1337
+    graph_node: 4758
+    graph_node_label: 5965
+TOTAL VIOLATIONS: 0
+
+=== NEGATIVE CONTROLS (throwaway copy; measured DB never written) ===
+  injected: 3 synthetic elements revealed at chapter 6, payload fetched at 6, checked against n=5
+    queries=4 elements=204 violations_detected=39
+      entity 51: entity 'Thessaly' revealed at 6 served at n=5
+      entity 52: entity 'Thorne' revealed at 6 served at n=5
+      entity 53: entity 'House Ashcombe' revealed at 6 served at n=5
+      entity 54: entity 'Ashcombe household' revealed at 6 served at n=5
+      entity 55: entity 'Beneath the Bone Market' revealed at 6 served at n=5
+      entity 189: entity 'SYNTHETIC LEAK CANARY' revealed at 6 served at n=5
+      graph_node_label 1:SYNTHETIC LABEL CANARY: label 'SYNTHETIC LABEL CANARY' (epithet) on node 1 is revealed at 6
+      graph_node 51: node 'Thessaly' revealed at 6
+      graph_node_label 51:Thessaly: label 'Thessaly' (full) on node 51 is revealed at 6
+      graph_node_label 51:Thessaly: label 'Thessaly' rides an unrevealed node 51 (both-rule)
+      graph_node 52: node 'Thorne' revealed at 6
+      graph_node_label 52:Bellamy Thorne: label 'Bellamy Thorne' (short) on node 52 is revealed at 6
+      graph_node_label 52:Bellamy Thorne: label 'Bellamy Thorne' rides an unrevealed node 52 (both-rule)
+      graph_node_label 52:Thorne: label 'Thorne' (full) on node 52 is revealed at 6
+      graph_node_label 52:Thorne: label 'Thorne' rides an unrevealed node 52 (both-rule)
+      graph_node 53: node 'House Ashcombe' revealed at 6
+      graph_node_label 53:House Ashcombe: label 'House Ashcombe' (full) on node 53 is revealed at 6
+      graph_node_label 53:House Ashcombe: label 'House Ashcombe' rides an unrevealed node 53 (both-rule)
+      graph_node 54: node 'Ashcombe household' revealed at 6
+      graph_node_label 54:Ashcombe household: label 'Ashcombe household' (full) on node 54 is revealed at 6
+      graph_node_label 54:Ashcombe household: label 'Ashcombe household' rides an unrevealed node 54 (both-rule)
+      graph_node 55: node 'Beneath the Bone Market' revealed at 6
+      graph_node_label 55:Beneath the Bone Market: label 'Beneath the Bone Market' (full) on node 55 is revealed at 6
+      graph_node_label 55:Beneath the Bone Market: label 'Beneath the Bone Market' rides an unrevealed node 55 (both-rule)
+      graph_node 189: node 'SYNTHETIC LABEL ON A HIDDEN NODE' revealed at 6
+      graph_node_label 189:SYNTHETIC LABEL ON A HIDDEN NODE: label 'SYNTHETIC LABEL ON A HIDDEN NODE' rides an unrevealed node 189 (both-rule)
+      graph_node_property 189:canary: property canary='synthetic' on node 189 is revealed no earlier than 6
+      graph_edge e15: edge LOCATED_IN 51->34
+      graph_edge e15: edge source 51 revealed at 6
+      graph_edge e16: edge MEMBER_OF 51->49
+      graph_edge e16: edge source 51 revealed at 6
+      graph_edge e18: edge SERVES 52->54
+      graph_edge e18: edge source 52 revealed at 6
+      graph_edge e18: edge target 54 revealed at 6
+      graph_edge e65: edge RelatedTo 1->189
+      graph_edge e65: edge target 189 revealed at 6
+      detail_entity 189: entity 'SYNTHETIC LEAK CANARY' served at n=5
+      detail_edge 65: edge RelatedTo on entity 189
+      detail_property 189:canary: property canary='synthetic'
+  sabotaged: fenced reads replaced with unfenced ones, payload fetched at n=5 as a client would
+    queries=43 elements=428 violations_detected=188
+      detail_edge: 38
+      entity: 138
+      graph_edge: 12
+
+DETECTOR VERIFIED TO FIRE: True
+wrote evidence\retrofit\R4_fence.csv (227 rows)

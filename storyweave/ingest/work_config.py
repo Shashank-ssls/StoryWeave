@@ -111,6 +111,13 @@ class RelationConfig(BaseModel):
     relex_ner_threshold: float | None = None
     relex_rel_threshold: float | None = None
 
+    # --- retrofit R4: per-relation cue words for the STATED grade rule. ---
+    # Keyed by one of the twelve relation names; REPLACES that relation's default list
+    # from storyweave/extract/cues.py. Empty by default: the shipped run uses the
+    # defaults, which were written from SPEC.md §5.3 and general English before any
+    # scoring run and were NOT tuned against the answer key.
+    cues: dict[str, list[str]] = Field(default_factory=dict)
+
 
 class IdentityConfig(BaseModel):
     # --- Tier-3 identity inference (Phase 7c): LLM-inferred, citation-gated. ---

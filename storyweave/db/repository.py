@@ -20,6 +20,7 @@ from storyweave.db.models import (
     ALL_RELATIONS,
     GRAPH_NODE_TYPES,
     LEGACY_TYPE_MAP,
+    RELATIONS,
     Arc,
     Chapter,
     Chunk,
@@ -31,6 +32,7 @@ from storyweave.db.models import (
     Node,
     NodeProperty,
     NodeType,
+    RelationGrade,
     RelationTier,
     Work,
     is_graph_type,
@@ -39,14 +41,49 @@ from storyweave.db.models import (
 # Controlled-vocabulary fragments for CHECK constraints, derived from the ontology
 # so the SQL and the pydantic mirrors can never drift.
 _NODE_TYPE_LIST = ", ".join(f"'{t.value}'" for t in NodeType)
-_RELATION_LIST = ", ".join(f"'{r}'" for r in ALL_RELATIONS)
+# The stored relation vocabulary is v1's fifteen-per-tier list PLUS retrofit R4's
+# twelve. Both, not one: R4's producer writes the new names, while the frozen v1
+# baseline and the Hollow Crown fixture are full of the old ones and must keep loading.
+# `LEGACY_RELATION_MAP` in db/models.py is where each old name's fate is recorded.
+_STORED_RELATIONS: tuple[str, ...] = (
+    *ALL_RELATIONS,
+    *(r.value for r in RELATIONS if r.value not in ALL_RELATIONS),
+)
+_RELATION_LIST = ", ".join(f"'{r}'" for r in _STORED_RELATIONS)
 _TIER_LIST = ", ".join(str(t.value) for t in RelationTier)
 _METHOD_LIST = ", ".join(f"'{m.value}'" for m in ExtractionMethod)
+_GRADE_LIST = ", ".join(f"'{g.value}'" for g in RelationGrade)
 _LABEL_KIND_LIST = ", ".join(f"'{k.value}'" for k in LabelKind)
 # The graph's four display types (retrofit R3). Used ONLY in the display clause of
 # list_graph_nodes_revealed, never in a fence clause - they are different filters with
 # different purposes and must stay visibly separate.
 _GRAPH_TYPE_LIST = ", ".join(f"'{t.value}'" for t in GRAPH_NODE_TYPES)
+
+# The `edges` DDL as its own constant: `migrate_edges_relation_vocabulary` rebuilds
+# the table from this exact statement, so the rebuilt table can never drift from
+# the one a fresh database gets.
+_EDGES_DDL: str = f"""CREATE TABLE IF NOT EXISTS edges (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    work_id             INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+    source_id           INTEGER NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    target_id           INTEGER NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    relation            TEXT NOT NULL CHECK (relation IN ({_RELATION_LIST})),
+    tier                INTEGER NOT NULL CHECK (tier IN ({_TIER_LIST})),
+    first_seen_chapter  INTEGER NOT NULL,
+    revealed_chapter    INTEGER NOT NULL,
+    extraction_method   TEXT NOT NULL CHECK (extraction_method IN ({_METHOD_LIST})),
+    evidence_span       TEXT,
+    -- Retrofit R4. All default, so a pre-R4 row is still a valid Edge. `weight` is what
+    -- replaces duplicate rows: repeat evidence increments it and keeps the earliest
+    -- quote. `grade` is STATED only when the quote names both participants and a cue.
+    weight              INTEGER NOT NULL DEFAULT 1,
+    grade               TEXT CHECK (grade IS NULL OR grade IN ({_GRADE_LIST})),
+    quote               TEXT,
+    quote_chapter       INTEGER,
+    kin_role            TEXT,
+    surface_term        TEXT,
+    subtype             TEXT
+);"""
 
 SCHEMA: str = f"""
 PRAGMA foreign_keys = ON;
@@ -74,18 +111,40 @@ CREATE TABLE IF NOT EXISTS nodes (
 
 -- Edges: three-tier typed relationships. An edge is visible at chapter N only if
 -- BOTH endpoints are visible (enforced later in query/fence.py).
-CREATE TABLE IF NOT EXISTS edges (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    work_id             INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
-    source_id           INTEGER NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-    target_id           INTEGER NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-    relation            TEXT NOT NULL CHECK (relation IN ({_RELATION_LIST})),
-    tier                INTEGER NOT NULL CHECK (tier IN ({_TIER_LIST})),
-    first_seen_chapter  INTEGER NOT NULL,
-    revealed_chapter    INTEGER NOT NULL,
-    extraction_method   TEXT NOT NULL CHECK (extraction_method IN ({_METHOD_LIST})),
-    evidence_span       TEXT
+{_EDGES_DDL}
+
+-- One row per (work, relation, head, tail) FOR R4 EDGES: R4 has no parallel duplicates
+-- of the same relation on the same pair. DIFFERENT relations on the same pair remain
+-- separate rows, which is exactly the defect D2 fix - the old nx.DiGraph projection
+-- collapsed them.
+--
+-- PARTIAL, on `grade IS NOT NULL`, and that scope is the honest one rather than a
+-- convenience: `grade` is non-NULL exactly on rows this retrofit's validator wrote, and
+-- the uniqueness claim is a claim about R4's producer, not about history. Legacy rows
+-- predate the key and can legitimately violate it - the Phase-7d coref merge, for one,
+-- re-points an edge onto a pair that already carries the same relation at a different
+-- tier, and it is right to keep both. A full index would make R4 silently break a
+-- working legacy path; this one cannot.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_edges_unique_relation
+    ON edges(work_id, relation, source_id, target_id) WHERE grade IS NOT NULL;
+
+-- Retrofit R4: every proposal the validator refuses, with its reason code. Rejections
+-- are evidence, not silence - the phase reports counts by reason.
+CREATE TABLE IF NOT EXISTS validator_rejections (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    work_id           INTEGER NOT NULL REFERENCES works(id) ON DELETE CASCADE,
+    relation          TEXT NOT NULL,
+    source_surface    TEXT,
+    target_surface    TEXT,
+    source_id         INTEGER,
+    target_id         INTEGER,
+    quote             TEXT,
+    quote_chapter     INTEGER,
+    reason            TEXT NOT NULL,
+    detail            TEXT
 );
+
+CREATE INDEX IF NOT EXISTS idx_rejections_work ON validator_rejections(work_id, reason);
 
 -- Node properties: reveal-stamped facts about a node (the property-level fence).
 CREATE TABLE IF NOT EXISTS node_properties (
@@ -212,14 +271,110 @@ class Repository:
         self.conn.execute("PRAGMA foreign_keys = ON;")
         #: cache for has_entity_labels_table(); None = not yet probed
         self._has_labels: bool | None = None
+        #: cache for has_edge_r4_columns(); None = not yet probed
+        self._has_edge_r4: bool | None = None
 
     # --- lifecycle ------------------------------------------------------- #
 
     def initialize_schema(self) -> None:
         """Create the full 8-type schema if it does not yet exist (idempotent)."""
+        # The additive edge migration runs FIRST: on a pre-R4 database the schema
+        # script's partial index (`WHERE grade IS NOT NULL`) refers to a column that
+        # does not exist yet. On a fresh database the migration is a no-op - there is
+        # no `edges` table for it to find - and the DDL below creates both.
+        self.migrate_edges_r4()
+        self.migrate_edges_relation_vocabulary()
         self.conn.executescript(SCHEMA)
         self.conn.commit()
         self._has_labels = None  # the schema may have just added entity_labels
+        self._has_edge_r4 = None  # ... and the R4 edge columns
+
+    #: The seven columns retrofit R4 adds to `edges`, with their DDL fragments.
+    _EDGE_R4_COLUMNS: tuple[tuple[str, str], ...] = (
+        ("weight", "INTEGER NOT NULL DEFAULT 1"),
+        ("grade", "TEXT"),
+        ("quote", "TEXT"),
+        ("quote_chapter", "INTEGER"),
+        ("kin_role", "TEXT"),
+        ("surface_term", "TEXT"),
+        ("subtype", "TEXT"),
+    )
+
+    def migrate_edges_r4(self) -> list[str]:
+        """Add R4's edge columns to a WRITABLE database created before R4 (idempotent).
+
+        Purely additive: every column is nullable or defaulted, so existing rows keep
+        their meaning and every historical Edge still validates. A read-only database
+        (the frozen v1 baseline) is never migrated - it is detected by
+        :meth:`has_edge_r4_columns` instead and simply reads without these fields.
+
+        The `grade` CHECK constraint is deliberately NOT added by the migration: SQLite
+        cannot add a CHECK to an existing table without rewriting it, and rewriting a
+        historical table is a bigger risk than the constraint is worth. New databases get
+        it from the DDL; :meth:`add_edge` validates the value in Python either way.
+        """
+        existing = {r["name"] for r in self.conn.execute("PRAGMA table_info(edges)")}
+        if not existing:  # no edges table at all -> nothing to migrate
+            return []
+        added: list[str] = []
+        for name, ddl in self._EDGE_R4_COLUMNS:
+            if name not in existing:
+                self.conn.execute(f"ALTER TABLE edges ADD COLUMN {name} {ddl}")
+                added.append(name)
+        if added:
+            self.conn.commit()
+            self._has_edge_r4 = None
+        return added
+
+    def migrate_edges_relation_vocabulary(self) -> bool:
+        """Widen a pre-R4 `edges.relation` CHECK to admit the twelve new names.
+
+        SQLite cannot alter a CHECK constraint in place, so this is the standard
+        create-copy-drop-rename rebuild, run only when the existing constraint is
+        actually stale. Returns True if it rebuilt.
+
+        Two safety properties, because rebuilding a table with history in it is the
+        riskiest thing in this file:
+
+        * the copy is column-by-column BY NAME, taken from the old table's own
+          ``PRAGMA table_info``, so no column is reordered, renamed or dropped; and
+        * ``id`` is copied explicitly, so every foreign key and every edge id quoted in
+          the evidence files (1325, 1327, ...) still points at the same row.
+
+        A read-only database is never migrated: the caller cannot write to it and the
+        probe below simply reports the old vocabulary.
+        """
+        row = self.conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'edges'"
+        ).fetchone()
+        if row is None or row["sql"] is None:
+            return False  # no edges table yet: the DDL will create it correctly
+        if all(f"'{r.value}'" in row["sql"] for r in RELATIONS):
+            return False  # already wide enough
+        columns = [r["name"] for r in self.conn.execute("PRAGMA table_info(edges)")]
+        cols = ", ".join(columns)
+        self.conn.execute("PRAGMA foreign_keys = OFF;")
+        try:
+            self.conn.executescript(_EDGES_DDL.replace("edges", "edges_r4_new", 1))
+            self.conn.execute(f"INSERT INTO edges_r4_new ({cols}) SELECT {cols} FROM edges")
+            self.conn.execute("DROP TABLE edges")
+            self.conn.execute("ALTER TABLE edges_r4_new RENAME TO edges")
+            self.conn.commit()
+        finally:
+            self.conn.execute("PRAGMA foreign_keys = ON;")
+        return True
+
+    def has_edge_r4_columns(self) -> bool:
+        """Whether this database's `edges` table carries the R4 columns.
+
+        Same role as :meth:`has_entity_labels_table`: the frozen v1 baseline is opened
+        read-only and cannot be migrated on the fly, so any query that names `grade` or
+        `weight` must ask first and fall back. Probed once and cached.
+        """
+        if self._has_edge_r4 is None:
+            cols = {r["name"] for r in self.conn.execute("PRAGMA table_info(edges)")}
+            self._has_edge_r4 = "grade" in cols and "weight" in cols
+        return self._has_edge_r4
 
     def close(self) -> None:
         self.conn.close()
@@ -532,25 +687,148 @@ class Repository:
     # --- edges ----------------------------------------------------------- #
 
     def add_edge(self, edge: Edge) -> int:
+        """Insert one edge. Writes R4's columns when the database has them."""
+        if not self.has_edge_r4_columns():
+            cur = self.conn.execute(
+                """INSERT INTO edges
+                     (work_id, source_id, target_id, relation, tier,
+                      first_seen_chapter, revealed_chapter, extraction_method,
+                      evidence_span)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    edge.work_id, edge.source_id, edge.target_id, edge.relation,
+                    edge.tier.value, edge.first_seen_chapter, edge.revealed_chapter,
+                    edge.extraction_method.value, edge.evidence_span,
+                ),
+            )
+            self.conn.commit()
+            return int(cur.lastrowid or 0)
         cur = self.conn.execute(
             """INSERT INTO edges
                  (work_id, source_id, target_id, relation, tier,
-                  first_seen_chapter, revealed_chapter, extraction_method, evidence_span)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                  first_seen_chapter, revealed_chapter, extraction_method, evidence_span,
+                  weight, grade, quote, quote_chapter, kin_role, surface_term, subtype)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                edge.work_id,
-                edge.source_id,
-                edge.target_id,
-                edge.relation,
-                edge.tier.value,
-                edge.first_seen_chapter,
-                edge.revealed_chapter,
-                edge.extraction_method.value,
-                edge.evidence_span,
+                edge.work_id, edge.source_id, edge.target_id, edge.relation,
+                edge.tier.value, edge.first_seen_chapter, edge.revealed_chapter,
+                edge.extraction_method.value, edge.evidence_span,
+                edge.weight,
+                edge.grade.value if edge.grade is not None else None,
+                edge.quote, edge.quote_chapter, edge.kin_role, edge.surface_term,
+                edge.subtype,
             ),
         )
         self.conn.commit()
         return int(cur.lastrowid or 0)
+
+    def get_edge_by_relation_pair(
+        self, work_id: int, relation: str, source_id: int, target_id: int
+    ) -> Edge | None:
+        """The one edge on this (work, relation, head, tail), if it exists (R4 key)."""
+        row = self.conn.execute(
+            """SELECT * FROM edges
+                WHERE work_id = ? AND relation = ? AND source_id = ? AND target_id = ?""",
+            (work_id, relation, source_id, target_id),
+        ).fetchone()
+        return Edge(**dict(row)) if row is not None else None
+
+    def reinforce_edge(
+        self,
+        existing: Edge,
+        *,
+        first_seen_chapter: int,
+        revealed_chapter: int,
+        grade: RelationGrade | None = None,
+        quote: str | None = None,
+        quote_chapter: int | None = None,
+        surface_term: str | None = None,
+    ) -> None:
+        """Record repeat evidence for an existing edge: +1 weight, best quote kept.
+
+        This is R4 task 5. The reveal stamps only ever move EARLIER, so reinforcement
+        can never push an edge past the fence into a later chapter than it already had.
+
+        Which quote survives is decided here, in Python, rather than in a CASE ladder,
+        because the rule has two parts and both matter: a STATED citation always beats an
+        INFERRED one (STATED is the only grade the graph serves), and among quotes of the
+        same grade the EARLIEST chapter wins (that is the chapter the reader learns it,
+        so it is also the edge's revealed_chapter).
+        """
+        assert existing.id is not None
+        keep_quote = existing.quote
+        keep_chapter = existing.quote_chapter
+        keep_grade = existing.grade
+        incoming_better = (
+            keep_quote is None
+            or (grade is RelationGrade.STATED and keep_grade is not RelationGrade.STATED)
+            or (
+                grade == keep_grade
+                and quote_chapter is not None
+                and keep_chapter is not None
+                and quote_chapter < keep_chapter
+            )
+        )
+        if incoming_better and quote is not None:
+            keep_quote, keep_chapter, keep_grade = quote, quote_chapter, grade
+        self.conn.execute(
+            """UPDATE edges
+                  SET weight = weight + 1,
+                      first_seen_chapter = ?,
+                      revealed_chapter   = ?,
+                      grade = ?, quote = ?, quote_chapter = ?,
+                      surface_term = COALESCE(surface_term, ?)
+                WHERE id = ?""",
+            (
+                min(existing.first_seen_chapter, first_seen_chapter),
+                min(existing.revealed_chapter, revealed_chapter),
+                keep_grade.value if keep_grade is not None else None,
+                keep_quote, keep_chapter, surface_term, existing.id,
+            ),
+        )
+        self.conn.commit()
+
+    def add_validator_rejection(
+        self,
+        work_id: int,
+        relation: str,
+        reason: str,
+        *,
+        source_surface: str | None = None,
+        target_surface: str | None = None,
+        source_id: int | None = None,
+        target_id: int | None = None,
+        quote: str | None = None,
+        quote_chapter: int | None = None,
+        detail: str | None = None,
+    ) -> int:
+        """Log one refused proposal with its reason code (R4 task 3)."""
+        cur = self.conn.execute(
+            """INSERT INTO validator_rejections
+                 (work_id, relation, source_surface, target_surface, source_id,
+                  target_id, quote, quote_chapter, reason, detail)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                work_id, relation, source_surface, target_surface, source_id,
+                target_id, quote, quote_chapter, reason, detail,
+            ),
+        )
+        self.conn.commit()
+        return int(cur.lastrowid or 0)
+
+    def rejection_counts(self, work_id: int) -> dict[str, int]:
+        """Refusals by reason code, for the phase report."""
+        rows = self.conn.execute(
+            """SELECT reason, COUNT(*) AS n FROM validator_rejections
+                WHERE work_id = ? GROUP BY reason ORDER BY n DESC, reason""",
+            (work_id,),
+        ).fetchall()
+        return {str(r["reason"]): int(r["n"]) for r in rows}
+
+    def clear_validator_rejections(self, work_id: int) -> None:
+        """Drop this work's rejection log (a rebuild re-derives it)."""
+        self.conn.execute("DELETE FROM validator_rejections WHERE work_id = ?", (work_id,))
+        self.conn.commit()
 
     def list_edges(self, work_id: int) -> list[Edge]:
         rows = self.conn.execute(

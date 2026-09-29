@@ -15,7 +15,7 @@ No phase starts until the previous one is green, committed and pushed.
 | R1 | co-occurrence off + rescore on the v1 key | **green** | `8319c46` | [MEASURED] relation micro-F1 **0.0459 → 0.0000** (worse: all 5 v1 TPs were rule edges) · FP **162 → 2** (Tier-1 160 → 0) · FN 46 → 51 · ch40 edges served **1316 → 18** · isolated nodes at ch40 **0 → 186 of 206** · entity F1 unchanged at 0.5319 · D2 is now 100% of the projection loss (19 rows → 18 served) · fence 0 / 17,471 | 2026-09-28 |
 | R2 | Stage 0 cleaner | **green** | `3b91545` | [MEASURED] 0 watermark hits / 0 homoglyphs over 44 committed chapters · clean text byte-identical to pre-R2 in **0 of 44 chapters changed** · residual Greek/Cyrillic **0** · injection round-trip **1,063 hits removed, 0 failures** · Shadow Slave **[NOT MEASURED]**, text absent from this machine | 2026-09-28 |
 | R3 | 4 node types + `entity_labels` | **green** | `69a95e7` | [MEASURED] 4-type entity F1 **0.6076** strict / 0.6582 alias-aware on the PROJECTED key (different answer key — never a delta vs 0.532) · alias F1 **0.7500** (P=1.0000, R=0.6000), **over-merges 0**, under-merges 3→2 · fence **0 / 20,439** incl. 5,965 label elements, 2 label canaries fire · frozen DB serves, **0 / 95,530** · Hollow Crown digest identical · 806 mentions → 188 entities, 240 labels · title links **0 (correct: corpus has none)** | 2026-09-28 |
-| R4 | 12 relations + validator + weight (fixes D1/D2) | not started | — | — | — |
+| R4 | 12 relations + validator + weight (fixes D1/D2) | **green (STOP CONDITION HIT)** | `PENDING` | [MEASURED] STATED micro-F1 **0.0000** (TP=0 FP=3 FN=23) vs pre-registered 0.05–0.20 · STATED+INFERRED also 0.0000, so the both-names rule costs **0** recall · v1-key like-for-like 0.0000 (FP 2→3, FN 51) · 306 proposals → **64 edges, 37 STATED**, all ring 2, **0 ring-1 social edges** · rejections 137 ENDPOINT_NOT_STORED / 44 DOMAIN_RANGE / 0 all other codes · recall accounting 28 out-of-scope / 12 NO_PROPOSAL / 6 ENTITY_MISSING (all one entity) / 2 WRONG_TYPE / 1 VALIDATOR_REJECTED / 1 INFERRED / 1 FOUND · curated 12 of 19 would be accepted, 1 STATED · **D1/D2 fixed**: ch40 976 drawable rows → 976 payload edges, edge 1325 SECRET_IDENTITY preserved · fence 0 / 24,450 | 2026-09-29 |
 | R5 | LLM recall pass (optional) | not started | — | — | — |
 | R6 | salience per chapter + 4-clause query + ego API (fixes D3) | not started | — | — | — |
 | R7 | frontend readability, timeline removed | not started | — | — | — |
@@ -356,3 +356,87 @@ per-relation cue lists, the relex confidence threshold (the already-configured d
 and the kin guard. Any threshold sweep is a diagnostic table only and does not select the
 shipped value. The 19 hand-curated seed edges are not extraction output and are excluded
 from every score.
+
+---
+
+## R4 — twelve closed relations + validator + weight · green, 2026-09-29
+
+Full evidence: `evidence/retrofit/R4_RESULT.md`. Logs: `evidence/retrofit/logs/R4_*.log`.
+
+**The pre-registered band was 0.05–0.20. The measured STATED micro-F1 is 0.0000, below
+the phase's 0.05 stop condition. The validator was NOT loosened.** R4 reports and stops
+so the next step can be decided together.
+
+### Acceptance
+
+- [x] `check_local_env.py --c-drive-report` passes 10/10; C: `.cache` 135.8 MB, unchanged
+      from the R0 baseline; pip / Ollama / Playwright still absent. Nothing downloaded.
+- [x] Unit tests for every validator branch on real corpus strings, including both cases
+      the brief names: `"...such a wonderful little sister?"` **rejected** (`KIN_GUARD`),
+      `"The Saint looked at his niece"` **accepted**.
+- [x] D1/D2 regression tests pass. Edge 1325 `SECRET_IDENTITY` and edge 1327
+      `REINCARNATION` both reach the payload with their own relation strings; payload
+      edge count == fenced drawable row count, and the id SETS are equal, at chapters
+      1, 5, 9, 17, 25, 37, 40.
+- [x] Rejection counts by reason and relation counts per type in `R4_RESULT.md`,
+      all [MEASURED]. SAME_AS reported as counts (0 extracted, 5 curated), not F1.
+- [x] Gates: ruff `All checks passed!` · mypy `Success: no issues found in 66 source
+      files` · pytest **253 passed, 6 skipped** (221 → 253).
+- [x] Pre-registration committed BEFORE the first scoring run (`d99e445`) and not edited.
+- [x] Curated seeds excluded from every score and reported separately.
+- [x] Commit + push.
+
+### The result, stated plainly
+
+R4 built a relation extractor where R1 left none: 306 proposals, **64 edges, 37 STATED**,
+every one carrying a verbatim quote. **None of them is one of the 23 relations the key
+asks for in the scored chapters**, and **all 64 are ring 2** — the seven ring-1 social
+relations got zero edges, so R4 produced an overlay and not a graph.
+
+The recall accounting says where the 51 gold relations went, and it is the phase's real
+output: **28 (54.9%) are outside the closed twelve by design** and will never be
+produced; **12 (23.5%) are pure model-recall misses** where both entities exist and relex
+proposed nothing — that is R5's target; **6 (11.8%) are all downstream of ONE missing
+Organization** (`Salt Quarter watch`), so entity recall is the cheapest relation win
+available; and exactly **1 reached the validator and was refused**. The validator is
+provably not the bottleneck.
+
+### Three findings for later phases
+
+1. **Do not spend R5 on the gate.** One gold relation in 51 was lost to the validator.
+   Loosening it cannot raise the score; supplying proposals can.
+2. **Entity recall and relation recall are not independent.** One missing Organization
+   cost six relations, and one mistyped entity (`House Vell` typed Place, not
+   Organization) cost the only `DOMAIN_RANGE` refusal of a gold relation.
+3. **A curated citation does not check out.** `Thessaly -Mentor-> Mira` has an
+   `evidence_span` that is not verbatim in chapter 7 of the clean text. That is a finding
+   about the seeded data, not the validator.
+
+### Two deviations, stated not buried
+
+1. The Hollow Crown digest test now spells out its column list instead of `SELECT *`,
+   because R4's seven additive `edges` columns would otherwise change the digest with no
+   seeded value changing. **The expected hash is unchanged** (`e73a69c0…c482`), so the
+   I2 guarantee is intact rather than re-baselined.
+2. The unique index on `(work_id, relation, source_id, target_id)` is **partial**
+   (`WHERE grade IS NOT NULL`), scoped to rows R4's validator wrote. A full index broke
+   the Phase-7d coref merge, which legitimately keeps two same-relation edges on one pair
+   at different tiers.
+
+### Viva defense
+
+R4's honest result is that it built a working relation extractor and scored zero, and the
+report leads with that rather than with the 37 cited edges it could have led with. The
+phase is defensible because it was pre-registered: the band was committed before the
+first run, the cue lists and thresholds were fixed without reading the answer key, the
+curated seeds were held out of the score, and when the number came in under the stop
+condition nothing was loosened to rescue it. What it delivers is a diagnosis instead of a
+number — four separately actionable loss stages — plus a genuine fix to D1/D2, where the
+`SECRET_IDENTITY` reveal v1 silently overwrote now reaches the payload, pinned by a
+set-equality test at seven chapters.
+
+### Next phase
+
+R5 (LLM recall pass) is now clearly aimed: 12 of 51 gold relations are `NO_PROPOSAL` on
+pairs whose entities already exist. It remains optional, and the alternative — fixing the
+entity miss that costs six relations — may be cheaper. **Decide before starting.**

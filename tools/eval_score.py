@@ -40,6 +40,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from storyweave.db.models import (  # noqa: E402
     ALL_RELATIONS,
+    DOMAIN_RANGE,
+    LEGACY_RELATION_MAP,
     NodeType,
     is_graph_type,
 )
@@ -298,10 +300,30 @@ class V1Chapter:
     degree: dict[int, int]
 
 
-def load_v1(repo: Repository, work_id: int, chapters: tuple[int, ...]) -> dict[int, V1Chapter]:
+def load_v1(
+    repo: Repository,
+    work_id: int,
+    chapters: tuple[int, ...],
+    grade: str = "all",
+    exclude_methods: tuple[str, ...] = (),
+) -> dict[int, V1Chapter]:
+    """Load what the database holds for the scored chapters.
+
+    ``grade`` and ``exclude_methods`` are retrofit R4 and both default to the v1
+    behaviour, so an unflagged run reproduces the original measurement byte for byte.
+
+    ``grade='stated'`` keeps only the edges the graph actually serves. ``exclude_methods``
+    exists for one specific integrity reason: the 19 hand-curated seed edges in this
+    corpus were WRITTEN BY HAND, not extracted, and counting them would credit the
+    extractor with work a person did.
+    """
     mentions = repo.list_mentions(work_id)
     nodes = {n.id: n for n in repo.list_nodes(work_id)}
     edges = repo.list_edges(work_id)
+    if exclude_methods:
+        edges = [e for e in edges if e.extraction_method.value not in exclude_methods]
+    if grade == "stated":
+        edges = [e for e in edges if e.grade is not None and e.grade.value == "STATED"]
 
     out: dict[int, V1Chapter] = {}
     for chapter in chapters:
@@ -669,6 +691,57 @@ def project_to_graph_types(ann: Annotation, chapter: int) -> None:
         )
 
 
+def project_to_twelve_relations(ann: Annotation, chapter: int) -> None:
+    """Project the reference relations onto R4's closed twelve (retrofit R4).
+
+    Unlike the four-type projection, this one has to REWRITE names as well as exclude
+    them, because the retrofit renamed the vocabulary ("LeaderOf" is now "LEADS"). The
+    rewrite is mechanical and comes entirely from ``LEGACY_RELATION_MAP`` in
+    ``db/models.py`` - the same table the extractor is bound by, so the key and the
+    producer cannot drift apart. Three things happen:
+
+    * ``MAPS``  -> the reference relation is renamed, and its endpoints are swapped when
+      the map says so ("Student of" is "MENTOR_OF" the other way round). A relation that
+      is symmetric in ``DOMAIN_RANGE`` is marked undirected, so endpoint order stops
+      counting against it.
+    * ``BECOMES_LABEL`` (HasTitle, ALIAS) -> excluded. These are not edges in R4 at all;
+      they are ``entity_labels`` rows, which R3 already scores separately.
+    * ``DROPPED`` (AffiliatedWith, RelatedTo, Rival, Respects, ...) -> excluded, because
+      the retrofit refuses to create them by design (retrofit rule 3).
+
+    This is a DIFFERENT ANSWER KEY from v1's. Its F1 is not a delta against 0.0459, and
+    the annotation file on disk is never modified - only this in-memory copy.
+    """
+    renamed = 0
+    dropped: list[tuple[str, str]] = []
+    for i, relation in enumerate(ann.data.get("relations", [])):
+        if i in ann.excluded_relations:
+            continue
+        old = str(relation.get("relation", ""))
+        entry = LEGACY_RELATION_MAP.get(old)
+        if entry is None or entry[1] is None:
+            fate = entry[0].value if entry else "UNKNOWN"
+            ann.excluded_relations.add(i)
+            dropped.append((old, fate))
+            continue
+        _fate, new, reverse = entry
+        assert new is not None  # guarded by the branch above; narrows for mypy
+        relation["relation"] = new.value
+        if reverse:
+            relation["source"], relation["target"] = relation["target"], relation["source"]
+        if DOMAIN_RANGE[new].symmetric:
+            relation["directed"] = False
+        renamed += 1
+    print(
+        f"  12-RELATION PROJECTION ch{chapter:02d}: {renamed} reference relations "
+        f"mapped, {len(dropped)} dropped"
+    )
+    if dropped:
+        counts = Counter(f"{old} [{fate}]" for old, fate in dropped)
+        for label, n in sorted(counts.items()):
+            print(f"      dropped {n} x {label}")
+
+
 def main(argv: list[str] | None = None) -> int:  # noqa: PLR0915 - a report, read top to bottom
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -683,6 +756,30 @@ def main(argv: list[str] | None = None) -> int:  # noqa: PLR0915 - a report, rea
         "DIFFERENT answer key - its numbers are not comparable with the 8-type ones and "
         "must never be reported as a delta against them. Off by default: without this "
         "flag the scorer behaves exactly as it did for the v1 measurement.",
+    )
+    ap.add_argument(
+        "--twelve-relation-projection",
+        action="store_true",
+        help="score relations against the 12-relation PROJECTION of the annotation "
+        "(retrofit R4), via LEGACY_RELATION_MAP. A DIFFERENT answer key: never report "
+        "its F1 as a delta against the v1 figure. Off by default.",
+    )
+    ap.add_argument(
+        "--grade",
+        choices=("all", "stated"),
+        default="all",
+        help="which graded edges to score. 'stated' scores only grade=STATED edges - "
+        "what the graph actually serves, and the R4 headline. 'all' additionally counts "
+        "INFERRED edges and is a DIAGNOSTIC showing what the both-names rule costs.",
+    )
+    ap.add_argument(
+        "--exclude-method",
+        action="append",
+        default=[],
+        metavar="METHOD",
+        help="drop edges with this extraction_method before scoring (repeatable). R4 "
+        "passes 'curated': the 19 hand-written seed edges are not extraction output and "
+        "must never be counted as this run's true positives.",
     )
     ap.add_argument("--slug", default=SLUG)
     ap.add_argument("--out", default=Path("evidence/scores_v1.csv"), type=Path)
@@ -702,6 +799,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: PLR0915 - a report, rea
         ann = validate(chapter, args.annotations)
         if args.four_type_projection:
             project_to_graph_types(ann, chapter)
+        if args.twelve_relation_projection:
+            project_to_twelve_relations(ann, chapter)
         annotations[chapter] = ann
         fatals = [f for f in ann.failures if f.fatal]
         soft = [f for f in ann.failures if not f.fatal]
@@ -749,7 +848,10 @@ def main(argv: list[str] | None = None) -> int:  # noqa: PLR0915 - a report, rea
         work = repo.get_work_by_slug(args.slug)
         if work is None or work.id is None:
             raise ValueError(f"work {args.slug!r} not found in {args.db}")
-        v1_all = load_v1(repo, work.id, CHAPTERS)
+        v1_all = load_v1(
+            repo, work.id, CHAPTERS,
+            grade=args.grade, exclude_methods=tuple(args.exclude_method),
+        )
     finally:
         repo.close()
 
