@@ -18,6 +18,7 @@ No phase starts until the previous one is green, committed and pushed.
 | R4 | 12 relations + validator + weight (fixes D1/D2) | **green (STOP CONDITION HIT)** | `f1204f0` | [MEASURED] STATED micro-F1 **0.0000** (TP=0 FP=3 FN=23) vs pre-registered 0.05–0.20 · STATED+INFERRED also 0.0000, so the both-names rule costs **0** recall · v1-key like-for-like 0.0000 (FP 2→3, FN 51) · 306 proposals → **64 edges, 37 STATED**, all ring 2, **0 ring-1 social edges** · rejections 137 ENDPOINT_NOT_STORED / 44 DOMAIN_RANGE / 0 all other codes · recall accounting 28 out-of-scope / 12 NO_PROPOSAL / 6 ENTITY_MISSING (all one entity) / 2 WRONG_TYPE / 1 VALIDATOR_REJECTED / 1 INFERRED / 1 FOUND · curated 12 of 19 would be accepted, 1 STATED · **D1/D2 fixed**: ch40 976 drawable rows → 976 payload edges, edge 1325 SECRET_IDENTITY preserved · fence 0 / 24,450 | 2026-09-29 |
 | R4b | Organization recall (head-noun rule) | **green (partial: entities yes, relations no)** | `d31a43b` | [MEASURED] `ENTITY_MISSING` **6 → 0, stage eliminated** · but `NO_PROPOSAL` **12 → 18**, relation micro-F1 **0.0000 → 0.0000** · entity F1 4-type **0.6076 → 0.6250** (TP 24→25, **FP unchanged 17**) · Organization F1 **0.400 → 0.545** · over-merges **0 → 0** · 9 rule promotions → **3 new Organizations, 0 false positives, 0 lost** · 4 label-prompt candidates measured, **none recovered the class** · relation build bit-identical to R4 | 2026-09-29 |
 | R4c | relex grounded on known entities | **green (negative result)** | `b5469a2` | [MEASURED] ring-1 ch40 **4** (predicted 4–25) · ring-2 ch40 **64** (predicted 60–150) · STATED micro-F1 **0.0000** (predicted 0.05–0.25, **MISSED**) · `input_spans` accepted but **IGNORED** (byte-identical entity list, both NER modes) → snapping fallback · 30 spans snapped, `ENDPOINT_NOT_STORED` 137→115, edges 64→68, STATED 37→40 · recall accounting **unchanged in every stage** · **default view ch40 = 0 edges, 20/20 isolated** · 125 ungrounded endpoints are pronouns/common nouns (`She`×14), i.e. coreference not recall | 2026-09-29 |
+| R5 | LLM recall pass (now required) | **green (negative; STOP CONDITION)** | `PENDING` | [MEASURED] **all 5 pre-registered bands missed** · STATED micro-F1 **0.0000**, **STATED precision 0.0000 < 0.5 → stop** · ring-1 ch40 **4 → 35** (any grade) but only **4 STATED** · default-view ch40 **0 → 1** (threshold 10) · 118 calls → 83 proposals → **33 edges, 30 INFERRED / 3 STATED** · validator caught 5 invented relations + 3 paraphrased quotes (**both first-ever non-zero**) · recall accounting moved by **one** relation (NO_PROPOSAL → GRADE_INFERRED) · antecedent diagnostic **2** of 33 (band 5–20), not shipped · few-shot contamination found + re-run | 2026-09-29 |
 | R5 | LLM recall pass (optional) | not started | — | — | — |
 | R6 | salience per chapter + 4-clause query + ego API (fixes D3) | not started | — | — | — |
 | R7 | frontend readability, timeline removed | not started | — | — | — |
@@ -670,3 +671,74 @@ measured as insufficient.
 
 The validator is unchanged and there is no bypass flag. A proposal whose head or tail is
 only a pronoun will fail the both-names test and be stored as INFERRED, never served.
+
+---
+
+## R5 — local-LLM recall pass · green (negative result), 2026-09-29
+
+Full evidence: `evidence/retrofit/R5_RESULT.md`. Logs: `evidence/retrofit/logs/R5_*.log`
+(run B, shipped) and `R5A_*.log` (run A, the contamination sensitivity check).
+
+**All five pre-registered bands (`4aedbbb`) were missed, and the stop condition fired.**
+
+| quantity | pre-registered | measured |
+| --- | --- | ---: |
+| ring-1 ch40, STATED | 5 – 25 | **4** |
+| default-view edges ch40 | 3 – 15 | **1** |
+| STATED micro-F1 | 0.05 – 0.30 | **0.0000** |
+| STATED precision | 0.50 – 0.90 | **0.0000 → STOP** |
+| antecedent diagnostic | 5 – 20 | **2** |
+
+Nothing was tuned after the stop condition was seen.
+
+### I contaminated my own few-shot set, caught it, and re-ran
+
+The KIN_OF example was the real ch2 sentence naming **Lord Fennick Oswald and his sister
+Brenna Oswald** — legal under the chapter rule, but that pair is a **ch17 gold relation**.
+Re-ran with a different ch2 pair (Cassian / Ione Ashcombe); run A kept whole as the
+sensitivity check. The comparison is more interesting than a bare retraction:
+
+| the ch17 gold KIN_OF | run A | run B (clean) |
+| --- | --- | --- |
+| found by the LLM? | yes | **yes** |
+| grade | **STATED** (served, counted FOUND) | **INFERRED** (stored, not served) |
+
+**The example taught the model the QUOTE, not the relation.** Discovery is genuine and
+reproducible; the grade was what the contamination inflated, and with it run A's only TP.
+
+### What R5 bought, and what it did not
+
+Ring-1 social relations exist for the first time in the retrofit — MENTOR_OF 10, SERVES
+12, ENEMY_OF 5, KIN_OF 3, SAME_AS 2, KILLED 2, ROMANTIC_WITH 1 at ch40, against R4c's four
+SERVES. **But only 4 of 35 are STATED**, so the reader's view went from 0 edges to 1. The
+recall accounting moved by exactly one relation, NO_PROPOSAL → GRADE_INFERRED.
+
+Serving INFERRED is priced, not guessed: it buys 1 true positive and costs false positives
+**10 → 25**.
+
+### The validator earned its keep against a generative producer
+
+`RELATION_NOT_CLOSED` = 5 and `QUOTE_NOT_VERBATIM` = 3 — **both had been zero in every
+relex phase**. An LLM is the first producer that invents relation names and paraphrases
+quotes, which is exactly what those checks exist for. No bypass flag was added.
+
+### Graceful degradation, measured rather than asserted
+
+Ollama died between sessions, so the no-LLM path ran for real:
+`OLLAMA UNREACHABLE — adding zero LLM edges, R4c graph left intact`, exit 0.
+
+### Verdict — a decision point, not a next phase
+
+**R7 must not run: default-view edges at ch40 = 1, threshold 10.** The binding constraint
+is now isolated: not entity recall (0 losses), not the model's ability to find relations,
+not the type or closed-list checks — it is the **STATED grade rule**, which 30 of 33 LLM
+edges fail because English narrates one participant with a pronoun. Options, in order:
+**(1) coreference** — the only one that raises STATED without weakening rule 4, and the
+same capability R4c's pronoun residue pointed at; (2) let a pronoun count when its
+antecedent is the sentence subject; (3) serve INFERRED with weaker styling — cheapest,
+priced above, not recommended.
+
+### Gates
+
+ruff clean · mypy 75 files · pytest **287 passed, 6 skipped** (270 → 287, 17 new LLM
+tests) · C: **byte-identical to the ledger** after 236 model calls.

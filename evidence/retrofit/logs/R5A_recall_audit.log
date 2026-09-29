@@ -1,0 +1,135 @@
+﻿==============================================================================
+R4 RECALL ACCOUNTING - where each gold relation was lost
+==============================================================================
+
+gold relations in the key: 51
+
+stage                   n     share
+------------------------------------------------------------------------------
+FOUND                   2     3.9%
+GRADE_INFERRED          1     2.0%
+VALIDATOR_REJECTED      1     2.0%
+WRONG_TYPE              2     3.9%
+NO_PROPOSAL            17    33.3%
+ENTITY_MISSING          0     0.0%
+NOT_IN_THE_TWELVE      28    54.9%
+------------------------------------------------------------------------------
+TOTAL                  51
+
+
+Every gold relation, by stage:
+
+--- FOUND (2) ---
+  ch17 Lord Fennick Oswald -Sibling-> Brenna Oswald
+      KIN_OF
+  ch37 Mira Quell -LocatedIn-> Undercroft
+      LOCATED_IN
+
+--- GRADE_INFERRED (1) ---
+  ch37 Mira Quell -MemberOf-> Choir
+      MEMBER_OF
+
+--- VALIDATOR_REJECTED (1) ---
+  ch09 Hask -Serves-> House Vell
+      DOMAIN_RANGE
+
+--- WRONG_TYPE (2) ---
+  ch09 Hask -MemberOf-> House Vell
+      proposed SERVES
+  ch17 Sorrel -LocatedIn-> Chancery
+      proposed SERVES
+
+--- NO_PROPOSAL (17) ---
+  ch09 Casimir Lowe -LocatedIn-> eastern docks
+      relex proposed nothing for this pair
+  ch09 Casimir Lowe -MemberOf-> Salt Quarter watch
+      relex proposed nothing for this pair
+  ch09 Ettie Marsh -LocatedIn-> market row
+      relex proposed nothing for this pair
+  ch09 Ettie Marsh -MemberOf-> Salt Quarter watch
+      relex proposed nothing for this pair
+  ch09 Hask -LocatedIn-> Bone Market
+      relex proposed nothing for this pair
+  ch09 Juno Stray -LocatedIn-> Bone Market
+      relex proposed nothing for this pair
+  ch09 Juno Stray -MemberOf-> Salt Quarter watch
+      relex proposed nothing for this pair
+  ch09 Orin Drask -LeaderOf-> Salt Quarter watch
+      relex proposed nothing for this pair
+  ch09 Pryn Voss -MemberOf-> Salt Quarter watch
+      relex proposed nothing for this pair
+  ch09 Salt Quarter watch -LocatedIn-> Salt Quarter
+      relex proposed nothing for this pair
+  ch09 the trader -LocatedIn-> Bone Market
+      relex proposed nothing for this pair
+  ch17 Brenna Oswald -MemberOf-> House Oswald
+      relex proposed nothing for this pair
+  ch17 House Oswald -MemberOf-> Council
+      relex proposed nothing for this pair
+  ch17 Lord Fennick Oswald -MemberOf-> House Oswald
+      relex proposed nothing for this pair
+  ch17 Vell Masque -LocatedIn-> Aldenreach
+      relex proposed nothing for this pair
+  ch37 Choir -LocatedIn-> Undercroft
+      relex proposed nothing for this pair
+  ch37 Grey Road -LocatedIn-> Undercroft
+      relex proposed nothing for this pair
+
+--- NOT_IN_THE_TWELVE (28) ---
+  ch09 Hask -RelatedTo-> Corwin Vell
+      DROPPED
+  ch09 Hask -RelatedTo-> Vell Hall
+      DROPPED
+  ch09 Juno Stray -HasAbility-> Warden's Discipline
+      DROPPED
+  ch09 Juno Stray -RelatedTo-> Undercroft's hidden door
+      DROPPED
+  ch09 Orin Drask -HasTitle-> Warden-Captain
+      BECOMES_LABEL
+  ch09 Orin Drask -Respects-> Juno Stray
+      DROPPED
+  ch09 Undercroft -RelatedTo-> Undercroft's hidden door
+      DROPPED
+  ch09 Undercroft's hidden door -RelatedTo-> fishmonger's stall
+      DROPPED
+  ch17 Brenna Oswald -ParticipatedIn-> Vell Masque
+      DROPPED
+  ch17 Brenna Oswald -RelatedTo-> Corwin
+      DROPPED
+  ch17 Brenna Oswald -RelatedTo-> House Vell
+      DROPPED
+  ch17 Brenna Oswald -Respects-> Corwin
+      DROPPED
+  ch17 House Vell -AffiliatedWith-> House Ashcombe
+      DROPPED
+  ch17 House Vell -ParticipatedIn-> Vell Masque
+      DROPPED
+  ch17 House Vell -RelatedTo-> House Oswald
+      DROPPED
+  ch17 Lord Fennick Oswald -Fears-> Corwin
+      DROPPED
+  ch17 Lord Fennick Oswald -ParticipatedIn-> Vell Masque
+      DROPPED
+  ch17 Lord Fennick Oswald -RelatedTo-> Brenna Oswald
+      DROPPED
+  ch17 Lord Fennick Oswald -RelatedTo-> Corwin
+      DROPPED
+  ch17 Sorrel -HasTitle-> Scribe
+      BECOMES_LABEL
+  ch37 Mira Quell -RelatedTo-> Choir initiate
+      DROPPED
+  ch37 Mira Quell -RelatedTo-> Sorrel
+      DROPPED
+  ch37 Mira Quell -RelatedTo-> Thessaly
+      DROPPED
+  ch37 Mira Quell -RelatedTo-> Thessaly
+      DROPPED
+  ch37 Mira Quell -RelatedTo-> Thornmere
+      DROPPED
+  ch37 Mira Quell -RelatedTo-> Wanderer
+      DROPPED
+  ch37 Mira Quell -Respects-> Sorrel
+      DROPPED
+  ch37 Sorrel -Protects-> Mira Quell
+      DROPPED
+

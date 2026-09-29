@@ -40,6 +40,28 @@ Items 8 and 9 are **harness-managed, not written by the project's own code or by
 `dev.ps1`**. They are listed for completeness and are NOT removed by the uninstall
 script — deleting item 8 would destroy this project's conversation history.
 
+### Items 8 and 9 grow with session length — [MEASURED] 2026-09-29
+
+| | at the first audit | later the same day | delta |
+| --- | ---: | ---: | ---: |
+| 8, `.claude\projects\F--Dev-…-StoryWeave` | 118.35 MB | **121.1 MB** | **+2.75 MB** |
+| 9, `%LOCALAPPDATA%\Temp\claude\…` | 2.64 MB | **9.02 MB** | **+6.4 MB** |
+
+**These two are the only C: items this project causes to grow during a working session**,
+and the growth is Claude Code's transcript and scratchpad storage, not anything the
+pipeline writes. Recorded here because the rule is that every C: write is recorded, not
+because either is a defect.
+
+Checked at the same moment, for contrast: **Ollama wrote nothing to C: during the entire
+R5 LLM run** — `.ollama` and `%LOCALAPPDATA%\Ollama` were byte-identical to items 1 and 2
+above, with no file modified since 11:26, while the run itself was making hundreds of
+model calls. The weights (4.47 GB) and the LLM response cache both stayed on F:.
+`.ollama\models`, `Ollama\models` and `.ollamalobs` are all **absent**.
+
+For scale, the largest C: consumers measured at the same time were **not this project**:
+`AppData\Local\Google` 3.87 GB, `.vscode` 1.94 GB, `AppData\Local\Packages` 676 MB,
+`.dartServer` 531 MB. C: had 114.4 GB free.
+
 ---
 
 ## 2. Ollama install — detail and removal

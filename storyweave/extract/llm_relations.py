@@ -23,6 +23,9 @@ keyed by (model, prompt hash) so a re-run is free and reproducible. With Ollama 
 pass degrades to zero proposals and the R4c graph stands unchanged (rule 4).
 """
 
+# ruff: noqa: E501 - `build_prompt` below emits PROMPT TEXT. Wrapping its lines
+# would change what the model is asked, so they are left exactly as sent.
+
 from __future__ import annotations
 
 import hashlib
