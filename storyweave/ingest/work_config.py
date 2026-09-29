@@ -129,6 +129,14 @@ class RelationConfig(BaseModel):
     # scoring run and were NOT tuned against the answer key.
     cues: dict[str, list[str]] = Field(default_factory=dict)
 
+    # --- retrofit R4c: ground relex spans by character overlap with stored mentions. ---
+    # relex re-runs its own NER and returns spans like "Drask" or "watch" that no stored
+    # surface matches, so the relation is discarded as ENDPOINT_NOT_STORED. Its documented
+    # `input_spans` argument would have avoided this, but this build ACCEPTS AND IGNORES it
+    # (measured: tools/r4c_api_probe2.py). Snapping is the fallback. ON by default; the
+    # surface lookup still runs first, so this only ever rescues a span that had failed.
+    snap_spans_to_mentions: bool = True
+
 
 class IdentityConfig(BaseModel):
     # --- Tier-3 identity inference (Phase 7c): LLM-inferred, citation-gated. ---

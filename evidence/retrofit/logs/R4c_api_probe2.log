@@ -1,0 +1,35 @@
+﻿python : 
+F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv-ml\Lib\site-packages\huggingface_hub\utils\_validators.py:189: 
+UserWarning: The `resume_download` argument is deprecated and ignored in `snapshot_download`. Downloads always resume 
+whenever possible.
+At line:1 char:340
++ ... _OFFLINE=1; python tools/r4c_api_probe2.py > evidence/retrofit/logs/R ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...never possible.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+==============================================================================
+1. IS input_spans INERT IN BOTH NER MODES?
+==============================================================================
+  flat_ner=False  free= 12 entities, with input_spans= 12   IDENTICAL -> input_spans IGNORED
+  flat_ner=True   free=  6 entities, with input_spans=  6   IDENTICAL -> input_spans IGNORED
+
+==============================================================================
+2. DIAGNOSTIC relation-threshold sweep on real corpus chunks
+   (diagnostic only -- the shipped threshold stays at the configured 0.6)
+==============================================================================
+
+  sampling 24 chunks from the first 6 chapters
+
+   rel_threshold   relations returned
+  ------------------------------------
+             0.9                    1
+             0.8                    4
+             0.7                   16
+             0.6                   48   <== SHIPPED
+             0.5                  111
+             0.4                  245
+             0.3                  560
+             0.2                 1436
+             0.1                 4885

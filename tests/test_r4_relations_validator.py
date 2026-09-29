@@ -407,3 +407,36 @@ def test_a_pre_r4_database_serves_without_the_r4_columns(tmp_path: Path) -> None
         assert repo.has_edge_r4_columns() is False
         edge = repo.list_edges(1)[0]
         assert edge.grade is None and edge.weight == 1
+
+
+# --- R4c: grounding relex spans on stored mentions --------------------------- #
+
+
+def test_snap_prefers_the_mention_with_the_most_overlap() -> None:
+    from storyweave.extract.relations import snap_to_mention
+
+    # "Salt Quarter" (Place, 34-46) nested inside "Salt Quarter watch" (Org, 34-52).
+    candidates = [(34, 46, 101), (34, 52, 102)]
+    assert snap_to_mention(34, 46, candidates) == 101  # exact Place
+    assert snap_to_mention(47, 52, candidates) == 102  # "watch" -> the Organization
+
+
+def test_snap_breaks_ties_toward_the_shorter_mention() -> None:
+    """The tighter match is the safer one: never widen a span into its container."""
+    from storyweave.extract.relations import snap_to_mention
+
+    candidates = [(0, 10, 1), (0, 40, 2)]
+    assert snap_to_mention(0, 10, candidates) == 1
+
+
+def test_snap_returns_none_when_nothing_overlaps() -> None:
+    """A pronoun has no mention at its offsets -- that is coreference, not snapping."""
+    from storyweave.extract.relations import snap_to_mention
+
+    assert snap_to_mention(500, 510, [(0, 10, 1), (34, 52, 2)]) is None
+
+
+def test_snap_ignores_a_merely_adjacent_mention() -> None:
+    from storyweave.extract.relations import snap_to_mention
+
+    assert snap_to_mention(10, 20, [(0, 10, 1)]) is None  # touching, not overlapping

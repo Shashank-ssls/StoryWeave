@@ -17,6 +17,7 @@ No phase starts until the previous one is green, committed and pushed.
 | R3 | 4 node types + `entity_labels` | **green** | `69a95e7` | [MEASURED] 4-type entity F1 **0.6076** strict / 0.6582 alias-aware on the PROJECTED key (different answer key — never a delta vs 0.532) · alias F1 **0.7500** (P=1.0000, R=0.6000), **over-merges 0**, under-merges 3→2 · fence **0 / 20,439** incl. 5,965 label elements, 2 label canaries fire · frozen DB serves, **0 / 95,530** · Hollow Crown digest identical · 806 mentions → 188 entities, 240 labels · title links **0 (correct: corpus has none)** | 2026-09-28 |
 | R4 | 12 relations + validator + weight (fixes D1/D2) | **green (STOP CONDITION HIT)** | `f1204f0` | [MEASURED] STATED micro-F1 **0.0000** (TP=0 FP=3 FN=23) vs pre-registered 0.05–0.20 · STATED+INFERRED also 0.0000, so the both-names rule costs **0** recall · v1-key like-for-like 0.0000 (FP 2→3, FN 51) · 306 proposals → **64 edges, 37 STATED**, all ring 2, **0 ring-1 social edges** · rejections 137 ENDPOINT_NOT_STORED / 44 DOMAIN_RANGE / 0 all other codes · recall accounting 28 out-of-scope / 12 NO_PROPOSAL / 6 ENTITY_MISSING (all one entity) / 2 WRONG_TYPE / 1 VALIDATOR_REJECTED / 1 INFERRED / 1 FOUND · curated 12 of 19 would be accepted, 1 STATED · **D1/D2 fixed**: ch40 976 drawable rows → 976 payload edges, edge 1325 SECRET_IDENTITY preserved · fence 0 / 24,450 | 2026-09-29 |
 | R4b | Organization recall (head-noun rule) | **green (partial: entities yes, relations no)** | `d31a43b` | [MEASURED] `ENTITY_MISSING` **6 → 0, stage eliminated** · but `NO_PROPOSAL` **12 → 18**, relation micro-F1 **0.0000 → 0.0000** · entity F1 4-type **0.6076 → 0.6250** (TP 24→25, **FP unchanged 17**) · Organization F1 **0.400 → 0.545** · over-merges **0 → 0** · 9 rule promotions → **3 new Organizations, 0 false positives, 0 lost** · 4 label-prompt candidates measured, **none recovered the class** · relation build bit-identical to R4 | 2026-09-29 |
+| R4c | relex grounded on known entities | **green (negative result)** | `PENDING` | [MEASURED] ring-1 ch40 **4** (predicted 4–25) · ring-2 ch40 **64** (predicted 60–150) · STATED micro-F1 **0.0000** (predicted 0.05–0.25, **MISSED**) · `input_spans` accepted but **IGNORED** (byte-identical entity list, both NER modes) → snapping fallback · 30 spans snapped, `ENDPOINT_NOT_STORED` 137→115, edges 64→68, STATED 37→40 · recall accounting **unchanged in every stage** · **default view ch40 = 0 edges, 20/20 isolated** · 125 ungrounded endpoints are pronouns/common nouns (`She`×14), i.e. coreference not recall | 2026-09-29 |
 | R5 | LLM recall pass (optional) | not started | — | — | — |
 | R6 | salience per chapter + 4-clause query + ego API (fixes D3) | not started | — | — | — |
 | R7 | frontend readability, timeline removed | not started | — | — | — |
@@ -551,3 +552,65 @@ and the STATED rule still demands both names in one quote.
 
 Unchanged from R4's own pre-registration and not re-tuned: the model, the fixed relex
 thresholds (ner 0.3 / rel 0.6), the cue lists, the kin guard, the validator.
+
+---
+
+## R4c — relex grounded on known entities · green (negative result), 2026-09-29
+
+Full evidence: `evidence/retrofit/R4c_RESULT.md`. Screenshots: `evidence/retrofit/shots/R4c/`.
+
+**Pre-registered (`5d25d3a`) and missed on the headline.** ring-1 at ch40 landed at 4
+(band 4–25) and ring-2 at 64 (band 60–150), both at the floor of their bands; **STATED
+micro-F1 came in at 0.0000 against a predicted 0.05–0.25**.
+
+### Which path, and why
+
+The brief's primary path — hand relex the stored spans — is **unavailable**:
+`GLiNER.inference` has `input_spans`, **accepts it, and ignores it**. Measured: the
+returned entity list is byte-identical with and without it under `flat_ner` both True and
+False. So R4c used the snapping fallback (overlap-match each returned span to the stored
+mention in the same chapter, shortest wins on ties), with the candidate list built through
+`fence.visible_nodes` so a later reveal can never be a snapping target earlier.
+
+### What it bought, and what it did not
+
+30 spans rescued · `ENDPOINT_NOT_STORED` 137 → 115 · edges 64 → 68 · STATED 37 → 40.
+**Recall accounting did not move in a single stage**, all three scores stayed 0.0000, and
+the default view at ch40 is still **0 edges with 20 of 20 cast isolated**.
+
+The residue localises the remaining loss: of 125 endpoints that still ground to nothing,
+the largest group is **pronouns** (`She` ×14, `she` ×6, `He`, `I`) and the next is common
+nouns (`secret`, `birds`, `realm`). Those are **coreference and junk, not missed
+entities** — snapping has no target to snap to, and the junk should be refused.
+
+### Two of my earlier claims corrected by evidence
+
+1. R4b said relex "never proposes the full span" for `Salt Quarter watch`. **Wrong** — free
+   NER does return it. The loss was relations proposed between `him` / `watch` / `Drask`,
+   which no stored surface matched. Right stage, wrong mechanism.
+2. I said this session that the frontend has no cast-size or type controls. **It has
+   both** (`show-people`, `show-orders`, `show-places`, `cast-principal`/`cast-everyone`).
+   Running the app found it; reading the source had not. "Groups" is in fact **ON by
+   default**.
+3. Also corrected in the pre-registration: R4/R4b's "all 64 edges are ring 2" — `SERVES`
+   is ring 1, so 4 are.
+
+### Rule Zero — screenshots inspected
+
+`04_web_ch40_people_only.png` is the phase's real deliverable: **12 dots, zero lines**.
+`03_web_ch40_default.png` opens focused on one character with ~17 dots and ~2 dozen
+unlabelled lines; the side panel calls every tie "linked", never naming the relation.
+
+### Verdict
+
+- **R5 (LLM) still needed: YES.** Default-view edges at ch40 = 0, threshold 10. Two phases
+  of grounding work moved it by zero.
+- **Showable to a non-technical reviewer: NO, neither.** One reads as a broken app, the
+  other cannot answer "how are these two related?".
+- **Qualification:** the biggest ungrounded category is pronouns, which is coreference — a
+  cheaper fix than R5. Weigh it before spending R5's budget.
+
+### Gates
+
+ruff clean · mypy clean · pytest green · C: checked against the ledger: **no new items**
+(`.cache` still 135.76 MB; npm cache and playwright-core both on F:, `.local\pw` 12.8 MB).

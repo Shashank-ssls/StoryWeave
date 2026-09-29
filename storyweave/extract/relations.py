@@ -26,12 +26,13 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 
 from storyweave.config import Settings, get_settings
 from storyweave.db.models import (
     RELATION_RING,
+    Chapter,
     Edge,
     ExtractionMethod,
     Relation,
@@ -54,6 +55,7 @@ from storyweave.nlp.relex import (
     RelexProtocol,
     _node_surface_index,
 )
+from storyweave.query import fence
 
 #: Relation -> the storage tier its rows keep using, so R4 needs no schema change to
 #: `edges.tier`. Ring 1 minus SAME_AS is social; SAME_AS is identity; ring 2 is
@@ -80,6 +82,10 @@ class RelationReport:
     per_grade: dict[str, int] = field(default_factory=dict)
     rejections_by_reason: dict[str, int] = field(default_factory=dict)
     degraded: bool = False
+    # --- retrofit R4c: span snapping ---
+    spans_snapped: int = 0      # grounded by overlap after the surface lookup missed
+    spans_unsnapped: int = 0    # grounded by neither -- these become ENDPOINT_NOT_STORED
+    unsnapped_surfaces: dict[str, int] = field(default_factory=dict)
 
     def summary(self) -> str:
         if self.degraded:
@@ -89,7 +95,8 @@ class RelationReport:
         return (
             f"work id={self.work_id}: {self.proposals} proposals -> "
             f"{self.edges_written} edges (+{self.edges_reinforced} reinforcements), "
-            f"{self.rejected} rejected. [{by_rel}] grades [{by_grade}]"
+            f"{self.rejected} rejected. [{by_rel}] grades [{by_grade}]; "
+            f"snapped {self.spans_snapped}, unsnapped {self.spans_unsnapped}"
         )
 
 
@@ -107,6 +114,87 @@ def expand_to_sentence(text: str, start: int, end: int, max_chars: int = MAX_QUO
     right_match = _SENT_END.search(text, end, min(len(text), end + max_chars))
     right = right_match.end() if right_match else min(len(text), end + max_chars)
     return text[left:right].strip()
+
+
+def _mention_index(
+    repo: Repository, work_id: int, chapters: Sequence[Chapter]
+) -> dict[int, list[tuple[int, int, int]]]:
+    """Per chapter, the stored mentions as ``(char_start, char_end, node_id)``.
+
+    **Fenced by construction (retrofit rule 1).** A chunk in chapter *n* may only ground
+    against entities the reader has already met: the candidate list for chapter *n* is
+    built from ``fence.visible_nodes(repo, work_id, n)``, so a mention of an entity first
+    revealed at *n+3* is not a snapping target at *n*, even though the mention row exists.
+    Without this the snapper would be a side channel that leaks a later reveal into an
+    earlier chapter's edge.
+    """
+    mentions = repo.list_mentions(work_id)
+    index: dict[int, list[tuple[int, int, int]]] = {}
+    for chapter in chapters:
+        revealed = {n.id for n in fence.visible_nodes(repo, work_id, chapter.ordinal)}
+        index[chapter.ordinal] = [
+            (m.char_start, m.char_end, m.node_id)
+            for m in mentions
+            if m.chapter_ordinal == chapter.ordinal
+            and m.node_id is not None
+            and m.node_id in revealed
+        ]
+    return index
+
+
+def snap_to_mention(
+    start: int, end: int, candidates: Sequence[tuple[int, int, int]]
+) -> int | None:
+    """The stored mention overlapping ``[start, end)`` most, or None.
+
+    This is retrofit R4c's whole mechanism, and it is a FALLBACK: the primary plan was to
+    hand relex the stored spans through its documented ``input_spans`` argument, which
+    this build accepts and then ignores (measured in ``tools/r4c_api_probe2.py`` -- the
+    returned entity list is byte-identical with and without it, under both
+    ``flat_ner`` modes). So instead relex runs free and its spans are snapped afterwards
+    onto what the graph already knows.
+
+    Overlap, not string equality, is what makes this work: relex returns "Drask" or
+    "watch" where the graph stores "Orin Drask" and "Salt Quarter watch", and a surface
+    lookup misses both. Ties go to the SHORTEST candidate, so a span inside "Salt Quarter"
+    grounds to the Place rather than to the longer Organization containing it -- the
+    tighter match is the safer one.
+    """
+    best: tuple[int, int, int] | None = None  # (overlap, -length, node_id)
+    for m_start, m_end, node_id in candidates:
+        overlap = min(end, m_end) - max(start, m_start)
+        if overlap <= 0:
+            continue
+        key = (overlap, -(m_end - m_start), node_id)
+        if best is None or key > best:
+            best = key
+    return best[2] if best is not None else None
+
+
+def _ground(
+    surface: str,
+    offsets: tuple[int, int],
+    chapter_ordinal: int,
+    surface_to_node: Mapping[str, int],
+    mention_index: Mapping[int, Sequence[tuple[int, int, int]]],
+    report: RelationReport,
+) -> int | None:
+    """Resolve one relex span to a stored entity: exact surface first, then overlap.
+
+    The surface lookup is tried first so R4c is a strict superset of R4b's behaviour --
+    every span that grounded before still grounds to the same node, and snapping only
+    ever rescues one that did not.
+    """
+    node_id = surface_to_node.get(normalize_surface(surface))
+    if node_id is not None:
+        return node_id
+    node_id = snap_to_mention(offsets[0], offsets[1], mention_index.get(chapter_ordinal, ()))
+    if node_id is not None:
+        report.spans_snapped += 1
+        return node_id
+    report.spans_unsnapped += 1
+    report.unsnapped_surfaces[surface] = report.unsnapped_surfaces.get(surface, 0) + 1
+    return None
 
 
 def _labels_for_nodes(repo: Repository, work_id: int) -> dict[int, list[str]]:
@@ -164,6 +252,12 @@ def build_relations(
 
     surface_to_node = _node_surface_index(repo, work_id)
     chapters = repo.list_chapters(work_id)
+    # Retrofit R4c: the fenced mention index the span-snapper grounds against. Built once.
+    mention_index: Mapping[int, Sequence[tuple[int, int, int]]] = (
+        _mention_index(repo, work_id, chapters)
+        if cfg.relations.snap_spans_to_mentions
+        else {}
+    )
     clean_text = {c.ordinal: c.clean_text for c in chapters}
     node_types = {n.id: n.type for n in repo.list_nodes(work_id) if n.id is not None}
     labels = _labels_for_nodes(repo, work_id)
@@ -190,11 +284,25 @@ def build_relations(
                         chunk.char_start + min(starts),
                         chunk.char_start + max(ends),
                     )
+                    src_off = (chunk.char_start + span.source_start,
+                               chunk.char_start + span.source_end)
+                    tgt_off = (chunk.char_start + span.target_start,
+                               chunk.char_start + span.target_end)
+                    if reverse:
+                        src_off, tgt_off = tgt_off, src_off
+                    src_id = _ground(
+                        src_surface, src_off, chapter.ordinal, surface_to_node,
+                        mention_index, report,
+                    )
+                    tgt_id = _ground(
+                        tgt_surface, tgt_off, chapter.ordinal, surface_to_node,
+                        mention_index, report,
+                    )
                     proposals.append(
                         RelationProposal(
                             relation=relation,
-                            source_id=surface_to_node.get(normalize_surface(src_surface)),
-                            target_id=surface_to_node.get(normalize_surface(tgt_surface)),
+                            source_id=src_id,
+                            target_id=tgt_id,
                             quote=quote,
                             quote_chapter=chapter.ordinal,
                             source_surface=src_surface,
