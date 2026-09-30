@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+from storyweave.db.repository import Repository
 from storyweave.graph.salience import compute_salience
 from storyweave.query import fence
 from tests.test_r6_salience_and_query import _work
@@ -22,7 +23,7 @@ from tests.test_r6_salience_and_query import _work
 EVERY_TYPE = ["Character", "Organization", "Place", "Item"]
 
 
-def _eligible(repo, work_id: int, chapter: int, types: list[str]) -> int:
+def _eligible(repo: Repository, work_id: int, chapter: int, types: list[str]) -> int:
     """How many nodes of these types are both fenced in and ranked at `chapter`."""
     placeholders = ", ".join("?" for _ in types)
     rows = repo.conn.execute(
@@ -35,7 +36,7 @@ def _eligible(repo, work_id: int, chapter: int, types: list[str]) -> int:
     return int(rows["n"])
 
 
-def _fenced(repo, work_id: int, chapter: int, types: list[str]) -> int:
+def _fenced(repo: Repository, work_id: int, chapter: int, types: list[str]) -> int:
     placeholders = ", ".join("?" for _ in types)
     row = repo.conn.execute(
         f"""SELECT COUNT(*) AS n FROM nodes

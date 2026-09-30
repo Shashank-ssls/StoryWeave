@@ -116,8 +116,13 @@ const styles: Style[] = [
       width: "data(thickness)",
       "line-color": T.line,
       "target-arrow-shape": "data(arrow)",
-      "target-arrow-color": T.dim,
-      "arrow-scale": 0.8,
+      // The arrowhead is the brightest part of the line on purpose. The line itself sits
+      // at T.line so a dense web stays quiet; an arrow drawn in the same near-background
+      // brown was invisible against T.bg, which is one of the reasons directed ties read
+      // as undirected. `curve-style` stays "straight" (a "haystack" edge cannot draw an
+      // arrowhead at all — it is not used anywhere in this stylesheet).
+      "target-arrow-color": T.ink,
+      "arrow-scale": "data(arrowScale)",
       label: "data(label)",
       "font-family": body,
       "font-size": 12,
@@ -152,7 +157,11 @@ const styles: Style[] = [
       "underlay-padding": 5,
     },
   },
+  { selector: 'edge[kind = "identity"]', style: { "target-arrow-color": T.accent } },
   { selector: 'edge[kind = "identity"].far', style: { opacity: 0.45 } },
+  // A dimmed edge dims its arrowhead too, or the far tier reads as a field of bright
+  // chevrons pointing at nothing.
+  { selector: "edge.far", style: { "target-arrow-color": T.faint } },
   { selector: "edge.selected-edge", style: { width: 3.2, "underlay-opacity": 0.25 } },
   { selector: "edge.just-revealed", style: { "underlay-opacity": 0.35, "underlay-padding": 8 } },
 

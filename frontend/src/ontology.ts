@@ -95,9 +95,54 @@ export const R4_RELATION_INVERSE: Record<string, string> = {
 };
 
 /**
- * Relations that get an arrowhead. The symmetric ones deliberately do not: an arrow on
- * "ally of" invites the reader to infer a direction the book never stated.
+ * Relations that get an arrowhead at the TARGET end. The symmetric ones deliberately do
+ * not: an arrow on "ally of" invites the reader to infer a direction the book never
+ * stated.
+ *
+ * This set mirrors the backend's own split exactly — `SYMMETRIC_R4_RELATIONS` in
+ * `storyweave/db/models.py`, which is what `/ego` already serialises as its `directed`
+ * flag (`api/app.py`). Of the closed twelve, four are symmetric (ALLY_OF, ENEMY_OF,
+ * ROMANTIC_WITH, SAME_AS) and eight are directed. `KIN_OF` was missing here, so the
+ * canvas drew a kinship tie with no arrowhead while the ego panel read the same tie as
+ * directed — the two disagreed about the same edge.
+ *
+ * The arrow points SOURCE -> TARGET, which is the direction the forward label in
+ * `R4_RELATION_LABELS` is written in: "A serves B" points at the master, "A mentors B"
+ * points at the student. Reading an edge from the other end uses
+ * `R4_RELATION_INVERSE`, and the arrow is what tells the reader which end they are on.
+ *
+ * KIN_OF is a deliberate half-measure and worth stating plainly: the edge is drawn with
+ * an arrow because the backend calls it directed, but the stored `kin_role` ("sister",
+ * "nephew") does NOT record WHICH endpoint holds the role — `_possessive_kin` in
+ * `extract/validator.py` returns the kin noun alone, with no binding to a participant.
+ * So the arrow shows the stored source -> target ordering and nothing more; it is not
+ * evidence of a parent -> child direction, and no such direction is synthesised here.
+ *
+ * The lower block is v1's CamelCase vocabulary, which the frozen Hollow Crown demo
+ * payload still carries (integration rule I2 — it must keep rendering unchanged). Only
+ * the v1 names that map onto one of the eight directed relations are listed, so this is
+ * the same rule expressed in the older names rather than a second, looser rule. Without
+ * it the demo — the Landing mini graph and the Dossier ego graph, which is what a first
+ * visitor actually sees — drew ZERO arrowheads, because not one of its relation names
+ * appeared in the R4-only set above.
  */
 export const DIRECTED_RELATIONS = new Set([
-  "SERVES", "MENTOR_OF", "KILLED", "MEMBER_OF", "LEADS", "OWNS", "LOCATED_IN",
+  // R4's closed twelve, minus the four symmetric ones.
+  "KIN_OF", "SERVES", "MENTOR_OF", "KILLED", "MEMBER_OF", "LEADS", "OWNS", "LOCATED_IN",
+  // v1 (Hollow Crown) names for the same eight relations.
+  "LocatedIn", "MemberOf", "AffiliatedWith", "LeaderOf", "OwnsItem", "HasAbility",
+  "HasTitle", "ParticipatedIn", "Serves", "Killed", "Mentor", "Student",
+  "Parent", "Child",
+]);
+
+/**
+ * The counterpart of the set above: relations that must NEVER carry an arrowhead.
+ * Exported so the unit test can assert the two partition the closed vocabulary rather
+ * than testing the implementation against itself.
+ */
+export const SYMMETRIC_RELATIONS = new Set([
+  // R4's four.
+  "ALLY_OF", "ENEMY_OF", "ROMANTIC_WITH", "SAME_AS",
+  // v1 names with no direction to state.
+  "Ally", "Enemy", "Rival", "Family", "Sibling", "Spouse", "Romantic", "RelatedTo",
 ]);

@@ -1069,3 +1069,90 @@ Verified in-browser at Hollow Crown ch IV focused on Wren: 6 nodes at "1 step" �
 - **NOT RUN**: the Playwright suites. `.local/ms-playwright` is empty on this machine, so
   the browser binaries the harness needs are absent; no spec references the steps control,
   `dragfree` or edge `thickness`, but the suites are unverified for this change.
+
+## 2026-09-30 (2) — arrowheads, and the Playwright browsers that were never missing
+
+### The Playwright browsers — [MEASURED], nothing was broken
+The previous entry said the Playwright suites were NOT RUN because `.local\ms-playwright`
+was empty. That inference was wrong, and this entry corrects it. `playwright.config.ts`
+sets `channel: "chrome"`, so the harness drives the machine's installed Chrome and has
+never downloaded a browser to either drive — the empty directory is the expected state,
+which `C_DRIVE_LEDGER.md` had already recorded at the end of R7. Nothing was installed.
+The suite runs from the repo as it stands: **`1 skipped, 101 passed (3.0m)`** and
+**`1 skipped, 101 passed (3.1m)`**, two consecutive runs at `--workers=1`.
+
+One flake is worth recording. The first full run of the session reported
+**`1 failed, 1 skipped, 100 passed (4.0m)`** — `stemma.spec.ts:466` "legibility: zero
+overlaps among principal labels", `expect(overlaps.count).toBeGreaterThan(12)` receiving
+exactly `12`. Re-run alone it passed 3/3, and it passed in both later full runs. It is a
+boundary assertion on a layout-dependent count (`> 12` against a measured 12), not a
+fence test, and not caused by the drag-lock/step-0 commit — that commit changed no code
+reachable from the default unfocused view. Recorded as a known flake, not fixed here.
+
+### Arrowheads on directed relations — [MEASURED], fixed
+Reported as still not working after the previous session. Four of the five candidate
+causes were checked; two were true.
+
+| candidate cause | true? | evidence |
+| --- | --- | --- |
+| `curve-style: haystack` (cannot draw arrows) | **no** | `haystack` appears nowhere in the repo; the style is `straight`, which draws arrows |
+| arrow hidden under the target node | **no** | at 3x zoom the head sits outside the node boundary, including on the 46px focus disk |
+| arrow colour matching the background | **partly** | it was `T.dim` on a `T.line` line over `T.bg`; now `T.ink`, with `T.faint` on `.far` and `T.accent` on identity |
+| `arrow-scale` too small to see | **YES** | Cytoscape sizes a head as `arrow-scale` x edge WIDTH. At the old fixed `0.8` a weight-1 tie drew a head **smaller than the 1px line under it** |
+| the `arrow` key missing from `edgeData` for some relations | **YES — the main cause** | see below |
+
+The main cause is a vocabulary mismatch. `DIRECTED_RELATIONS` listed seven
+SCREAMING_SNAKE R4 names. It was missing **`KIN_OF`**, and the backend's own
+`SYMMETRIC_R4_RELATIONS` (`db/models.py`) has been calling KIN_OF directed all along — so
+`/ego` served `directed: true` for a tie the canvas drew undirected. And the frozen
+Hollow Crown demo payload still carries v1's **CamelCase** names (`LocatedIn`, `OwnsItem`,
+`Serves`, ...), not one of which was in the set — so the demo, which is the first thing a
+visitor sees, drew **zero** arrowheads on any canvas. Both are fixed: the set now mirrors
+the backend's eight-directed / four-symmetric split and carries the v1 names for the same
+eight relations.
+
+`arrowScale` is now computed per thickness bucket (`3.2 / 2.0 / 1.6`) so the DRAWN head
+stays roughly constant instead of shrinking with the line. A fixed larger scale was tried
+first and measured worse: at `4.5` a weight-1 head was right but weight-2 heads dominated
+the canvas.
+
+**KIN_OF direction, stated plainly.** The request asked for a parent -> child direction
+taken from `kin_role`. That is not derivable: `_possessive_kin` in `extract/validator.py`
+returns the kin noun alone ("sister", "nephew") with no binding to which participant holds
+it, so the stored value does not say which endpoint is the parent. The arrow therefore
+shows the stored source -> target ordering, which is what the forward label already reads
+in, and no parent -> child ordering was synthesised. Said in the code comment too.
+
+### Rule Zero — what the crops actually show
+Captured against `data/retrofit/ninth_house_r6.db` (a second uvicorn on :8010; the demo
+backend was left running), ch40, 1280x720, focused on Sorrel, 20 nodes / 13 edges.
+
+- **Default fit (zoom 0.685).** Filled triangles at Hask, Ione, Corwin, Cassian, Robart
+  Kell, Thorne, Vesper and at the Sorrel focus disk. Legible without zooming.
+- **2x (zoom 1.37), three directed lines.** `Sorrel -> Hask "serves (implied)"`: filled
+  cream triangle at the Hask dot's lower right, pointing up-left into it.
+  `Ione -> Thorne "mentors · serves (implied)"`: triangle at Thorne's right edge, pointing
+  left into it. `Thessaly -> Sorrel "mentors (implied)"`: cream triangle just outside the
+  focus disk's outer ring at its lower right, pointing up-left. All three point at the
+  target named second by the label.
+- **2x, one symmetric line.** `Cassian - Thorne "enemy of (implied)"`, the long dashed line
+  across the middle: **no arrowhead at either end**, as intended.
+- **3x on Sorrel** confirms the head is drawn outside the 46px disk's 7px border and 1.5px
+  outline, not under it.
+
+DOM check at the default fit: 13 edges, **11 `triangle`, 2 `none`**, the two being the
+ENEMY_OF ties. Demo canvases re-checked at 1440x900: the Landing mini graph now shows
+heads into `the Coil` and `Aldercross`, and Wren's Dossier ego graph into `Aldercross` and
+`the heron ring`. Previously both drew none.
+
+### Verification
+- Playwright, `--workers=1`, twice: **`1 skipped, 101 passed (3.0m)`**, **`1 skipped, 101 passed (3.1m)`**.
+- `npm run test:unit`: **`Test Files  6 passed (6)` / `Tests  77 passed (77)`** (27 of them
+  the new `src/graph/arrows.test.ts`). `npm run build`: **`✓ built in 4.17s`**.
+  `npm run lint:design`: **`OK — 81 files checked`**. `npm run typecheck`: clean.
+- `pytest`: **`318 passed, 6 skipped, 2 warnings in 242.56s`**.
+- `ruff check .`: **`All checks passed!`**. `mypy .`: **`Success: no issues found in 116 source files`**.
+  Both needed five pre-existing annotation fixes in `tests/test_r7_cast_within_types.py`
+  and `tools/r8_compare.py` (inherited from R7; no behaviour changed).
+- C: re-audited against the ledger; nothing installed. See `C_DRIVE_LEDGER.md`, re-audit
+  2026-09-30.

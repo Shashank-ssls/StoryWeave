@@ -292,3 +292,67 @@ Checked for and did not find any new C: cache this phase: `%LOCALAPPDATA%\pip\Ca
 `%LOCALAPPDATA%\ms-playwright` are all **absent**. The R7 screenshot harness runs
 `playwright-core` against the system Chrome from `.local\pw\` on F:, which is exactly why
 no browser was downloaded to either drive.
+
+---
+
+## Re-audit 2026-09-30 — the Playwright-browsers question, answered — [MEASURED]
+
+This session fixed frontend defects and ran the Playwright suite. It **installed nothing,
+downloaded nothing and pulled no model**, so no ledger item was added.
+
+### Why `.local\ms-playwright` is empty, and always was
+
+The session started from the belief that R7's 101 passing Playwright tests implied a
+browser download that had since gone missing. That belief was wrong, and the evidence is
+already in this file (the closing paragraph of the R7 re-audit above).
+
+| checked | found |
+| --- | --- |
+| `.local\ms-playwright` on F: | exists, **0 MB**, holds only `.links` |
+| `.local\ms-playwright\.links` | one registry link -> `frontend\node_modules\playwright-core` |
+| `%LOCALAPPDATA%\ms-playwright` | **absent** |
+| `C:\ProgramData\ms-playwright` | **absent** |
+| `PLAYWRIGHT_BROWSERS_PATH`, every reference in the repo | `<repo>\.local\ms-playwright`, never a C: path |
+
+`frontend/playwright.config.ts` sets `channel: "chrome"`, which drives the machine's
+installed Chrome (`C:\Program Files\Google\Chrome`) instead of a Playwright-managed
+download — its own comment says the bundled Chromium download is blocked on this network.
+So **no browser was ever downloaded to either drive**, the empty directory is the
+*expected* state, and the suite runs from it unchanged: **`1 skipped, 101 passed (3.0m)`**
+and again **`1 skipped, 101 passed (3.1m)`**, two consecutive runs at `--workers=1`.
+
+No Chromium was therefore installed into `.local\ms-playwright`. Installing one would
+have downloaded ~140 MB that the config does not use, so the download was not made.
+
+### One C: directory found that this project did not create
+
+| What | Where | Size | Created | Likely creator |
+| --- | --- | ---: | --- | --- |
+| `ms-playwright-go` | `C:\Users\space\AppData\Local\ms-playwright-go` | **0 bytes, empty** | 2026-06-04 (modified 2026-07-16) | `playwright-go`, a Go binding unrelated to this repo |
+
+It is **empty**, it predates the retrofit branch by three months, and this repo contains
+no Go code and no `playwright-go` dependency. It is recorded here because the rule is that
+everything found on C: is written down — it belongs in §3 ("NOT created by this project"),
+**not** in the removable items 1–7, and `tools/uninstall_project_c_traces.ps1` was
+deliberately **not** extended to cover it: that script removes only traces this project
+made, and deleting another tool's directory is not its job. Say the word and it can be
+added, or simply removed by hand.
+
+### Item check
+
+| item | at the R7 check | at this check | verdict |
+| --- | ---: | ---: | --- |
+| 1 `C:\Users\space\.ollama\` | 2,284 B | **2,284 B** | byte-identical |
+| 2 `%LOCALAPPDATA%\Ollama\` | 276,845 B | **276,845 B** | byte-identical |
+| 5 Startup shortcut | removed | **still absent** | stays removed |
+| 7 `HKCU\Environment\Path` entry | removed | **still absent** | stays removed |
+| 8 `.claude\projects\...` | 134.8 MB | **153.98 MB** | Claude Code harness, grows with the session |
+| 9 `%LOCALAPPDATA%\Temp\claude\...` | 4.44 MB | **5.02 MB** | scratchpad |
+
+Confirmed still absent: `%LOCALAPPDATA%\pip\Cache`, `C:\Users\space\.cache\huggingface`,
+`%APPDATA%\npm-cache`, `%LOCALAPPDATA%\ms-playwright`.
+
+The pre-existing Chrome DevTools MCP browser cache (§3) has grown on its own from
+135.60 MB to **144.72 MB**. It is not this project's — it is the MCP browser the harness
+drives — and it is listed here only so the next audit does not read the change as new.
+

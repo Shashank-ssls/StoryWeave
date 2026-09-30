@@ -52,6 +52,7 @@ export function visibleGraph(vm: ViewModel): VisibleGraph {
  * every line (R7), while the two small panel graphs have no room for them.
  */
 export function edgeData(e: VmEdge, label = ""): Record<string, unknown> {
+  const thick = e.weight >= 5 ? 3 : e.weight >= 2 ? 2 : 1;
   return {
     id: e.id,
     source: e.source,
@@ -64,7 +65,15 @@ export function edgeData(e: VmEdge, label = ""): Record<string, unknown> {
     arrow: e.directed ? "triangle" : "none",
     // Bucketed to 3 steps rather than mapped continuously, so a pair mentioned forty
     // times cannot draw a line so thick it reads as a different kind of relationship.
-    thickness: e.weight >= 5 ? 3 : e.weight >= 2 ? 2 : 1,
+    thickness: thick,
+    // Cytoscape sizes an arrowhead as `arrow-scale` x the edge WIDTH, so the old fixed
+    // 0.8 drew a head smaller than the 1px line it sat on: present in the DOM, invisible
+    // on screen. A fixed scale is the wrong shape of fix too — it makes a weight-1 tie's
+    // head three times smaller than a weight-5 tie's, and weight-1 is most of the graph.
+    // The scale therefore falls as the line thickens, which keeps the drawn head roughly
+    // constant. [MEASURED] at the ch40 default fit (zoom 1.05, 1280x720): every one of
+    // the 11 directed ties shows a head, and both ENEMY_OF ties show none.
+    arrowScale: [3.2, 2.0, 1.6][thick - 1],
   };
 }
 

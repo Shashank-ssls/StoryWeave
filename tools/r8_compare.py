@@ -25,6 +25,10 @@ import statistics
 import sys
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # the real import stays inside _client, to keep the CLI import light
+    from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -36,7 +40,7 @@ CHAPTERS = (10, 20, 40)
 REPEATS = 15
 
 
-def _client(db: Path):
+def _client(db: Path) -> TestClient:
     from fastapi.testclient import TestClient
 
     from storyweave.api.app import create_app
@@ -47,14 +51,14 @@ def _client(db: Path):
     return TestClient(create_app())
 
 
-def _graph(client, base: str, n: int, **params: str) -> tuple[int, int]:
+def _graph(client: TestClient, base: str, n: int, **params: str) -> tuple[int, int]:
     r = client.get(f"{base}/graph", params={"n": n, **params})
     r.raise_for_status()
     el = r.json()["elements"]
     return len(el["nodes"]), len(el["edges"])
 
 
-def _median_ms(client, base: str, n: int, **params: str) -> float:
+def _median_ms(client: TestClient, base: str, n: int, **params: str) -> float:
     timings: list[float] = []
     for _ in range(REPEATS):
         start = time.perf_counter()
