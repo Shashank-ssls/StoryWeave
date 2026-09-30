@@ -1,0 +1,7 @@
+phase,tp,fp,fn,micro_f1,source_csv,note
+v1,5,162,46,0.045872,R0_scores_v1.csv,
+R1,0,2,51,0.000000,R1_scores_rule_off.csv,
+R4,0,3,51,0.000000,R4_scores_v1key.csv,
+R4c,0,3,51,0.000000,R4c_scores_v1key.csv,
+R5,0,7,51,0.000000,R5_scores_v1key.csv,
+R7,0,7,51,0.000000,r8_scores_final_v1key.csv,R6 and R7 changed no extraction; the R8 like-for-like rescore is the R7 state

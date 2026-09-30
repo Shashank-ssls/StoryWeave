@@ -34,6 +34,30 @@ this measurement; what the measurement supports is the precondition for raising 
 That precondition was real and is the phase's actual result: false positives **162 → 2**,
 a 98.8% reduction. Precision's denominator was fixed. The numerator was never filled.
 
+### Update 2026-09-30 — `EVALUATION_PLAN.md` is now committed
+
+The paragraph above says `EVALUATION_PLAN.md` is absent from this repository. **It is now
+present**, at `docs/retrofit/design/EVALUATION_PLAN.md`, added on **2026-09-30** together
+with `ARCHITECTURE.md` and `ONTOLOGY.md`.
+
+Said plainly, because the distinction is the whole point of a pre-registration: the
+document was **written before the retrofit** — it describes every metric in the future
+tense, and it is stamped "Phase 0 specification. Frozen before any v2 code is written" —
+but it was **committed only now**, after every measurement it governs had already been
+taken. `git log --all` on the path confirms no earlier commit added it.
+
+So it is a genuine design-time artifact and **not** a version-controlled pre-registration.
+It cannot be used to claim that the metrics were fixed in the repository before the
+results were known; what it does show is that they were fixed in the author's plan.
+Anyone auditing this project should weigh it accordingly.
+
+This changes **no row** in this document. The withdrawn 0.20–0.35 band above still has no
+committed source: it does not appear in `EVALUATION_PLAN.md` either, which specifies
+*methods and reporting formats*, not predicted values. `PREDICTIONS.md` remains absent.
+
+Section-by-section, what the plan asked for versus what was measured is now mapped in
+`docs/retrofit/design/IMPLEMENTED.md` §4.
+
 ---
 
 ## 1. R4 — the twelve closed relations and the validator (`d99e445`, scored at `f1204f0`)

@@ -27,6 +27,14 @@ dev = [
     "ruff>=0.5",
     "mypy>=1.10",
 ]
+# The evaluation figures (`tools/make_figures.py`). Deliberately in the LIGHT venv, not
+# the ML one: the figures are drawn from databases, CSVs and result documents that already
+# exist, and re-extracting nothing means needing no model, no torch and no GPU. matplotlib
+# was already installed here and undeclared; this declares it rather than adding a second
+# copy to `.venv-ml`.
+figures = [
+    "matplotlib>=3.8",
+]
 
 [project.scripts]
 storyweave = "storyweave.cli.main:main"

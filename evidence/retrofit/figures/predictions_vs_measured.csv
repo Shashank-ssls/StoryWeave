@@ -1,0 +1,21 @@
+phase,quantity,band_low,band_high,measured,verdict
+R1,relation micro-F1 (withdrawn),0.2,0.35,0.0,WITHDRAWN
+R4,STATED micro-F1,0.05,0.2,0.0,OUT
+R4c,ring-1 edges @ch40,4,25,4,IN
+R4c,ring-2 edges @ch40,60,150,64,IN
+R4c,STATED micro-F1,0.05,0.25,0.0,OUT
+R5,"ring-1 edges @ch40, STATED",5,25,4,OUT
+R5,default-view edges @ch40,3,15,1,OUT
+R5,STATED micro-F1,0.05,0.3,0.0,OUT
+R5,STATED precision,0.5,0.9,0.0,OUT
+R5,antecedent diagnostic,5,20,2,OUT
+R6,salience AUC,0.7,0.92,0.6667,OUT
+R6,salience P@10,0.55,0.85,0.875,OUT
+R6,default-view dots @ch10,8,20,10,IN
+R6,default-view dots @ch20,15,20,7,OUT
+R6,default-view dots @ch40,20,,12,OUT
+R7,INFERRED share of lines @ch10 (%),70,100,100,IN
+R7,INFERRED share of lines @ch20 (%),70,100,100,IN
+R7,rendered == payload elements,,,,MIS-SPECIFIED
+R7,edge labels legible @ch40 (%),80,100,31,OUT
+R7,chapters needing the low-edge note,0,0,0,IN
