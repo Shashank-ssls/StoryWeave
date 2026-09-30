@@ -65,7 +65,14 @@ ANNOTATION_DIR = REPO_ROOT / "evidence" / "annotation"
 SCORES = REPO_ROOT / "evidence" / "retrofit"
 OUT = REPO_ROOT / "evidence" / "retrofit" / "figures"
 
-SCRIPT = "tools/make_figures.py"
+SCRIPT = f"tools/{Path(__file__).name}"
+
+#: "pooled ch 9 / 17 / 37", built from the constant rather than typed out. Every literal
+#: on a figure that restates something the code decides is a place where the picture can
+#: quietly stop describing its own data — which is exactly what happened to
+#: `phase_timeline`'s title, where it said `cumulative` for a run that had been switched
+#: to `chapter_local`. The rule here is: if the code knows it, the caption asks the code.
+CHAPTERS_TEXT = " / ".join(str(c) for c in CHAPTERS)
 
 # The Codex palette, so the figures sit beside the app's own screenshots. Plot on a light
 # background: these go into a document that is read, and printed, not into the dark UI.
@@ -247,7 +254,7 @@ def fig_entity_confusion() -> None:
     fig, axes = plt.subplots(1, 2, figsize=(13, 5.6))
     n1 = draw_matrix(axes[0], v1_cells, v1_rows, v1_cols, "v1 — scored on the 8-type key")
     n2 = draw_matrix(axes[1], fi_cells, fi_rows, fi_cols, "final — scored on the 4-type key")
-    fig.suptitle("Entity type confusion, pooled over chapters 9 / 17 / 37",
+    fig.suptitle(f"Entity type confusion, pooled over chapters {CHAPTERS_TEXT}",
                  fontsize=12, y=0.99)
     # The two panels are DIFFERENT answer keys. Said on the figure, not just in prose.
     fig.text(0.5, 0.935,
@@ -273,6 +280,11 @@ def fig_entity_confusion() -> None:
 
 NONE = "NONE"
 
+#: Which of the scorer's two relation scopes this matrix uses. `cumulative` = every edge
+#: between two entities mentioned in the chapter; the counts it produces are the ones
+#: R5_RESULT.md §3 reports. Named once, read by both the data and the title.
+RELATION_VARIANT = "cumulative"
+
 
 def fig_relation_confusion() -> None:
     print("relation_confusion")
@@ -285,7 +297,8 @@ def fig_relation_confusion() -> None:
     for chapter in CHAPTERS:
         ann, view = annotations[chapter], side[chapter]
         match = match_entities(view, ann, alias_aware=False)
-        edges = view.edges_cumulative  # the pooled `cumulative` variant, as R5 §3 reports
+        # The variant is named ONCE, and both the data and the title read it from here.
+        edges = getattr(view, f"edges_{RELATION_VARIANT}")
 
         # predicted edges keyed by endpoint pair, both orders, so a gold relation can be
         # paired with a predicted edge that named the SAME pair a DIFFERENT relation —
@@ -337,10 +350,13 @@ def fig_relation_confusion() -> None:
 
     fig, ax = plt.subplots(figsize=(9.5, 7.2))
     n = draw_matrix(ax, cells, rows, cols,
-                    "final system, 12-relation key, pooled ch 9 / 17 / 37 (`cumulative`)",
+                    f"final system, 12-relation key, pooled ch {CHAPTERS_TEXT} "
+                    f"(`{RELATION_VARIANT}`)",
                     unit="relation")
     diag = sum(cells.get((r, r), 0) for r in rows if r != NONE)
     fp = sum(v for (g, pr), v in cells.items() if g == NONE)
+    # Counted, not typed: the gold total is every cell on a gold row.
+    gold_total = sum(v for (g, pr), v in cells.items() if g != NONE)
     fig.suptitle("Relation confusion", fontsize=12)
     # The requested caption was "0 true positives". That is the STATED-only figure
     # (0 TP / 10 FP, R5_RESULT.md §3). This matrix is the configuration the graph
@@ -348,7 +364,8 @@ def fig_relation_confusion() -> None:
     # same table measures at 1 TP / 25 FP, and that is what the cells below add up to.
     # The sentence therefore says what is drawn, and names the stricter number too.
     fig.text(0.5, 0.925,
-             f"{diag} true positive of 23 gold relations ({fp} false positives); "
+             f"{diag} true positive of {gold_total} gold relations "
+             f"({fp} false positives); "
              "shown to locate losses, not to claim accuracy.",
              ha="center", fontsize=9, color=ACCENT, style="italic")
     fig.text(0.5, 0.902,
@@ -418,10 +435,10 @@ def fig_recall_funnel() -> None:
     ax.set_xticks(x, phases)
     ax.set_ylim(0, GOLD_RELATIONS + 4)
     ax.set_ylabel("gold relations")
-    ax.set_title("Where all 51 gold relations go, by phase", fontsize=12)
+    ax.set_title(f"Where all {GOLD_RELATIONS} gold relations go, by phase", fontsize=12)
     ax.legend(fontsize=8, loc="center left", bbox_to_anchor=(1.01, 0.5), frameon=False)
-    caption(fig, "n=51 gold relations at every phase; "
-                 "transcribed from R4/R4b/R4c/R5_RESULT.md recall-accounting tables")
+    caption(fig, f"n={GOLD_RELATIONS} gold relations at every phase; transcribed from "
+                 f"{'/'.join(FUNNEL)}_RESULT.md recall-accounting tables")
     fig.tight_layout(rect=(0, 0.03, 1, 1))
     save(fig, "recall_funnel")
 
@@ -620,12 +637,15 @@ def fig_predictions_vs_measured() -> None:
         ax.spines[s].set_visible(False)
     n_in = sum(1 for b in BANDS if b[4] == "IN")
     n_out = sum(1 for b in BANDS if b[4] == "OUT")
+    n_mis = sum(1 for b in BANDS if b[4] == "MIS-SPECIFIED")
+    n_withdrawn = sum(1 for b in BANDS if b[4] == "WITHDRAWN")
+    n_bands = len(BANDS) - n_withdrawn
     ax.set_title("Every pre-registered band against its measured value\n"
-                 f"n = {len(BANDS) - 1} pre-registered bands "
-                 f"({n_in} inside, {n_out} outside, 1 mis-specified), "
-                 "plus 1 withdrawn projection", fontsize=11)
-    caption(fig, f"n={len(BANDS) - 1} bands + 1 withdrawn; each row normalised to its own "
-                 "band (0 = low, 1 = high); transcribed from PROJECTION_CHECK.md")
+                 f"n = {n_bands} pre-registered bands "
+                 f"({n_in} inside, {n_out} outside, {n_mis} mis-specified), "
+                 f"plus {n_withdrawn} withdrawn projection", fontsize=11)
+    caption(fig, f"n={n_bands} bands + {n_withdrawn} withdrawn; each row normalised to "
+                 "its own band (0 = low, 1 = high); transcribed from PROJECTION_CHECK.md")
     fig.tight_layout(rect=(0, 0.02, 1, 1))
     save(fig, "predictions_vs_measured")
 
@@ -683,10 +703,12 @@ def fig_graph_size() -> None:
     final = sizes(client_for(FINAL_DB))  # the DEFAULT view: Characters, cast 20
 
     fig, axes = plt.subplots(1, 2, figsize=(11.5, 5.0))
+    ratios: dict[str, float] = {}
     for ax, idx, what in ((axes[0], 0, "dots"), (axes[1], 1, "lines")):
         xs = list(GRAPH_CHAPTERS)
         a = [v1[n][idx] for n in xs]
         b = [final[n][idx] for n in xs]
+        ratios[what] = max(av / bv for av, bv in zip(a, b, strict=True) if bv)
         ax.plot(xs, a, marker="o", color=ACCENT, linewidth=1.8,
                 label="v1 payload (whole fenced graph)")
         ax.plot(xs, b, marker="s", color=INK, linewidth=1.8,
@@ -707,7 +729,13 @@ def fig_graph_size() -> None:
         ax.legend(fontsize=8, frameon=False, loc="lower center",
                   bbox_to_anchor=(0.5, -0.30), ncol=1)
     fig.suptitle("What the client is handed, v1 versus the final default view", fontsize=12)
-    fig.text(0.5, 0.925, "log scale — the v1 line runs two orders of magnitude higher",
+    # This line USED to read "the v1 line runs two orders of magnitude higher", which the
+    # left panel contradicts: the widest dots gap is about 7x, well under one order. The
+    # gap is now computed per panel and printed, so the sentence cannot overstate what is
+    # drawn above it.
+    fig.text(0.5, 0.925,
+             f"log scale — at its widest the v1 line is {ratios['dots']:.0f}x the final "
+             f"view's dots and {ratios['lines']:.0f}x its lines",
              ha="center", fontsize=8.5, color=MUTED, style="italic")
     caption(fig, "n on every point; served through the real API (TestClient), "
                  "frozen v1 DB read from a scratch copy")

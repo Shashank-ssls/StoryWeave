@@ -388,6 +388,11 @@ the CSV. Transcribed from `PROJECTION_CHECK.md`, which remains the authority.
 ### 9.6 `figures/graph_size.png` · `graph_size.csv`
 
 Dots and lines served at chapters 10 / 20 / 30 / 40, v1's payload against the final
-default view, through the real API. Log scale, because the gap is two orders of magnitude:
-at ch40, **152 dots / 976 lines** becomes **20 dots / 18 lines**. The frozen v1 database is
-served from a scratch copy on F: so the original is never opened for writing.
+default view, through the real API. At ch40, **152 dots / 976 lines** becomes
+**20 dots / 18 lines**. Log scale, because the two panels differ by an order of magnitude
+from each other: at its widest the v1 line is **8×** the final view's dots but **91×** its
+lines, so a shared linear axis would flatten the dots panel to nothing. (An earlier
+revision of this paragraph and of the figure said "two orders of magnitude" for both; that
+is true of the lines and false of the dots, and the figure now computes both ratios rather
+than asserting one.) The frozen v1 database is served from a scratch copy on F: so the
+original is never opened for writing.
