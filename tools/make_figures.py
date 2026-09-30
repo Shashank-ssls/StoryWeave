@@ -38,6 +38,7 @@ from typing import Any
 import matplotlib
 
 matplotlib.use("Agg")  # no display on this machine; never open a window
+import matplotlib.patheffects as pe  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
@@ -507,15 +508,26 @@ def fig_phase_timeline() -> None:
 
     ax2 = ax.twinx()
     ax2.plot(x, f1s, color=ACCENT, marker="o", linewidth=1.8, label="micro-F1")
+    # Five of the six F1 values are exactly 0.0000 and five of the six bars are 7 or
+    # shorter, so both series crowd the axis floor and their labels collided (measured by
+    # looking at the PNG). Headroom UNDER the F1 line separates them: the bottom of the
+    # right-hand axis is padded below zero, exactly as the left-hand axis is padded above
+    # its tallest bar. The padding is blank space, not a claim that F1 can be negative —
+    # the ticks are set explicitly from 0 up so no negative value is ever printed.
+    top = max(max(f1s) * 1.9, 0.08)
+    ax2.set_ylim(-top * 0.34, top)
+    ax2.set_yticks([t for t in np.arange(0, top + 1e-9, 0.02)])
     for xf, vf in zip(x, f1s, strict=True):
-        ax2.annotate(f"{vf:.4f}", (float(xf), vf), textcoords="offset points", xytext=(0, 9),
-                     ha="center", fontsize=8.5, color=ACCENT)
+        # A paper-coloured halo: the steep v1 -> R1 segment otherwise runs through the
+        # leading digit of R1's label. Cheaper and more robust than nudging one label.
+        ax2.annotate(f"{vf:.4f}", (float(xf), vf), textcoords="offset points", xytext=(0, 11),
+                     ha="center", fontsize=8.5, color=ACCENT, zorder=5,
+                     path_effects=[pe.withStroke(linewidth=3, foreground=PAPER)])
     ax2.set_ylabel("relation micro-F1 (v1 key)", color=ACCENT)
     ax2.tick_params(axis="y", colors=ACCENT)
-    ax2.set_ylim(0, max(max(f1s) * 1.9, 0.08))
 
     ax.set_title("Relation false positives and micro-F1, v1 through R7\n"
-                 "(one answer key throughout: v1's, `cumulative`, pooled ch 9/17/37)",
+                 f"(one answer key throughout: v1's, `{VARIANT}`, pooled ch 9/17/37)",
                  fontsize=11)
     h1, l1 = ax.get_legend_handles_labels()
     h2, l2 = ax2.get_legend_handles_labels()
