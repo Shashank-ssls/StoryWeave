@@ -38,7 +38,9 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
 
   // undefined = not resolved yet (first data still loading); null = the reader cleared it.
   const [focusId, setFocusId] = useState<string | null | undefined>(undefined);
-  const [steps, setSteps] = useState<1 | 2>(1);
+  // 0 = direct ties only (everything else off the canvas), 1 = 1 hop dimmed,
+  // 2 = 2 hops dimmed. See codexStyle's `.out-of-focus` rule.
+  const [steps, setSteps] = useState<0 | 1 | 2>(1);
 
   // R7: the Stemma's controls are its own UI state, applied to the SERVER on every
   // change. The Dossier declares FULL_VIEW on its mount, so returning here re-declares
@@ -316,7 +318,7 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
           </Button>
           <span className={styles.focusLabel} data-testid="focus-label">
             {focusNode
-              ? fillTemplate(codexTheme.focusedOn, { name: focusNode.label, steps: steps === 1 ? codexTheme.stepOne : codexTheme.stepTwo })
+              ? fillTemplate(codexTheme.focusedOn, { name: focusNode.label, steps: steps === 0 ? codexTheme.stepZero : steps === 1 ? codexTheme.stepOne : codexTheme.stepTwo })
               : codexTheme.unfocused}
           </span>
           <Tabs items={tabItems} activeKey="web" onChange={(k) => navigateToTab(k, route)} />
@@ -393,9 +395,9 @@ export default function Stemma({ route }: { route: WorkRoute }): JSX.Element {
           <Button variant="outline" className={styles.zoomButton} aria-label={codexTheme.zoomOut} onClick={() => canvas.current?.zoomOut()} data-testid="zoom-out"><MinusIcon size={16} /></Button>
           {focusId && (
             <div className={styles.segmented} role="radiogroup" aria-label={codexTheme.stepsLabel} data-testid="steps">
-              {([1, 2] as const).map((s) => (
+              {([0, 1, 2] as const).map((s) => (
                 <button key={s} type="button" role="radio" aria-checked={steps === s} className={`${styles.segment} ${steps === s ? styles.segmentOn : ""}`} onClick={() => setSteps(s)} data-testid={`steps-${s}`}>
-                  {s === 1 ? codexTheme.stepOne : codexTheme.stepTwo}
+                  {s === 0 ? codexTheme.stepZero : s === 1 ? codexTheme.stepOne : codexTheme.stepTwo}
                 </button>
               ))}
             </div>

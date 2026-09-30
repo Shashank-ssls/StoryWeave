@@ -38,8 +38,38 @@ export function visibleGraph(vm: ViewModel): VisibleGraph {
   return { nodes: vm.nodes, edges: vm.edges };
 }
 
+/**
+ * Cytoscape `data` for one edge, shared by EVERY canvas that uses `codexStyle`.
+ *
+ * The stylesheet maps `width: data(thickness)` and `target-arrow-shape: data(arrow)`.
+ * The Landing mini graph and the Dossier ego graph each built their own edge data and
+ * omitted both keys, so those mappers resolved to `undefined` and Cytoscape drew the
+ * lines at arbitrary slab widths with no arrowheads (reported and reproduced: the thick
+ * brown bars behind the Hollow Crown mini graph, and the beige spokes in the ego graph).
+ * One builder means a missing key cannot happen again.
+ *
+ * `label` is passed in rather than derived here: the Stemma draws relation words on
+ * every line (R7), while the two small panel graphs have no room for them.
+ */
+export function edgeData(e: VmEdge, label = ""): Record<string, unknown> {
+  return {
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    kind: e.kind,
+    relation: e.relation,
+    revealed_chapter: e.revealed_chapter,
+    label,
+    grade: e.grade ?? "STATED",
+    arrow: e.directed ? "triangle" : "none",
+    // Bucketed to 3 steps rather than mapped continuously, so a pair mentioned forty
+    // times cannot draw a line so thick it reads as a different kind of relationship.
+    thickness: e.weight >= 5 ? 3 : e.weight >= 2 ? 2 : 1,
+  };
+}
+
 /** §8.3 focus set: the focus node plus everything within `steps` hops over VISIBLE edges. */
-export function focusSet(edges: VmEdge[], focusId: string, steps: 1 | 2): Set<string> {
+export function focusSet(edges: VmEdge[], focusId: string, steps: number): Set<string> {
   const adj = new Map<string, Set<string>>();
   for (const e of edges) {
     (adj.get(e.source) ?? adj.set(e.source, new Set()).get(e.source)!).add(e.target);

@@ -3,7 +3,7 @@ import cytoscape, { type Core, type ElementDefinition, type Layouts } from "cyto
 import cola from "cytoscape-cola";
 import { codexStyle, colaOptions, SETTLE_MS } from "../../graph/codexStyle";
 import { cyRegistry } from "../../graph/cyRegistry";
-import { declutterLabels, focusSet, labelRank, minorLabelIds, nodeSize, zoomTier, type Box, type VisibleGraph } from "../../graph/stemmaModel";
+import { declutterLabels, edgeData, focusSet, labelRank, minorLabelIds, nodeSize, zoomTier, type Box, type VisibleGraph } from "../../graph/stemmaModel";
 import { edgeLabel } from "../../graph/viewModel";
 
 // The Stemma canvas (DESIGN_SPEC §6.3 canvas, §7, §8.3). Owns exactly one Cytoscape
@@ -41,7 +41,9 @@ interface Props {
   graph: VisibleGraph;
   identityEndpoints: Set<string>;
   focusId: string | null;
-  steps: 1 | 2;
+  /** 0 = draw ONLY the focus and its direct ties; 1 = 1 hop, the rest dimmed;
+   *  2 = 2 hops, the rest dimmed. */
+  steps: 0 | 1 | 2;
   /** Hover-preview focus (§8.3): applied like the focus but never moves the camera. */
   previewId: string | null;
   selected: Selection | null;
@@ -97,24 +99,10 @@ function toElements(graph: VisibleGraph, identityEndpoints: Set<string>): Elemen
   }
   for (const e of graph.edges) {
     // R7: the label is always drawn, in plain words, and says "(implied)" when the
-    // evidence is INFERRED. `weight` is bucketed to 3 steps here rather than mapped
-    // continuously, so a pair mentioned forty times cannot draw a line so thick it
-    // reads as a different kind of relationship.
-    els.push({
-      group: "edges",
-      data: {
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        kind: e.kind,
-        relation: e.relation,
-        revealed_chapter: e.revealed_chapter,
-        label: edgeLabel(e),
-        grade: e.grade ?? "STATED",
-        arrow: e.directed ? "triangle" : "none",
-        thickness: e.weight >= 5 ? 3 : e.weight >= 2 ? 2 : 1,
-      },
-    });
+    // evidence is INFERRED. Everything else about an edge's `data` (thickness bucket,
+    // arrowhead, grade) comes from stemmaModel.edgeData, which the two panel graphs
+    // share -- see its comment for why that is no longer duplicated per canvas.
+    els.push({ group: "edges", data: edgeData(e, edgeLabel(e)) });
   }
   return els;
 }
@@ -277,11 +265,26 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     if (!cy) return;
     const activeFocus = props.previewId ?? props.focusId;
     cy.batch(() => {
-      cy.elements().removeClass("focus near far selected-edge kbd-ring");
+      cy.elements().removeClass("focus near far selected-edge kbd-ring out-of-focus");
       if (activeFocus && cy.getElementById(activeFocus).length) {
-        const set = focusSet(props.graph.edges, activeFocus, props.steps);
-        cy.nodes().forEach((n) => { n.addClass(n.id() === activeFocus ? "focus" : set.has(n.id()) ? "near" : "far"); });
-        cy.edges().forEach((e) => { e.addClass(set.has(e.source().id()) && set.has(e.target().id()) ? "near" : "far"); });
+        // Step 0 spans the same 1 hop as step 1 -- what differs is the TREATMENT: step 1
+        // dims what lies outside the set, step 0 takes it off the canvas entirely
+        // (`.out-of-focus` -> `display: none`). That is a display clause, never a fence
+        // change (retrofit rule 1): the payload is untouched, and the fence already
+        // decided what was allowed to arrive.
+        const hops = props.steps === 0 ? 1 : props.steps;
+        const set = focusSet(props.graph.edges, activeFocus, hops);
+        const hide = props.steps === 0;
+        cy.nodes().forEach((n) => {
+          const cls = n.id() === activeFocus ? "focus" : set.has(n.id()) ? "near" : "far";
+          n.addClass(cls);
+          if (hide && cls === "far") n.addClass("out-of-focus");
+        });
+        cy.edges().forEach((e) => {
+          const inSet = set.has(e.source().id()) && set.has(e.target().id());
+          e.addClass(inSet ? "near" : "far");
+          if (hide && !inSet) e.addClass("out-of-focus");
+        });
       }
       if (props.selected?.kind === "edge") cy.getElementById(props.selected.id).addClass("selected-edge");
       if (props.kbdId) cy.getElementById(props.kbdId).addClass("kbd-ring");
@@ -374,22 +377,22 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     // so the losers are deferred exactly as node names already are — they return at the
     // close zoom tier and whenever the edge is in the focus set.
     //
-    // Node names are ranked FIRST; relation labels take what is left. Both orders were
-    // built and screenshotted at ch40, and neither fits everything into the 652px canvas
-    // that the 1280x720 minimum leaves:
-    //   * names first     -> all 20 names, 4 of 13 relation labels
-    //   * relations first -> most relation labels, but only 5 of 20 names; the web read
-    //                        as "serves (implied)" pointing at anonymous dots, which
-    //                        answers "who does X serve?" with no X at all.
-    // Names win because a name is the subject of every question this graph exists to
-    // answer, and because a deferred relation is one click from its full sentence in the
-    // side panel whereas an unnamed dot tells the reader nothing. The residue is
-    // reported rather than hidden (R7_RESULT.md). Among edges, heavier ties (more
-    // mentions) win, then id, so the choice is deterministic rather than paint-order luck.
+    // Node names are ranked FIRST; relation labels take what is left. Both orders were
+    // built and screenshotted at ch40, and neither fits everything into the 652px canvas
+    // that the 1280x720 minimum leaves:
+    //   * names first     -> all 20 names, 4 of 13 relation labels
+    //   * relations first -> most relation labels, but only 5 of 20 names; the web read
+    //                        as "serves (implied)" pointing at anonymous dots, which
+    //                        answers "who does X serve?" with no X at all.
+    // Names win because a name is the subject of every question this graph exists to
+    // answer, and because a deferred relation is one click from its full sentence in the
+    // side panel whereas an unnamed dot tells the reader nothing. The residue is
+    // reported rather than hidden (R7_RESULT.md). Among edges, heavier ties (more
+    // mentions) win, then id, so the choice is deterministic rather than paint-order luck.
     const ranked: { id: string; box: Box }[] = [];
     for (const n of labelRank(graph.nodes, identityEndpoints)) {
       const el = cy.getElementById(n.id);
-      if (el.length === 0 || el.style("label") === "") continue;
+      if (el.length === 0 || el.style("label") === "" || el.hasClass("out-of-focus")) continue;
       ranked.push({
         id: el.id(),
         box: el.boundingBox({ includeLabels: true, includeNodes: false, includeEdges: false, includeOverlays: false }),
@@ -401,7 +404,7 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     const zoom = cy.zoom() || 1;
     for (const e of edgesByWeight) {
       const el = cy.getElementById(e.id);
-      if (el.length === 0 || el.style("label") === "") continue;
+      if (el.length === 0 || el.style("label") === "" || el.hasClass("out-of-focus")) continue;
       // The label's own box, built from the text — NOT `boundingBox`, which for an edge
       // returns the whole line's extent and made every long edge collide with everything
       // (measured: only 2 of 13 relation labels survived the pass, which defeats the
@@ -472,14 +475,27 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     }, layoutSettleMs.current + 150);
   }
 
-  // Drag: the node is pinned by the user's hand while the burst runs; on release the
-  // graph re-settles around where it was dropped.
+  // Drag: a node the reader has moved STAYS exactly where they dropped it.
+  //
+  // This used to re-run the cola burst on `dragfree`, so the whole graph re-settled
+  // around the drop point and the node visibly snapped away from the cursor -- reported
+  // as "the nodes are getting attracted to one another". Dropping a node now LOCKS it
+  // instead: cytoscape-cola treats a locked node as a fixed constraint, so a later burst
+  // (chapter change, cast change) relaxes the rest of the web around the reader's
+  // arrangement rather than throwing it away. `orientToViewport` and
+  // `gatherIsolatedNodes` both honour the lock, and a fit only moves the camera.
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
-    const onDragFree = (): void => runPhysics();
+    const onDragFree = (ev: cytoscape.EventObject): void => {
+      const n = ev.target as cytoscape.NodeSingular;
+      n.lock();
+      n.addClass("pinned");
+      declutter(); // its label box moved with it
+    };
     cy.on("dragfree", "node", onDragFree);
     return () => { cy.off("dragfree", "node", onDragFree); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // A fit never zooms past the default tier (§7.5): a 3-node focus set would otherwise
@@ -515,6 +531,10 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
   function orientToViewport(): void {
     const cy = cyRef.current;
     if (!cy || cy.nodes().length < 2) return;
+    // The rotation is only free to take because a force layout has no meaningful axis.
+    // Once the reader has placed a node by hand the layout DOES have an axis -- theirs --
+    // so this is off from the first pin onwards.
+    if (cy.nodes().filter((n) => n.locked()).length > 0) return;
     const bb = cy.nodes().boundingBox();
     if (bb.w <= 0 || bb.h <= 0) return;
     const canvasW = cy.width();
@@ -555,7 +575,7 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     const cy = cyRef.current;
     if (!cy) return;
     const connected = cy.nodes().filter((n) => n.degree(false) > 0);
-    const isolated = cy.nodes().filter((n) => n.degree(false) === 0);
+    const isolated = cy.nodes().filter((n) => n.degree(false) === 0 && !n.locked());
     if (connected.length === 0 || isolated.length === 0) return;
     const bb = connected.boundingBox({ includeLabels: false } as never);
     const perRow = Math.min(isolated.length, Math.max(3, Math.round(bb.w / 150)));
@@ -578,6 +598,13 @@ const StemmaCanvas = forwardRef<StemmaCanvasHandle, Props>(function StemmaCanvas
     if (!cy || cy.nodes().length === 0) return;
     const { focusId, steps } = propsRef.current;
     if (focusId && cy.getElementById(focusId).length) {
+      // Step 0: only the focus and its direct ties are drawn, so the camera frames
+      // exactly those -- a fit-all here would frame nodes nobody can see.
+      if (steps === 0) {
+        const only = focusSet(propsRef.current.graph.edges, focusId, 1);
+        animateFit(cy.nodes().filter((n) => only.has(n.id())));
+        return;
+      }
       if (cy.nodes().length <= FIT_ALL_WHEN_SMALL) {
         animateFit(fitAllTargets());
         return;

@@ -172,6 +172,15 @@ const styles: Style[] = [
   { selector: "node.label-minor.near, node.label-minor.tier-close, node.label-deferred.near, node.label-deferred.tier-close", style: { label: "data(display)" } },
   { selector: "node.tier-close.focus", style: { color: T.onInk } }, // the initial sits ON the ink disk
 
+  // ---- step 0 (§8.3): the focus and its DIRECT ties only ----
+  // The steps control has three settings: 0 draws nothing outside the 1-hop set, 1 draws
+  // it dimmed at 1 hop, 2 at 2 hops. This is a DISPLAY clause applied after the fence
+  // (retrofit rule 1) — the payload is identical at all three, so nothing here can leak.
+  // `display: none` rather than opacity 0, so a hidden node is also unhittable: a reader
+  // who asked to see only the direct ties cannot select something invisible by accident.
+  // Declared last so it beats every other selector that sets a label or a colour.
+  { selector: ".out-of-focus", style: { display: "none" } },
+
   // ---- keyboard cursor (§8.3): 2px ink ring on the neighbour under arrow-key focus ----
   { selector: "node.kbd-ring", style: { "outline-width": 2, "outline-color": T.ink, "outline-offset": 3 } },
 ];

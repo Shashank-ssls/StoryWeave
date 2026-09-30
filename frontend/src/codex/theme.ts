@@ -92,6 +92,7 @@ export const codexTheme = {
   readTo: "Read to Chapter {n} of {m}",
   changeLink: "change",
   focusedOn: "Focused on {name} · {steps}",
+  stepZero: "Direct only",
   stepOne: "1 step",
   stepTwo: "2 steps",
   unfocused: "The whole web, as far as you have read",

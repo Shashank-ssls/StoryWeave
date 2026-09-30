@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import cytoscape, { type Core, type ElementDefinition } from "cytoscape";
 import { codexStyle } from "../../graph/codexStyle";
 import type { ViewModel } from "../../graph/viewModel";
-import { nodeSize } from "../../graph/stemmaModel";
+import { edgeData, nodeSize } from "../../graph/stemmaModel";
 import { cyRegistry } from "../../graph/cyRegistry";
 
 // Dossier right-panel ego graph (DESIGN_SPEC §6.2 right panel, §7): the entity centred
@@ -49,7 +49,7 @@ function egoElements(vm: ViewModel, focusId: string): { els: ElementDefinition[]
     const near = e.source === focusId || e.target === focusId;
     els.push({
       group: "edges",
-      data: { id: e.id, source: e.source, target: e.target, kind: e.kind, relation: e.relation, revealed_chapter: e.revealed_chapter },
+      data: edgeData(e),
       classes: near ? "near" : "far",
     });
   }

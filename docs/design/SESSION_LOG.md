@@ -1021,3 +1021,51 @@ Recorded in `evidence/annotation/PROVENANCE.md` and restated in `EVAL_V1.md` §8
 Nothing is scheduled. The open threads are the two BASELINE.md defects (DiGraph edge
 collapse and identity relabelling), which are backend changes and belong to a deliberate
 phase, and the `/search` fence, which cannot be measured until a `.chroma` index exists.
+
+## 2026-09-30 — canvas defects: slab edges, snapping nodes, a "direct only" step
+
+Three reader-reported defects on the graph canvases, all fixed in the frontend only. No
+backend, SQL, payload or fence change: the fence already decided what arrived, and every
+change here is a display clause applied after it (retrofit rule 1).
+
+### 1. The thick brown/beige "slab" lines — [MEASURED], fixed
+`codexStyle` maps `width: data(thickness)` and `target-arrow-shape: data(arrow)`, but the
+Landing mini graph and the Dossier ego graph each built their own edge `data` and set
+neither key. Both mappers resolved against a missing field, and Cytoscape drew the lines
+at arbitrary slab widths with no arrowheads — reproduced from the reader's screenshots on
+the Hollow Crown landing panel and on Wren's ego graph. The Stemma was unaffected because
+it was the one canvas that set the keys.
+Fix: one shared builder, `stemmaModel.edgeData(edge, label)`, used by all three canvases,
+so a missing key cannot happen again. Verified in a real browser (Chrome, 1440×900): the
+mini graph and the ego graph now draw 1–3px lines with arrowheads, and the identity edge
+is a thin accent line rather than a red slab.
+
+### 2. Dropped nodes snapped away — [MEASURED], fixed
+`dragfree` re-ran the whole cola burst, so the graph re-settled around the drop point and
+the node visibly moved after the reader let go ("the nodes are getting attracted to one
+another"). Dropping a node now **locks** it instead. cytoscape-cola treats a locked node
+as a fixed constraint, so later bursts relax the rest of the web *around* the reader's
+arrangement. `orientToViewport` is off once anything is pinned (a hand-placed layout has
+an axis, so the free rotation is no longer free to take) and `gatherIsolatedNodes` skips
+locked nodes.
+Measured in-browser: Ser Dunmore dragged to (43.9, 213.8) stayed at (43.9, 213.8) after
+the drop, after 1.6s idle, and after a payload change (Places overlay on, 6 → 7 nodes,
+fresh cola burst). Nothing else on the canvas moved on drop.
+
+### 3. New "Direct only" step — added
+The steps control is now **Direct only · 1 step · 2 steps**. Step 0 spans the same 1 hop
+as step 1; what differs is the treatment — step 1 dims what lies outside the set, step 0
+takes it off the canvas (`.out-of-focus` → `display: none`, so a hidden node is also
+unhittable). The camera frames the focus set alone at step 0, and hidden labels are
+excluded from the declutter pass.
+Verified in-browser at Hollow Crown ch IV focused on Wren: 6 nodes at "1 step" → 2 nodes
+(Wren, Prince Caelum) at "Direct only", header reads "Focused on Wren · Direct only".
+
+### Verification
+- `npm run typecheck`: clean. `npm run build`: **`✓ built in 5.01s`**.
+- `npm run test:unit`: **`Test Files  5 passed (5)` / `Tests  50 passed (50)`**.
+- `npm run lint:design`: **`lint:design OK — 80 files checked. Red-permitted: 9 file(s).`**
+- Rule Zero: all three fixes inspected as rendered pixels in a real Chrome, not asserted.
+- **NOT RUN**: the Playwright suites. `.local/ms-playwright` is empty on this machine, so
+  the browser binaries the harness needs are absent; no spec references the steps control,
+  `dragfree` or edge `thickness`, but the suites are unverified for this change.
