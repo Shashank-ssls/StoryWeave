@@ -88,3 +88,32 @@ git revert -m 1 83785a0      # undo the merge, keeping history
 git push origin main
 ```
 The previous `main` stays reachable as tag `pre-retrofit-main`.
+
+## 7. Follow-up (same day): fresh-clone check and fixes
+
+**Fresh clone [MEASURED].** Cloned `retrofit/v2-core` at `30193a4` from GitHub into
+`.local/fresh_clone` (533 tracked files), followed the README quick start, then deleted the folder.
+- `py -3.12 -m venv .venv` **failed** on this machine: `No suitable Python runtime found`. The
+  launcher lists 3.14 and a uv-managed 3.12 that is only reachable as `-V:Astral/CPython3.12.13`.
+  The README now says to pick a version from `py -0p`. `py -V:3.14` worked.
+- `.\dev.ps1`, `pip install -e ".[dev]"` (exit 0), `check_local_env.py` (`PASS: all 10 checks are on
+  the project drive.`), and `storyweave seed-demo --no-ninth-house --db storyweave-demo.sqlite`
+  (`seeded 'the-hollow-crown' (work id=1) into storyweave-demo.sqlite`) all behaved as documented.
+- API on :8000 plus `npm install` (`added 122 packages`) and `npm run dev`: the page returned HTTP 200,
+  and `/api/v1/works` through the Vite proxy returned The Hollow Crown. A screenshot of the landing
+  page was opened and checked: title, shelf and the chapter-gated preview all render.
+- In the clone: `318 passed, 6 skipped in 315.72s (0:05:15)`, `All checks passed!`,
+  `Success: no issues found in 112 source files`. `pip install -e ".[figures,tools]"` exit 0, and
+  `import numpy, PIL, playwright, matplotlib` succeeded.
+- `npm install` reported `11 vulnerabilities (4 moderate, 5 high, 2 critical)` from `npm audit`.
+  Not changed (no version changes in this run); listed for review.
+- Not tested from the clone: the ML path (`.venv-ml`, GLiNER, Ollama) and the Playwright suite.
+
+**Fixes committed:** a `tools` extra in `pyproject.toml` (numpy, pillow, playwright) and
+playwright/greenlet/pyee added to `requirements.lock.txt` at the installed versions (numpy and
+pillow were already locked); "superseded by the retrofit, kept for history" banners on `SPEC.md`,
+`PROGRESS.md` and `SETUP_NOTES.md`; and a README that states the measured browser-test result
+(100 passed, 1 skipped, 1 timing-flaky failure) plus its setup. That setup needs both sample works,
+and building the Ninth House requires `.venv-ml`.
+
+**Still manual:** the GitHub description and topics (no `gh` CLI on this machine).

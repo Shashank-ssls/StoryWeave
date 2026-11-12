@@ -95,7 +95,8 @@ for this shell to folders inside the repo.
 ```powershell
 git clone https://github.com/Shashank-ssls/StoryWeave.git
 cd StoryWeave
-py -3.12 -m venv .venv
+py -0p                                      # lists your Pythons; any 3.12 or newer works
+py -V:3.14 -m venv .venv                    # or -3.12, -3.13: use a version py -0p shows
 .\dev.ps1                                   # activates .venv, pins caches inside the repo
 pip install -e ".[dev]"
 python tools/check_local_env.py             # must print PASS
