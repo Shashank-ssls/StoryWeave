@@ -67,6 +67,8 @@ How to read these:
   the twelve supported relation types by design.
 - The local LLM pass (qwen2.5:7b through Ollama) is optional; without it the system still
   builds a graph, with fewer relationships.
+- `npm audit` lists 11 advisories (2 critical) in frontend build and test tools (Vite, Vitest
+  and their dependencies). `npm audit --omit=dev` finds 0 in the packages the app ships with.
 - The interface is designed for desktop first. Phone layouts were captured in R7, but
   usability was not tested with readers.
 - Request times are in-process test-client timings, not production latency. Extraction time
@@ -89,14 +91,15 @@ Detail: [`docs/retrofit/design/ARCHITECTURE.md`](docs/retrofit/design/ARCHITECTU
 
 ## Quick start (Windows, everything local)
 
-Requires Git, Python 3.12+ and Node.js. `dev.ps1` creates no global state; it sets caches
+Requires Git, Python and Node.js. The light setup below was run from a fresh clone on Python 3.14
+(CI is configured for 3.12); the ML path was tested on Python 3.12 only. `dev.ps1` creates no global state; it sets caches
 for this shell to folders inside the repo.
 
 ```powershell
 git clone https://github.com/Shashank-ssls/StoryWeave.git
 cd StoryWeave
-py -0p                                      # lists your Pythons; any 3.12 or newer works
-py -V:3.14 -m venv .venv                    # or -3.12, -3.13: use a version py -0p shows
+py -0p                                      # lists your Pythons; use 3.12 or 3.14
+py -V:3.14 -m venv .venv                    # or the 3.12 entry py -0p shows
 .\dev.ps1                                   # activates .venv, pins caches inside the repo
 pip install -e ".[dev]"
 python tools/check_local_env.py             # must print PASS
@@ -120,7 +123,8 @@ npm run dev                                 # http://localhost:5173, proxies /ap
 
 `.\run.ps1` is an alternative that builds the frontend and serves it from the API on port 8000.
 
-**Optional ML path** (to process a novel yourself): create `.venv-ml` with Python 3.12, then
+**Optional ML path** (to process a novel yourself): create `.venv-ml` with Python 3.12 (the only version tested
+for torch and GLiNER; 3.14 is untested), then
 `.\dev.ps1 -Ml`, install `torch` from the CPU index and `pip install -r requirements-ml.txt`.
 GLiNER weights download to the Hugging Face cache on first use. The LLM pass needs Ollama
 running locally with `qwen2.5:7b`; it is off by default. The evaluated database
@@ -166,7 +170,6 @@ data/         two CC0 sample novels and their labels; data/raw/ is for your own 
 evidence/     frozen v1 baseline, annotation, every phase result, logs, figures, screenshots
 logs/         R7 and R8 run logs cited by the evaluation
 docs/         design specs, retrofit phase documents, the C: drive ledger
-docker/       empty placeholder
 ```
 
 ## v1 compared with the retrofit
