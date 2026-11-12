@@ -7,7 +7,7 @@ import type { Reveal } from "../../graph/diff";
 // sheet/quiet-toast state, the quiet-mode preference, the shared 3s `.just-revealed`
 // highlight both the Dossier and the Stemma read, and the Dossier's "replay" entry point.
 // Provided once per work by `RevealChrome`, mounted alongside `ChapterChrome` inside the
-// same `ChapterProvider` in `CodexApp` — so it sits above Dossier/Stemma/Chronicle and can
+// same `ChapterProvider` in `CodexApp` — so it sits above the Dossier and Stemma and can
 // coordinate all three without any of them fetching or holding reveal state themselves.
 
 /** Whatever a caller (Dossier's identity block, for a replay) already has in hand to

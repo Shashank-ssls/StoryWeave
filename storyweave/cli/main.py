@@ -38,12 +38,28 @@ def info() -> None:
 @app.command(name="seed-demo")
 def seed_demo(
     db: Annotated[Path | None, typer.Option(help="SQLite path override (fresh file).")] = None,
+    ninth_house: Annotated[
+        bool,
+        typer.Option(
+            "--ninth-house/--no-ninth-house",
+            help="Also build the-ninth-house via the real pipeline (needs .venv-ml).",
+        ),
+    ] = True,
 ) -> None:
-    """Build the deterministic CC0 demo graph (the-hollow-crown) — no ML, no LLM.
+    """Build the demo work(s) into a fresh DB, reproducibly. No LLM either way.
 
-    Reproducible fixture data for the Phase-8 frontend slice: the 8 node types + the
-    gold identity reveals (Wren==Caelum SECRET_IDENTITY@2, etc.) so the slider blooms.
-    Serve it with `uvicorn storyweave.api.app:app` and point the frontend at it.
+    the-hollow-crown: 100% hand-built fixture data (`demo.seed`), no ML — the 8 node
+    types + the gold identity reveals (Wren==Caelum SECRET_IDENTITY@2, etc.) so the
+    slider blooms. Works in the light `.venv`.
+
+    the-ninth-house (default; `--no-ninth-house` to skip): the REAL pipeline
+    (ingest -> extract -> relate) run against the committed source text and
+    storyweave.toml (arcs included), then the hand-curated Tier-2/Tier-3 layer from
+    its story bible (`demo.seed_ninth_house`, provenance `curated`, never `llm` —
+    the LLM stays off). `extract` needs GLiNER, so this half requires `.venv-ml`; run
+    with `--no-ninth-house` under the light `.venv` for Hollow Crown alone.
+
+    Serve either with `uvicorn storyweave.api.app:app` and point the frontend at it.
     """
     from storyweave.config import get_settings
     from storyweave.db.repository import Repository
@@ -58,6 +74,45 @@ def seed_demo(
             typer.echo(f"error: {exc}", err=True)
             raise typer.Exit(code=1) from exc
     typer.echo(f"seeded '{DEMO_SLUG}' (work id={work_id}) into {db_path}")
+
+    if not ninth_house:
+        return
+
+    from storyweave.demo.seed_ninth_house import curate_ninth_house
+    from storyweave.graph.builder import build_relationships
+    from storyweave.ingest.pipeline import ingest as run_ingest
+    from storyweave.ingest.work_config import find_work_config, load_work_config
+    from storyweave.nlp.pipeline import extract_work
+
+    source = Path("data/samples/the-ninth-house")
+    config_path = find_work_config(source)
+    work_config = load_work_config(config_path)
+
+    try:
+        with Repository(db_path) as repo:
+            report = run_ingest(source, repo, work_config)
+            work = repo.get_work_by_slug(report.work_slug)
+            assert work is not None and work.id is not None
+            # GLiNER imports lazily (nlp/extractor.py), so the ImportError this
+            # try/except exists to catch only actually surfaces here, at the first
+            # real predict_entities() call — not at any of the imports above.
+            extract_report = extract_work(work.id, repo, work_config)
+            relate_report = build_relationships(work.id, repo, work_config)
+            curation_report = curate_ninth_house(repo, work.id)
+    except ImportError as exc:
+        typer.echo(
+            "error: the-ninth-house needs the GLiNER pipeline (.venv-ml) - "
+            "re-run this command with '.venv-ml\\Scripts\\python.exe', or pass "
+            "--no-ninth-house to seed Hollow Crown alone in the light venv.",
+            err=True,
+        )
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"seeded 'the-ninth-house' (work id={work.id}) into {db_path}")
+    typer.echo(f"  {report.summary()}")
+    typer.echo(f"  {extract_report.summary()}")
+    typer.echo(f"  {relate_report.summary()}")
+    typer.echo(f"  {curation_report.summary()}")
 
 
 @app.command()

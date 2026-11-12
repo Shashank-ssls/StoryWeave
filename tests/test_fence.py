@@ -9,6 +9,7 @@ the reader has not been shown at chapter N is invisible.
 from __future__ import annotations
 
 from storyweave.db.models import (
+    Arc,
     Edge,
     ExtractionMethod,
     Node,
@@ -180,6 +181,45 @@ def test_identity_edge_is_fenced_like_any_edge() -> None:
         assert len(edges) == 1
         assert edges[0].relation == "SECRET_IDENTITY"
         assert edges[0].tier is RelationTier.IDENTITY
+
+
+# --- arcs (D6/F6, integration phase): name fenced, range always visible ----- #
+
+
+def test_arc_name_hidden_until_its_start_chapter_range_always_visible() -> None:
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid = repo.create_work(Work(slug="t", title="T"))
+        repo.set_arcs(
+            wid,
+            [
+                Arc(work_id=wid, ordinal=1, name="The Mourning Bell",
+                    start_chapter=1, end_chapter=8),
+                Arc(work_id=wid, ordinal=2, name="The Salt Cipher",
+                    start_chapter=9, end_chapter=16),
+            ],
+        )
+
+        # Before arc 2 starts: its range is visible, its NAME is not.
+        early = fence.visible_arcs(repo, wid, 5)
+        assert [a.start_chapter for a in early] == [1, 9]
+        assert [a.end_chapter for a in early] == [8, 16]
+        assert early[0].name == "The Mourning Bell"  # arc 1 already started
+        assert early[1].name == ""  # arc 2 not yet started -> redacted
+
+        # At arc 2's own start chapter, its name appears too.
+        later = fence.visible_arcs(repo, wid, 9)
+        assert later[1].name == "The Salt Cipher"
+
+
+def test_work_with_no_arcs_returns_empty_list() -> None:
+    """Hollow Crown, and any plain ingest with no [[arcs]] configured: no arcs at
+    all, never a 500 or an implicit fallback baked into the fence layer itself —
+    that fallback is the FRONTEND's job (DESIGN_SPEC D6), not the backend's."""
+    with Repository(":memory:") as repo:
+        repo.initialize_schema()
+        wid = repo.create_work(Work(slug="t", title="T"))
+        assert fence.visible_arcs(repo, wid, 10) == []
 
 
 # --- provably no unfenced element in the projection ------------------------ #

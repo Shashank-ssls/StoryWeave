@@ -597,3 +597,562 @@
 - **Next:** none within the redesign track — R0–R9 are all done. A fresh session on this
   branch should read this entry, confirm clean, and wait for your direction: further
   polish, new feature work, or merging `redesign/codex` into `main`.
+
+## Session 12 — Integration phase: merge to main, second demo novel, arcs, one-origin
+##   serving. Stopped mid-Part-C on explicit request to prioritize demo-readiness.
+
+> **A cold-start session on this track reads `docs/INTEGRATION.md` first** (it has its
+> own Part A/B/C structure and MEASURED numbers), then this entry, then
+> `CLAUDE.md`'s "Integration phase" section (I1–I6) before touching anything.
+
+- **Date:** 2026-09-22
+- **Model / effort:** Sonnet 5, high effort
+- **Branch:** `integration/demo-scale` (off `main`, which now has the merged R0–R9
+  redesign — see below)
+- **Commits:** `291b89a` (main, = R9's last commit) → `8862928` → `8cbb2cc` →
+  `5fbced9` → `da4f096` → `3ca5580` → `dec6ed2` → `82dfa34` → `cfb4d4d` (this branch)
+
+### 0. Cold-start discrepancy, resolved before anything else
+
+The user's kickoff instructions assumed `main` already had the merged R9 redesign.
+It didn't — `redesign/codex` was never merged (per its own R1 rule: only the user
+merges, and this session hadn't happened yet). Flagged it rather than guessing;
+user chose "merge now, then branch." Did exactly that: `git checkout master` (the
+local name; remote's default branch is `main` — renamed local `master` → `main` to
+stop the drift), `git merge --ff-only redesign/codex` (clean fast-forward, verified
+with `merge-base --is-ancestor` first), pushed, then branched
+`integration/demo-scale` from the now-current `main`. `main` is otherwise untouched
+this session (no further commits to it) per I6.
+
+### 1. Part A (recon) — complete, see INTEGRATION.md
+
+How Hollow Crown is actually produced (hand-built by `seed.py`, bypasses the real
+pipeline entirely, labels its curated identity edges `llm` despite no LLM ever
+running), how the app is served today (two dev servers, Vite proxy, no CORS/static
+mount), the real ingestion path end to end (`api/jobs.py` shells out to `.venv-ml`
+for `extract`→`relate`), and the 6 skipped pytest tests (all by design).
+
+**Real conflict found and taken to the user, not guessed**: Hollow Crown's `llm`
+provenance label for hand-curated data contradicted this phase's explicit
+instruction ("never label curated as llm"). User chose to add
+`ExtractionMethod.CURATED` (new enum value, additive) rather than mislabel the new
+work's data or retrofit Hollow Crown (which must stay byte-identical, I2).
+
+### 2. Part B (a second demo novel) — complete
+
+- **The bible + the text**: `docs/demo/the-ninth-house-bible.md` (cast/factions/
+  arcs/reveal schedule, all ground truth) → `data/samples/the-ninth-house/` (40
+  chapters, ~11k words, CC0 `LICENSE.md`, `storyweave.toml`). 89 designed entities,
+  4 factions of 5+ Character members, 5 arcs, 7 identity edges across 6 pairs (2
+  ALIAS, 2 SECRET_IDENTITY — one deepening into REINCARNATION at ch34, mirroring
+  Hollow Crown's own ch2→ch4 pattern — 1 standalone REINCARNATION, 1
+  TRANSMIGRATED_INTO), staggered ch5–ch37. A real authoring gap was found (several
+  bible-planned Ability/Concept terms never made it into the prose) and partly
+  fixed (small insertions into 5 existing chapters) — documented, not hidden.
+- **Arcs backend (D6/F6)**: `WorkConfig.arcs` (`[[arcs]]` in `storyweave.toml`) →
+  a new `arcs` table → `GET /works/{slug}/arcs?n=`, fenced in SQL (name redacted
+  until `start_chapter <= n`, range always sent). `ingest()` persists `cfg.arcs`
+  when present — a no-op for Hollow Crown (seeded directly, never via `ingest()`).
+  New tests at every layer (`test_fence.py`, `test_api.py`).
+- **Real GLiNER floor run + measured** (`.venv-ml`, `ingest`→`extract`→`relate`):
+  full precision/recall breakdown by type in INTEGRATION.md Part B.3 — Character
+  100% recall / 53% precision (pre-fix), Place ~22% precision, type confusion as
+  the dominant qualitative pattern (real entities landing under the wrong
+  ontology type more often than being missed outright).
+- **Tier-2/3 curation** (`demo/seed_ninth_house.py`): the 7 identity + 12 social
+  edges from the bible, added onto the real extracted graph, `CURATED`
+  provenance, real node-name lookups (never invented), loud failure on a miss.
+  Citation-gate test (`tests/test_ninth_house_citations.py`) reuses the project's
+  own `nlp.identity.citation_in_range` against the real chapter files — 9/9.
+- **Extended `seed-demo`** (`--ninth-house/--no-ninth-house`, default both):
+  GLiNER imports lazily, so the full default under the light venv seeds Hollow
+  Crown then fails with a clear message rather than a traceback;
+  `--no-ninth-house` works in either venv. MEASURED reproducible end to end.
+- **Real showability bug found AFTER the first full build**, via an actual
+  screenshot of the Stemma (not just the node-count numbers) — bare pronouns
+  (`she`, `you`) and generic-object nouns (`desk`, `door`) were rendering as their
+  own graph nodes, cluttering the canvas. Fixed with a small, principled stopword
+  filter in `nlp/cluster.py` (closed-class pronouns + bare single-word generic
+  nouns dropped before clustering; anything with real context untouched). Full
+  pipeline re-run, re-measured: 226→206 entities, 1584→1307 edges. Documented as
+  an addendum in INTEGRATION.md, not a silent rewrite of the original numbers.
+
+### 3. Part C (assimilation) — started, NOT complete
+
+**Done:**
+- **C.1 one-origin serving**: `storyweave/api/app.py` optionally mounts the built
+  frontend (`/assets`, `favicon.svg`, `og-image.png`, a genuine SPA-fallback
+  catch-all to `index.html`) when `frontend/dist` exists; skipped entirely
+  otherwise (every existing test unaffected — confirmed with dist/ actually
+  present on disk). `run.ps1`/`run.bat`: build + serve on one port. **MEASURED
+  live, twice**: once via `TestClient` (`tests/test_static_serving.py`, 6/6
+  against a fake dist tree) and once for real — `run.ps1 -Port 8090 -SkipBuild`
+  actually started, served `/`, `/api/v1/works`, and `/favicon.svg` all correctly
+  from one port, and a real Playwright screenshot against that exact server (not
+  the two-server dev setup) showed the Dossier rendering correctly with zero
+  console errors.
+- **C.2, partial**: the frontend now consumes the arcs endpoint for real
+  (`ChapterProvider` fetches `/arcs?n=` alongside the graph, `ChapterDialog` and
+  `Chronicle` use real arc names when present, F6 un-fixme'd in `fence.spec.ts`
+  and passing against the live the-ninth-house work). The FULL e2e walk
+  (`test:e2e-demo`: landing → open the-ninth-house → arc-based dialog → Dossier →
+  Stemma Principal/Everyone/search/focus → Chronicle with arc bands → a >3-reveal
+  jump → a single reveal → the deepening reveal → bookmark back, each step fence-
+  asserted) was **planned but not built** — only the F6 slice of it exists.
+
+**NOT done (explicitly deferred — user asked to prioritize demo-readiness over
+finishing the full checklist this session):**
+- C.3 performance measurements (API response time, time-to-interactive per tab,
+  Stemma settle time on the full cast) — not measured at all yet.
+- C.4 live ingestion test (paste-a-novel through the real UI/API path with the
+  GLiNER floor) — not run. `jobs.py`'s subprocess path is read and understood
+  (Part A.2) but never actually exercised end to end this session.
+- C.5 error-path tests (backend stopped mid-session, unknown slug, corrupted
+  bookmark) against the real backend — not run.
+- C.6 the §16 acceptance checklist re-run against the-ninth-house, with a new
+  column in the existing table — not done.
+- The formal "every screen, both viewports, inspected" screenshot pass — only
+  informal verification screenshots were taken (Landing, Dossier, the arc dialog,
+  Stemma Principal, Chronicle), by hand, to confirm demo-readiness, not saved or
+  organized as a phase-report artifact.
+- `FRONTEND_OVERHAUL.md` §9 "Integration" report — not written (INTEGRATION.md
+  itself is the record; the FRONTEND_OVERHAUL.md cross-reference is still owed).
+- INTEGRATION.md's own "Known limits" section is still a placeholder.
+
+### Decisions this session
+- Renamed local `master` → `main` (matches the remote's actual default branch
+  name) while merging — a one-time cleanup, not a new convention to maintain.
+- `ExtractionMethod.CURATED` added per the user's explicit choice (see §0 above).
+- The-Ninth-House's identity/social evidence quotes are real chapter text, checked
+  against the project's own citation-gate function — never hand-waved.
+- Stopped chasing further Stemma decluttering once the pronoun/generic-noun fix
+  measurably helped — the remaining density (a protagonist's ~50 real ties) is an
+  authentic property of the proximity-based Tier-1 floor on a hub character, not
+  noise, and further tuning (narrowing `window_chars`) is its own separate,
+  unstarted task rather than something to rush.
+
+### Issues — all MEASURED, all fixed same-session
+1. The Hollow-Crown-`llm`-provenance conflict (§0) — resolved via user decision,
+   not silently picked.
+2. `ExtractionMethod.CURATED` was added to the Python enum but NOT to the SQL
+   CHECK constraints (4 separate hardcoded literal lists in `repository.py`) —
+   every curated insert was rejected until this was caught (running the curation
+   script against a live DB, not just reading the code) and fixed by deriving the
+   CHECK constraint from the enum, the same pattern already used for node types/
+   relations/tiers.
+3. `seed-demo --ninth-house`'s `try/except ImportError` initially wrapped the
+   wrong thing — GLiNER imports lazily inside `extract_work()`, not at any of the
+   top-level `import` statements, so the first attempt let a raw traceback through
+   under the light venv. Found by actually running it there, fixed by moving the
+   try/except to wrap the call, not the imports.
+4. The F6 Playwright test failed twice for environmental reasons, not code bugs:
+   first because the running `uvicorn` process was **stale** (predated every
+   backend change made this session — arcs route, CURATED enum, static serving —
+   confirmed by curling `/arcs` directly and getting a bare 404 before restarting
+   the server), second because of a test-navigation mistake (a hardcoded
+   `entity/1` doesn't resolve on a work whose node IDs don't happen to include 1 —
+   fixed by navigating to the bare `/work/:slug` and letting `PENDING_ENTITY`
+   resolve the principal, the established pattern).
+5. The real showability bug (pronoun/generic-noun clutter in the Stemma) — found
+   only by actually looking at a screenshot, not by trusting the extraction
+   counts alone. Fixed, re-measured (§2 above).
+
+Nothing left BROKEN. Full regression at the last commit: backend `pytest` 132
+passed / 6 skipped, `ruff` clean, `mypy` clean (63 files); frontend `typecheck`/
+`build`/`lint:design` (83 files) clean, `test:unit` 68/68, and every Playwright
+suite touched this session re-run clean (`test:fence` 30/31 +1 fixme,
+`test:dossier` 6/6, `test:chronicle` 8/8, `test:stemma` 16/16, `test:reveal`
+11/11, `test:landing` 9/9, `test:static_serving` — backend-side, 6/6).
+
+### How to actually run and show the demo right now
+```powershell
+.\run.ps1                      # builds the frontend, serves both works on :8000
+# or, if frontend/dist is already built:
+.\run.ps1 -SkipBuild
+```
+Open `http://127.0.0.1:8000/`. Both works are on the shelf — Hollow Crown (the
+original 4-chapter showcase) and **The Ninth House** (the new 40-chapter demo:
+open it, set the bookmark past chapter 5 via the dialog to see real arc names, walk
+into the Stemma/Chronicle to see the identity reveals and arc bands). The two-
+server dev mode (`dev.ps1` + `cd frontend && npm run dev`) still works exactly as
+before if live-editing is wanted instead.
+
+### Next (resume order)
+1. Part C.2: build the actual `test:e2e-demo` Playwright walk (the F6 slice
+   already exists and passes; the rest of the walk — Stemma
+   principal/everyone/search/focus, Chronicle at 40 chapters, the >3-reveal jump,
+   the deepening reveal, bookmark back — is unbuilt).
+2. Part C.3–C.6 in the order INTEGRATION.md's Part C skeleton already lists them.
+3. Fill in INTEGRATION.md's "Known limits" section (it's currently a stub) and
+   write the `FRONTEND_OVERHAUL.md` §9 "Integration" report.
+4. A formal screenshot pass (every screen, 1440×900 and 1280×720) if/when a
+   polished, presentation-ready artifact set is wanted beyond the informal
+   verification already done this session.
+A fresh session should read `docs/INTEGRATION.md` in full first (it's the
+authoritative progress record for this track), then this entry, confirm
+`integration/demo-scale` is clean and pushed, restart the dev stack (or use
+`run.ps1`), and continue from step 1 above.
+
+---
+
+## Session — measurement harness (`tools/`) + first evidence run
+
+**Track:** integration (`integration/demo-scale`). Not a UI change: this session added a
+measurement harness and produced evidence artifacts. No app behaviour was modified.
+
+### What the task asked for vs what this repo is
+The task was written as a "v1 vs v2" comparison: an archived `v1_ninth_house.db`, a
+separate v2 repo, and v2 filtering by "spoiler fence + salience rank + disparity filter".
+Recon before writing any code found none of that exists here:
+- there is no archived v1 database and no second repo (`data/storyweave.sqlite` is empty;
+  `storyweave-demo.sqlite` is the only populated one);
+- the API applies the **spoiler fence only** (`api/app.py` -> `graph_json` ->
+  `graph/serialize.py:build_graph` -> `query/fence.py`);
+- `salience|disparity` has **zero code hits** across `.py/.ts/.tsx/.toml` — only prose in
+  PROGRESS/README/SETUP_NOTES/FRONTEND_OVERHAUL.
+The user confirmed the harness should measure the CURRENT system only, with no "v1"/"v2"
+naming, and be label-agnostic (`--label`) so a future rebuilt DB can be measured with it.
+
+### The three measured configurations (same codebase, same DB)
+- `api_payload` — the fence and nothing else: exactly what `/graph` sends.
+- `rendered_view` — that payload after the frontend's real client-side filters
+  (`viewModel.ts` `buildViewModel` + `stemmaModel.ts` `visibleGraph`, cast `principal`).
+- `rendered_everyone` — same, cast `everyone`. Added because `api_payload` has **no
+  renderable view**, so it cannot be screenshotted without inventing a screen.
+
+### Two real bugs the harness surfaced (NOT fixed — measurement phase)
+1. **`nx.DiGraph` silently drops same-direction parallel edges.** `build_graph` projects
+   into a DiGraph, so a second edge on the same ordered pair overwrites the first.
+   MEASURED: 1326 fenced edge rows at ch40 collapse to the **1316** the API serves.
+   The harness replicates this collapse, so it measures what is actually sent.
+2. **That collapse can relabel a Tier-3 identity reveal.** MEASURED at ch40: edge 1325
+   `SECRET_IDENTITY (14->150)` is overwritten by edge 1327 `REINCARNATION` on the same
+   ordered pair. This is why `SECRET_IDENTITY` counts read 1, 2, 2, **1** across the four
+   chapters. Worth a decision next session (a MultiDiGraph, or merging before projection).
+
+### Measured finding: the `principal` cast filter is a no-op on this work
+No drawable node in The Ninth House has degree < 2 (`deg0=0, deg1=0` at ch10 and ch40),
+so `rendered_view` and `rendered_everyone` are identical at every chapter
+(74/369, 108/569, 127/709, 157/989). The 206 -> 157 node reduction comes entirely from
+`buildViewModel`'s type drops (Concept/Event -> "Also mentioned", Title dropped), not from
+cast reduction. Confirmed twice: in the CSVs and in the live browser DOM.
+
+### Verification (MEASURED)
+- `pytest`: **`152 passed, 6 skipped, 2 warnings in 3.13s`** (Hollow Crown untouched, I2 holds).
+- `ruff check .`: **`All checks passed!`**
+- `mypy`: **`Success: no issues found in 70 source files`** (`tools` added to the gate).
+- `api_payload` metrics cross-checked against the LIVE endpoint at all four chapters:
+  90/503, 138/774, 167/970, 206/1316 — exact match.
+- All **16** screenshots verified (dimensions 3200x1800, non-blank, ink ratio, bbox) and
+  all 16 live-DOM counts match the CSVs. Every plate and plot was opened and inspected.
+- Harness guards negative-tested: density stays <=1 under multi-edges, the DOM/CSV
+  cross-check catches a mismatch, and a synthetic blank image is rejected.
+
+### Notes
+- No OpenCV: PIL + numpy cover blank detection, ink ratio and the ink bbox, so it was not
+  added as a dependency (the task asked this to be checked before adding it).
+- Playwright uses `channel="chrome"` (system Chrome) — no browser downloaded, matching the
+  existing screenshot-gate workflow.
+- The chapter bookmark is seeded via `localStorage` in an init script, never a URL
+  (DESIGN_SPEC §5 holds).
+- `#/work/:slug/web` with no `?focus` auto-focuses the highest-degree person, so the
+  "full" shot clicks the app's own `clear-focus` (focusOn(null) + fitAll) first.
+- `evidence/shots/*.png` (~39MB) is gitignored as regenerable; plates, plots, CSVs and
+  REPORT.md are committed.
+
+### Next
+Decide what to do about the DiGraph edge collapse (bug 1/2 above) — it is a backend
+change, so it belongs to a deliberate phase, not this measurement one.
+
+---
+
+## Session — v1 evaluation, phase 1 (ground-truth-free metrics + annotation scaffolding)
+
+Measurement only. No extraction, API or frontend code changed. Branch
+`integration/demo-scale`, measured at commit `f22f669`.
+
+### What landed
+Four new tools, all reusing `tools/swconfig.py`, the real `Repository` and the real
+`query/fence.py` (no SQL re-implemented anywhere):
+
+- `tools/eval_fence.py` — spoiler-fence leak rate over every reveal-stamped element on
+  every story surface, plus two negative controls. → `evidence/fence_leaks.csv`
+- `tools/eval_salience.py` — degree vs. mention-count ranking, Spearman, degree ties.
+  → `evidence/salience_v1.csv`
+- `tools/eval_performance.py` — machine, real extraction timing, peak RSS, model and DB
+  sizes, API medians. → `evidence/performance_v1.csv`
+- `tools/make_annotation_template.py` — chapter choice by computed criteria + the
+  phase-2 annotation pack. → `evidence/annotation/`
+
+Report: `evidence/EVAL_V1.md`. Runner stdout kept verbatim in `evidence/logs/`.
+
+### MEASURED
+- **Fence leak rate: 0 violations in 105,243 elements across 8,424 queries**, over 4
+  routes / 8 element kinds / both works / every chapter 1..max (Hollow Crown 1..4,
+  Ninth House 1..40). `/entity/{id}` was requested for *every* node id at *every*
+  chapter, so an unrevealed id 404-ing is part of the result.
+- **The detector was verified to fire.** Injected canary node/edge/property caught on
+  all six element kinds; a sabotaged (unfenced) Repository produced
+  `violations_detected=3556`. Both against a throwaway copy; the measured DB was never
+  written.
+- **Salience:** Spearman ρ = 0.7508 / 0.7378 / 0.7347 / 0.7166 at ch10/20/30/40, with
+  8–11 of the top 20 tied on degree. Agreement *decreases* as the graph grows.
+- **Performance (CPU, torch 2.12.1+cpu, CUDA unavailable):** per-chapter GLiNER stage
+  median **0.7178 s** over 5 real chapters; `extract_work` end-to-end 4.577 s for those
+  5; peak RSS **1697.2 MiB**; `gliner_small-v2.1` **610,659,026 bytes** on disk in
+  `<repo>/.hf-cache`; `/graph` median 12.816 → 25.803 ms from ch10 to ch40.
+- **Chapters chosen for the phase-2 annotation: 9, 17, 37** (computed, not hand-picked).
+
+### NOT MEASURED
+- The `/search` fence — no `.chroma` index exists in this checkout.
+- Entity/alias/relation P/R/F1 and P@k/MAP/AUC — they need the phase-2 annotation.
+- Node-property fence coverage is *thin* in the measurement run (7 elements): Ninth
+  House has zero `node_properties` rows; all 3 in the DB belong to Hollow Crown. The
+  property path is exercised properly only by the negative controls.
+
+### Note recorded, not a violation
+`GET /works/{slug}/status` returns an **unfenced** `node_count` (`count_nodes` takes no
+chapter). It serves no element and no name, so it is outside this metric — but it is a
+real side channel and is written down in `EVAL_V1.md` §7 rather than left implicit.
+
+### Verification
+- `pytest`: **`152 passed, 6 skipped, 2 warnings in 3.02s`** (Hollow Crown untouched, I2 holds).
+- `mypy`: **`Success: no issues found in 74 source files`**.
+- `ruff check` on the four new tools: **`All checks passed!`**. `ruff check .` over the
+  whole repo still reports 20 pre-existing E501/I001 findings in the older `tools/`
+  scripts; they predate this phase and were left alone.
+
+### Notes
+- **Model weights: a redundant download into the repo, since undone.** `<repo>/.hf-cache`
+  was empty at session start, so the performance run downloaded `gliner_small-v2.1`
+  (+ its `deberta-v3-small` backbone, 613 MB) into it. That was unnecessary: a populated
+  machine-wide cache already existed at `F:\Dev\shared\hf-cache` with the same models,
+  and the run missed it only because `storyweave/config.py` defaults `hf_home` to
+  `<repo>/.hf-cache`. The repo cache has been moved out and deleted; `gliner_small-v2.1`
+  is **610,659,026 bytes** in both locations (identical), and the shared copy was
+  verified to load and extract under `HF_HUB_OFFLINE=1`. `.hf-cache/` is in
+  `.gitignore:59` and no weight was ever committed (checked against the full history).
+  Cold load incl. download was 75.0108 s; the reported 10.3554 s is the warm load.
+- **Open item:** `STORYWEAVE_HF_HOME=F:\Dev\shared\hf-cache` must be set before
+  re-running `tools/eval_performance.py`, or the config default will silently pull the
+  613 MB back into the repo. A durable fix (changing the `hf_home` default, or an
+  `.env` entry) is a config change and was not made unasked.
+- Peak RSS uses Win32 `K32GetProcessMemoryInfo` via ctypes — psutil is in neither venv
+  and was not added. Spearman is computed with numpy on tie-corrected average ranks —
+  scipy is in neither venv and was not added.
+
+### Next
+Phase 2: fill the three `evidence/annotation/ch*_template.json` files against
+`GUIDELINES.md`, then score v1 against them.
+
+---
+
+## Session — v1 evaluation, phase 2 (scoring against the reference annotation)
+
+Measurement only. No extraction, API or frontend code changed. Branch
+`integration/demo-scale`, measured at commit `e928ca5`.
+
+### Reference provenance — the thing that governs every number here
+The reference annotation (`evidence/annotation/ch{09,17,37}.json`) is **model-generated
+(GPT-5)**, one fresh session per chapter, single run each, with paragraph indices, alias
+positions and evidence spans verified and corrected by hand; `ch09.json` was reindexed
+from 0- to 1-indexed. Every score is therefore **agreement between two systems**, not
+accuracy against human ground truth, and is reported per chapter as well as pooled.
+Recorded in `evidence/annotation/PROVENANCE.md` and restated in `EVAL_V1.md` §8 and §15.
+
+### What landed
+- `tools/eval_score.py` — validation + entity / alias / relation / Tier-3 / ranking /
+  rejected-mention scoring. → `evidence/scores_v1.csv` (1,837 rows)
+- `tools/eval_errors.py` — FP/FN grouped by cause, rules derived from the actual cases.
+  → `evidence/errors_v1.md`
+- `evidence/annotation/PROVENANCE.md`; `EVAL_V1.md` rewritten: §8–§15 added, the
+  phase-2 metrics moved out of "not yet measured", threats to validity added.
+
+### MEASURED (agreement, model-generated reference)
+- **Validation: zero failures.** All three files parse, every relation endpoint is in
+  `entities[]`, every evidence string is verbatim in the chapter text, every type and
+  relation is in v1's vocabulary, every paragraph number is in range. **0 records
+  excluded.** 23 `uncertain` records excluded from scoring (4/11/8) — they are free-text
+  notes, so nothing left the scored sets.
+- **Entities** (strict name+type): pooled **P=0.5208 R=0.5435 F1=0.5319** (TP25 FP23
+  FN21); per chapter F1 0.5116 / 0.4848 / 0.6667. Alias-aware variant pooled F1 0.5745.
+- **Alias clustering** (pairwise): pooled **P=1.0000 R=0.5000 F1=0.6667** —
+  **0 over-merges, 3 under-merges**, all three listed.
+- **Relations**: pooled `chapter_local` **micro-F1 0.0459** (TP5 FP162 FN46, macro-F1
+  0.0087); `cumulative` micro-F1 0.0623. Both variants reported; neither privileged.
+  38 of the 46 misses are reference relations with an endpoint v1 never produced, so the
+  relation figures largely restate the entity figures.
+- **Tier 3, as counts:** v1 holds `TRANSMIGRATED_INTO (Mira -> Wanderer)` at ch37. **The
+  reference contains ZERO Tier-3 records in any of the three chapters**, so there is no
+  matching record and the identity layer is not exercised in either direction.
+- **Ranking** (degree vs `significant`): MAP 0.7014 / 0.6008 / 0.9306, AUC 0.7875 /
+  0.6500 / 0.8333. P@20 and Recall@20 are **not measured** at ch17 and ch37 — 18 and 9
+  entities, fewer than the cutoff; nothing was padded.
+- **Rejected mentions:** v1 emitted **6 of 49** (rate 0.1224). All six are common nouns
+  or common-noun phrases; none is a proper noun.
+- **Error analysis:** entity FP 23 (type_disagreement 8, not_in_reference 8,
+  reference_rejected_string 4, alias_kept_separate 3); entity FN 21
+  (type_disagreement 8, partial_span_only 6, absent 4, canonical_name_choice 3);
+  relation FP 162 (RelatedTo fallback 81, type-pair rule 79, curated 2); relation FN 46
+  (endpoint_not_found 38, tier1_not_produced 5, tier2 3). Counts partition the totals.
+
+### Decisions worth recording
+- **Unmatchable reference relations are counted as FN**, not excluded. Excluding them
+  gave pooled `chapter_local` FN=8 instead of 46 and a recall of 0.80 at ch9 — scoring
+  v1 only on the relations it had already half-solved. The narrower figure is still
+  reported alongside as `*_matchable_only`, never instead.
+- **Two relation-scope variants**, because there is no neutral one: `chapter_local`
+  (`first_seen_chapter == N`) penalises v1 for relations first recorded earlier;
+  `cumulative` credits v1 for relations this chapter may not support.
+- **Error categories were derived from the cases, then written down as rules** in
+  `tools/eval_errors.py` so the counts are reproducible rather than asserted; first
+  matching rule wins, so the categories partition the errors.
+
+### Verification
+- `pytest`: **`152 passed, 6 skipped, 2 warnings in 3.38s`** (Hollow Crown untouched, I2 holds).
+- `mypy`: **`Success: no issues found in 76 source files`**.
+- `ruff check` on the six evaluation tools: **`All checks passed!`**. `ruff check .`
+  still reports the same 20 pre-existing E501/I001 findings in the older `tools/`
+  scripts; untouched.
+- Both tools re-run clean end to end after the last code change; the numbers in
+  `EVAL_V1.md` were read off `evidence/logs/eval_score.log` and `eval_errors.log`.
+
+### Next
+Nothing is scheduled. The open threads are the two BASELINE.md defects (DiGraph edge
+collapse and identity relabelling), which are backend changes and belong to a deliberate
+phase, and the `/search` fence, which cannot be measured until a `.chroma` index exists.
+
+## 2026-09-30 — canvas defects: slab edges, snapping nodes, a "direct only" step
+
+Three reader-reported defects on the graph canvases, all fixed in the frontend only. No
+backend, SQL, payload or fence change: the fence already decided what arrived, and every
+change here is a display clause applied after it (retrofit rule 1).
+
+### 1. The thick brown/beige "slab" lines — [MEASURED], fixed
+`codexStyle` maps `width: data(thickness)` and `target-arrow-shape: data(arrow)`, but the
+Landing mini graph and the Dossier ego graph each built their own edge `data` and set
+neither key. Both mappers resolved against a missing field, and Cytoscape drew the lines
+at arbitrary slab widths with no arrowheads — reproduced from the reader's screenshots on
+the Hollow Crown landing panel and on Wren's ego graph. The Stemma was unaffected because
+it was the one canvas that set the keys.
+Fix: one shared builder, `stemmaModel.edgeData(edge, label)`, used by all three canvases,
+so a missing key cannot happen again. Verified in a real browser (Chrome, 1440×900): the
+mini graph and the ego graph now draw 1–3px lines with arrowheads, and the identity edge
+is a thin accent line rather than a red slab.
+
+### 2. Dropped nodes snapped away — [MEASURED], fixed
+`dragfree` re-ran the whole cola burst, so the graph re-settled around the drop point and
+the node visibly moved after the reader let go ("the nodes are getting attracted to one
+another"). Dropping a node now **locks** it instead. cytoscape-cola treats a locked node
+as a fixed constraint, so later bursts relax the rest of the web *around* the reader's
+arrangement. `orientToViewport` is off once anything is pinned (a hand-placed layout has
+an axis, so the free rotation is no longer free to take) and `gatherIsolatedNodes` skips
+locked nodes.
+Measured in-browser: Ser Dunmore dragged to (43.9, 213.8) stayed at (43.9, 213.8) after
+the drop, after 1.6s idle, and after a payload change (Places overlay on, 6 → 7 nodes,
+fresh cola burst). Nothing else on the canvas moved on drop.
+
+### 3. New "Direct only" step — added
+The steps control is now **Direct only · 1 step · 2 steps**. Step 0 spans the same 1 hop
+as step 1; what differs is the treatment — step 1 dims what lies outside the set, step 0
+takes it off the canvas (`.out-of-focus` → `display: none`, so a hidden node is also
+unhittable). The camera frames the focus set alone at step 0, and hidden labels are
+excluded from the declutter pass.
+Verified in-browser at Hollow Crown ch IV focused on Wren: 6 nodes at "1 step" → 2 nodes
+(Wren, Prince Caelum) at "Direct only", header reads "Focused on Wren · Direct only".
+
+### Verification
+- `npm run typecheck`: clean. `npm run build`: **`✓ built in 5.01s`**.
+- `npm run test:unit`: **`Test Files  5 passed (5)` / `Tests  50 passed (50)`**.
+- `npm run lint:design`: **`lint:design OK — 80 files checked. Red-permitted: 9 file(s).`**
+- Rule Zero: all three fixes inspected as rendered pixels in a real Chrome, not asserted.
+- **NOT RUN**: the Playwright suites. `.local/ms-playwright` is empty on this machine, so
+  the browser binaries the harness needs are absent; no spec references the steps control,
+  `dragfree` or edge `thickness`, but the suites are unverified for this change.
+
+## 2026-09-30 (2) — arrowheads, and the Playwright browsers that were never missing
+
+### The Playwright browsers — [MEASURED], nothing was broken
+The previous entry said the Playwright suites were NOT RUN because `.local\ms-playwright`
+was empty. That inference was wrong, and this entry corrects it. `playwright.config.ts`
+sets `channel: "chrome"`, so the harness drives the machine's installed Chrome and has
+never downloaded a browser to either drive — the empty directory is the expected state,
+which `C_DRIVE_LEDGER.md` had already recorded at the end of R7. Nothing was installed.
+The suite runs from the repo as it stands: **`1 skipped, 101 passed (3.0m)`** and
+**`1 skipped, 101 passed (3.1m)`**, two consecutive runs at `--workers=1`.
+
+One flake is worth recording. The first full run of the session reported
+**`1 failed, 1 skipped, 100 passed (4.0m)`** — `stemma.spec.ts:466` "legibility: zero
+overlaps among principal labels", `expect(overlaps.count).toBeGreaterThan(12)` receiving
+exactly `12`. Re-run alone it passed 3/3, and it passed in both later full runs. It is a
+boundary assertion on a layout-dependent count (`> 12` against a measured 12), not a
+fence test, and not caused by the drag-lock/step-0 commit — that commit changed no code
+reachable from the default unfocused view. Recorded as a known flake, not fixed here.
+
+### Arrowheads on directed relations — [MEASURED], fixed
+Reported as still not working after the previous session. Four of the five candidate
+causes were checked; two were true.
+
+| candidate cause | true? | evidence |
+| --- | --- | --- |
+| `curve-style: haystack` (cannot draw arrows) | **no** | `haystack` appears nowhere in the repo; the style is `straight`, which draws arrows |
+| arrow hidden under the target node | **no** | at 3x zoom the head sits outside the node boundary, including on the 46px focus disk |
+| arrow colour matching the background | **partly** | it was `T.dim` on a `T.line` line over `T.bg`; now `T.ink`, with `T.faint` on `.far` and `T.accent` on identity |
+| `arrow-scale` too small to see | **YES** | Cytoscape sizes a head as `arrow-scale` x edge WIDTH. At the old fixed `0.8` a weight-1 tie drew a head **smaller than the 1px line under it** |
+| the `arrow` key missing from `edgeData` for some relations | **YES — the main cause** | see below |
+
+The main cause is a vocabulary mismatch. `DIRECTED_RELATIONS` listed seven
+SCREAMING_SNAKE R4 names. It was missing **`KIN_OF`**, and the backend's own
+`SYMMETRIC_R4_RELATIONS` (`db/models.py`) has been calling KIN_OF directed all along — so
+`/ego` served `directed: true` for a tie the canvas drew undirected. And the frozen
+Hollow Crown demo payload still carries v1's **CamelCase** names (`LocatedIn`, `OwnsItem`,
+`Serves`, ...), not one of which was in the set — so the demo, which is the first thing a
+visitor sees, drew **zero** arrowheads on any canvas. Both are fixed: the set now mirrors
+the backend's eight-directed / four-symmetric split and carries the v1 names for the same
+eight relations.
+
+`arrowScale` is now computed per thickness bucket (`3.2 / 2.0 / 1.6`) so the DRAWN head
+stays roughly constant instead of shrinking with the line. A fixed larger scale was tried
+first and measured worse: at `4.5` a weight-1 head was right but weight-2 heads dominated
+the canvas.
+
+**KIN_OF direction, stated plainly.** The request asked for a parent -> child direction
+taken from `kin_role`. That is not derivable: `_possessive_kin` in `extract/validator.py`
+returns the kin noun alone ("sister", "nephew") with no binding to which participant holds
+it, so the stored value does not say which endpoint is the parent. The arrow therefore
+shows the stored source -> target ordering, which is what the forward label already reads
+in, and no parent -> child ordering was synthesised. Said in the code comment too.
+
+### Rule Zero — what the crops actually show
+Captured against `data/retrofit/ninth_house_r6.db` (a second uvicorn on :8010; the demo
+backend was left running), ch40, 1280x720, focused on Sorrel, 20 nodes / 13 edges.
+
+- **Default fit (zoom 0.685).** Filled triangles at Hask, Ione, Corwin, Cassian, Robart
+  Kell, Thorne, Vesper and at the Sorrel focus disk. Legible without zooming.
+- **2x (zoom 1.37), three directed lines.** `Sorrel -> Hask "serves (implied)"`: filled
+  cream triangle at the Hask dot's lower right, pointing up-left into it.
+  `Ione -> Thorne "mentors · serves (implied)"`: triangle at Thorne's right edge, pointing
+  left into it. `Thessaly -> Sorrel "mentors (implied)"`: cream triangle just outside the
+  focus disk's outer ring at its lower right, pointing up-left. All three point at the
+  target named second by the label.
+- **2x, one symmetric line.** `Cassian - Thorne "enemy of (implied)"`, the long dashed line
+  across the middle: **no arrowhead at either end**, as intended.
+- **3x on Sorrel** confirms the head is drawn outside the 46px disk's 7px border and 1.5px
+  outline, not under it.
+
+DOM check at the default fit: 13 edges, **11 `triangle`, 2 `none`**, the two being the
+ENEMY_OF ties. Demo canvases re-checked at 1440x900: the Landing mini graph now shows
+heads into `the Coil` and `Aldercross`, and Wren's Dossier ego graph into `Aldercross` and
+`the heron ring`. Previously both drew none.
+
+### Verification
+- Playwright, `--workers=1`, twice: **`1 skipped, 101 passed (3.0m)`**, **`1 skipped, 101 passed (3.1m)`**.
+- `npm run test:unit`: **`Test Files  6 passed (6)` / `Tests  77 passed (77)`** (27 of them
+  the new `src/graph/arrows.test.ts`). `npm run build`: **`✓ built in 4.17s`**.
+  `npm run lint:design`: **`OK — 81 files checked`**. `npm run typecheck`: clean.
+- `pytest`: **`318 passed, 6 skipped, 2 warnings in 242.56s`**.
+- `ruff check .`: **`All checks passed!`**. `mypy .`: **`Success: no issues found in 116 source files`**.
+  Both needed five pre-existing annotation fixes in `tests/test_r7_cast_within_types.py`
+  and `tools/r8_compare.py` (inherited from R7; no behaviour changed).
+- C: re-audited against the ledger; nothing installed. See `C_DRIVE_LEDGER.md`, re-audit
+  2026-09-30.

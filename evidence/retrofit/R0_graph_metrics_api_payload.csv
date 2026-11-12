@@ -1,0 +1,5 @@
+label,config,slug,chapter,nodes,edges,distinct_pairs,parallel_edges,self_loops,mean_degree,median_degree,max_degree,edge_density,isolated_nodes,degree1_nodes
+api_payload,api_payload,the-ninth-house,10,90,503,498,5,0,11.1778,9.0,57,0.124345,0,0
+api_payload,api_payload,the-ninth-house,20,138,774,767,7,0,11.2174,8.5,83,0.081138,0,1
+api_payload,api_payload,the-ninth-house,30,167,970,961,9,0,11.6168,8.0,96,0.069331,0,2
+api_payload,api_payload,the-ninth-house,40,206,1316,1307,9,0,12.7767,8.0,121,0.061899,0,1

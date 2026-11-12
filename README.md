@@ -1,304 +1,190 @@
 # StoryWeave
 
-[![CI](https://github.com/Shashank-ssls/StoryWeave/actions/workflows/ci.yml/badge.svg)](https://github.com/Shashank-ssls/StoryWeave/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
+A local tool that builds a character graph of a novel which only shows what a reader has
+been told up to the chapter they have reached.
 
-> A spoiler-aware knowledge engine for web novels — a living, chapter-fenced knowledge graph that only ever shows you what you’ve already read.
-
-StoryWeave ingests the chapters of a web novel and builds a **knowledge graph** of the
-story — characters, places, organizations, items, abilities, concepts, events, and titles
-as nodes; typed relationships as edges — together with a **spoiler-aware semantic search**.
-Its defining principle: **the graph models what the reader has been told by chapter N, not
-the objective truth of the world.** A chapter slider drives this reading position, and the
-graph *blooms* as you advance — a secret identity, a hidden allegiance, or a late twist
-appears on the exact chapter the text reveals it, and never before.
-
----
-
-## ⚠️ Disclaimer
-
-- **Personal / portfolio project.** Built as a learning and demonstration project, provided
-  **as-is** with no warranty (see [LICENSE](LICENSE)).
-- **No copyrighted text is distributed.** The repo ships **only one original, CC0-licensed
-  sample novel** (*The Hollow Crown*, under `data/samples/the-hollow-crown/`). Any real
-  web-novel text you analyze stays in a **local, git-ignored** folder (`data/raw/`) and is
-  never committed, uploaded, or transmitted. Respect the copyright and terms of service of
-  any source you use.
-- **Output is automated and imperfect.** Entities and relationships come from zero-shot NER
-  (GLiNER) and an optional local LLM — a best-effort reconstruction of reader-knowledge, not
-  a curated wiki (see [Scope & limitations](#scope--limitations)).
-- **Local-first and private by default.** Nothing leaves your machine. The optional LLM
-  layer is **off by default**; with it off there are **zero outbound network calls** at
-  runtime.
-- **Not affiliated** with any author, translator, or publisher.
-
----
+Status: academic project, version tag `retrofit-v1.0` (final state `retrofit-v1.0-final`).
+Not maintained as a product.
 
 ## What it does
 
-- **Spoiler fence (the core idea).** Every node, edge, and significant property carries a
-  `revealed_chapter`. A single query chokepoint hides anything the reader hasn’t reached at
-  chapter N — enforced at the database/index level, never as a fragile post-filter.
-- **8-type ontology, rich edges.** `Character · Place · Organization · Item · Ability ·
-  Concept · Event · Title`, with subtypes and **three tiers of relationships**: structural
-  (rule-based floor), social (optional LLM), identity (`SAME_AS`, `ALIAS`, `SECRET_IDENTITY`,
-  `REINCARNATION`, `TRANSMIGRATED_INTO`).
-- **GLiNER floor, LLM enhancement.** A complete, useful graph is produced with **zero LLM**.
-  The optional local LLM only *adds* social and identity edges, and degrades gracefully to
-  the floor when unavailable.
-- **Fenced semantic search**, an **interactive React + Cytoscape UI** (chapter slider with
-  bloom, degree filter, salience demotion, type isolation, path-finding, evidence panel),
-  and **provenance** (extraction method + evidence span) on every element.
+You tell StoryWeave "I have read up to chapter *n*". It shows the people, groups, places and
+objects of the story, and the relationships between them, that the text has revealed by
+chapter *n*, and nothing later. Every node and edge stores the chapter at which a reader
+learns it (`revealed_chapter`). The rule `revealed_chapter <= n` is applied in one place,
+the query layer (`storyweave/query/fence.py`, executed by `storyweave/db/repository.py`),
+so the browser never receives anything from later chapters. Every drawn relationship
+carries the sentence from the book that supports it.
 
----
+![Default view at chapter 40](evidence/retrofit/shots/R7/desktop_ch40_default.png)
 
-## How a fresh clone behaves
+*Chapter 40 of the evaluation novel, default view: the 20 most central characters.
+Solid lines are stated in the text, dashed lines are implied. Captured in phase R7
+(`evidence/retrofit/shots/R7/`).*
 
-The clone gives you all the **source code** plus the **CC0 sample novel**. Several things are
-intentionally **git-ignored** and are recreated locally — so a clone is small and contains no
-weights, databases, or copyrighted text:
+## Results
 
-| Not in the clone (git-ignored) | How it comes back |
-| --- | --- |
-| `.venv/`, `.venv-ml/` (virtual envs) | you create them (steps below) |
-| `*.sqlite` (databases) | `storyweave seed-demo` / `storyweave ingest` rebuild them |
-| `.hf-cache/` (GLiNER + embedding weights) | auto-downloads on first `extract` / `index` (needs internet) |
-| `tools/`, `.llm-cache/` (LLM runner + model weights) | only for the **optional** LLM layer — set up separately |
-| `node_modules/`, `frontend/dist/` | `npm install` / `npm run build` |
-| `data/raw/` (your own novels) | you add your own text |
+All values below are [MEASURED] on one 40-chapter novel (*The Ninth House*, written for this
+project). The full write-up is [`evidence/retrofit/EVAL_RETROFIT.md`](evidence/retrofit/EVAL_RETROFIT.md).
 
-**The fastest path (the demo) needs no ML and no downloads** — only the light Python env and
-Node. The full novel-analysis pipeline adds the ML env (and downloads model weights on first
-run). The LLM layer is optional on top of that.
+| metric | v1 | retrofit | label | source |
+| --- | ---: | ---: | --- | --- |
+| spoiler-fence violations / elements checked | 0 / 105,243 | 0 / 28,869 (12,660 queries) | [MEASURED] | `logs/R8_eval_fence.log` |
+| relation micro-F1, v1 answer key | 0.0459 | 0.0000 | [MEASURED] | `logs/R8_score_final_v1key.log` |
+| wrong relationship lines (false positives), v1 key | 162 | 7 | [MEASURED] | `logs/R8_score_final_v1key.log` |
+| entity F1, v1 8-type key | 0.5319 | 0.5682 | [MEASURED] | `logs/R8_score_final_v1key.log` |
+| entity F1, 4-type key | n/a | 0.6250 | [MEASURED] | `logs/R8_score_final_proj.log` |
+| alias F1 / wrongly merged identities | n/a | 0.7500 / 0 | [MEASURED] | `logs/R8_score_final_proj.log` |
+| salience AUC (only chapter 9 has negatives) | n/a | 0.6667 | [MEASURED] | `evidence/retrofit/logs/R6_salience_score.log` |
+| default view at chapter 40 (dots / lines) | 152 / 976 | 20 / 18 | [MEASURED] | `logs/R8_compare.log` |
+| median `/graph` request at chapter 40 | 28.2 ms | 11.3 ms | [MEASURED] | `logs/R8_compare.log` |
+| pre-registered predictions | | 19: 6 inside band, 12 outside, 1 badly specified | [MEASURED] | `evidence/retrofit/PROJECTION_CHECK.md` |
 
----
+How to read these:
 
-## Setup — step by step
+- **Relationship extraction does not work yet.** F1 fell from 0.0459 to 0.0000. v1's five
+  correct relationships all came from a co-occurrence rule that also produced 160 of its
+  162 wrong ones. That rule is now off. The replacement only draws a relationship when a
+  sentence names both people, and English often names one of them as "she" or "he", so the
+  rule rejects most true relationships. The result is a graph with very few wrong lines and
+  very few right ones. Resolving pronouns (coreference) is the main open problem
+  (`EVAL_RETROFIT.md` §4).
+- **Salience is modest.** The AUC of 0.6667 comes from one chapter; at the other two annotated
+  chapters every matched entity is significant, so the metric cannot discriminate there.
+- **The fence count.** 28,869 is recounted from the per-element-kind totals in
+  `logs/R8_eval_fence.log`, which sum to the logged total. An earlier figure of 28,046
+  (`evidence/retrofit/logs/R6_eval_fence.log`) is from phase R6, before R7 widened the
+  default cast; both runs found 0 violations, and in both the injected test leaks were detected.
 
-This reproduces a complete local install (the same layout the project is developed on).
-Steps **1–3 + 6** are enough for the demo; add **4** to analyze your own novels; add **5**
-for the optional LLM layer.
+## What this does not show
 
-### Prerequisites
-- **Git**
-- **Python 3.12+** for the light app (the reference machine uses 3.14; any 3.12+ works)
-- **Python 3.12** specifically for the ML pipeline (torch/GLiNER wheels target 3.12)
-- **Node.js 18+** (20 recommended) for the frontend
-- *(optional, ML)* ~3 GB free disk for model weights; CPU is sufficient — a 4 GB GPU is optional
-- *(optional, LLM)* [Ollama](https://ollama.com) (or any OpenAI-compatible local runner)
-
-> **Tip (large files off your system drive):** model weights are big. The app already caches
-> HuggingFace weights to a git-ignored `.hf-cache/` **inside the project**. If your project
-> lives on a data drive (e.g. `D:`/`F:`), all weights stay off `C:` automatically. For the
-> LLM runner, point `OLLAMA_MODELS` at a folder on the same drive (step 5).
-
-### 1. Clone
-```bash
-git clone https://github.com/Shashank-ssls/StoryWeave.git
-cd StoryWeave
-```
-
-### 2. Light environment (`.venv`) — app, CLI, tests
-```bash
-# Windows (PowerShell)
-py -V:3.14 -m venv .venv          # or:  py -3.12 -m venv .venv
-.venv\Scripts\activate
-pip install -e ".[dev]"
-
-# macOS / Linux
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-```
-Verify:
-```bash
-storyweave version          # prints the version
-storyweave info             # shows config (confirms the LLM layer is OFF by default)
-pytest                      # 120+ tests; ML-only tests skip here
-ruff check . && mypy        # lint + strict type-check
-```
-
-### 3. Frontend
-```bash
-cd frontend
-npm install
-cd ..
-```
-
-### 4. ML environment (`.venv-ml`) — only to analyze your own novels
-```bash
-# Windows
-py -3.12 -m venv .venv-ml
-.venv-ml\Scripts\python -m pip install -U pip
-.venv-ml\Scripts\python -m pip install -e .
-.venv-ml\Scripts\python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-.venv-ml\Scripts\python -m pip install -r requirements-ml.txt
-```
-```bash
-# macOS / Linux
-python3.12 -m venv .venv-ml
-.venv-ml/bin/pip install -U pip
-.venv-ml/bin/pip install -e .
-.venv-ml/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
-.venv-ml/bin/pip install -r requirements-ml.txt
-```
-GLiNER + embedding weights download to `.hf-cache/` on first `extract` / `index`.
-
-### 5. Optional LLM layer (Ollama) — see [The optional LLM layer](#the-optional-llm-layer-tier-2--tier-3) for full details
-```bash
-# install Ollama (ollama.com), then — to keep weights off C: — point it at a data drive:
-#   PowerShell:  $env:OLLAMA_MODELS = "F:\path\to\StoryWeave\.llm-cache\ollama-models"
-#   bash:        export OLLAMA_MODELS="$PWD/.llm-cache/ollama-models"
-ollama serve                       # starts the runner on 127.0.0.1:11434
-ollama pull qwen2.5:7b             # CPU primary (identity/social)
-ollama pull llama3.2:3b            # smaller fallback (fits a 4 GB GPU)
-```
-
-### 6. Run the demo (no ML, no downloads)
-```bash
-# build the deterministic CC0 demo graph
-storyweave seed-demo --db storyweave-demo.sqlite
-
-# Terminal 1 — serve the fenced API (light venv)
-#   PowerShell:  $env:STORYWEAVE_DB_PATH="storyweave-demo.sqlite"; uvicorn storyweave.api.app:app --port 8000
-#   bash:        STORYWEAVE_DB_PATH=storyweave-demo.sqlite uvicorn storyweave.api.app:app --port 8000
-
-# Terminal 2 — run the UI (proxies /api -> :8000)
-cd frontend && npm run dev         # open http://localhost:5173
-```
-Drag the chapter slider: the `SECRET_IDENTITY` edge blooms at chapter 2, `ALIAS` at 3, and
-the layered `TRANSMIGRATED_INTO` reveal at 4 — the spoiler fence, made visible.
-
----
-
-## Running it
-
-### The demo
-See step 6 above — the quickest way to see StoryWeave working end-to-end (zero ML, zero
-network).
-
-### Your own novel (local pipeline)
-Place chapters under `data/raw/<your-novel>/` (one `.txt` per chapter, or a single file with
-`Chapter N` headings), then run the pipeline with the **`.venv-ml`** interpreter:
-```bash
-storyweave ingest data/raw/my-novel --slug my-novel --db my.sqlite   # clean, split, chunk
-storyweave extract my-novel --db my.sqlite                           # GLiNER entities (the floor)
-storyweave relate  my-novel --db my.sqlite                           # Tier-1 structural edges
-storyweave coref   my-novel --db my.sqlite                           # optional: pronoun -> POV merge
-storyweave index   my-novel --db my.sqlite                           # embeddings for search
-```
-Then serve that database and open the UI:
-```bash
-# PowerShell:  $env:STORYWEAVE_DB_PATH="my.sqlite"; uvicorn storyweave.api.app:app --port 8000
-STORYWEAVE_DB_PATH=my.sqlite uvicorn storyweave.api.app:app --port 8000
-cd frontend && npm run dev
-```
-Per-novel knobs (chapter detection, cleaning, POV character for coref, thresholds) live in an
-optional `storyweave.toml` beside the text — configuration is **data, never code**. See
-`data/samples/the-hollow-crown/storyweave.toml` for an example.
-
----
-
-## The optional LLM layer (Tier-2 + Tier-3)
-
-The GLiNER floor (entities + structural edges + the reveal fence) is fully functional with no
-LLM. The LLM only **adds** Tier-2 **social** relations and Tier-3 **identity** inference (the
-“who is secretly whom” reveals) — and it is **OFF by default**. If it’s disabled or the runner
-is unreachable, the pipeline degrades cleanly to the floor.
-
-**1. Run a local OpenAI-compatible model server.** The reference setup uses **Ollama**:
-```bash
-# optional: keep model weights off C: by pointing Ollama at a data-drive folder
-export OLLAMA_MODELS="$PWD/.llm-cache/ollama-models"   # PowerShell: $env:OLLAMA_MODELS=...
-ollama serve                                           # serves http://127.0.0.1:11434
-ollama pull qwen2.5:7b                                 # primary (CPU, ~8 tok/s, leaves VRAM for GLiNER)
-ollama pull llama3.2:3b                                # fallback (fits a 4 GB GPU, ~57 tok/s)
-```
-
-**2. Tell StoryWeave to use it.** Configuration is via `STORYWEAVE_*` env vars (defaults shown):
-```bash
-STORYWEAVE_LLM_ENABLED=true                       # the switch — OFF unless set
-STORYWEAVE_LLM_BASE_URL=http://127.0.0.1:11434/v1 # OpenAI-compatible endpoint (Ollama default)
-STORYWEAVE_LLM_MODEL=qwen2.5:7b                   # or llama3.2:3b
-```
-(You can also copy `.env.example` to `.env` and edit it.)
-
-**3. Run the enhancement passes** (with the `.venv-ml` interpreter, after `extract`/`relate`):
-```bash
-storyweave social   my-novel --db my.sqlite                    # Tier-2 social relations
-storyweave identity my-novel --db my.sqlite                    # Tier-3 identity inference
-storyweave identity my-novel --db my.sqlite --model llama3.2:3b  # use the GPU fallback model
-```
-Identity edges are **citation-gated and reveal-respecting**: each is written only at the
-earliest chapter the model can both conclude the identity *and* quote a confirming line that
-actually occurs in chapters 1..k — so a reveal never blooms early. Any compatible endpoint
-(Ollama, llama.cpp server, LM Studio, …) works; just point `STORYWEAVE_LLM_BASE_URL` at it.
-
-> **Note:** the runner itself (`tools/`) and its weights (`.llm-cache/`) are git-ignored, so a
-> fresh clone does **not** include them — install Ollama and pull the models as above.
-
----
+- One novel for the main evaluation, and that novel was generated for the project, so its
+  prose may be more regular than a published book.
+- A small answer key: 3 annotated chapters (9, 17, 37). The annotation was produced by a model
+  and hand-checked for spans; it is not independent human ground truth, and no
+  inter-annotator agreement was measured.
+- Relationship extraction is weak (see above). Over half the reference relations fall outside
+  the twelve supported relation types by design.
+- The local LLM pass (qwen2.5:7b through Ollama) is optional; without it the system still
+  builds a graph, with fewer relationships.
+- The interface is designed for desktop first. Phone layouts were captured in R7, but
+  usability was not tested with readers.
+- Request times are in-process test-client timings, not production latency. Extraction time
+  was not re-measured in the final phase.
 
 ## Architecture
 
 ```
-INGESTION   →   EXTRACTION    →   STORES         →   FENCE QUERY LAYER   →   API      →   FRONTEND
-clean/split     GLiNER (floor)    SQLite (truth)     the one chokepoint      FastAPI      React +
-chunk           + LLM (enhance)   vector store       revealed_chapter <= N                Cytoscape
+chapters (.txt) -> ingest: clean, split, chunk          storyweave/ingest
+                -> entities: GLiNER, 4 drawn types      storyweave/extract, storyweave/nlp
+                -> relations: GLiNER-RelEx + optional LLM proposals,
+                   checked by a validator (12 closed types, verbatim quote)
+                -> SQLite (source of truth; all SQL in db/repository.py)
+                -> salience rank per chapter, from chapters <= n only
+                -> query layer: fence clause first, then display clauses (cast size, types, grade)
+                -> FastAPI (storyweave/api) -> React + Cytoscape (frontend/), renders what it receives
 ```
 
-- **SQLite is the source of truth.** The graph projection and vector index are derived and
-  fully rebuildable from it.
-- **All SQL lives in `storyweave/db/repository.py`** — a single audit point.
-- **All spoiler filtering passes through `storyweave/query/fence.py`** — the one enforcement
-  chokepoint, keyed on `revealed_chapter`.
+Detail: [`docs/retrofit/design/ARCHITECTURE.md`](docs/retrofit/design/ARCHITECTURE.md).
 
-Package layout: `storyweave/{config, db, ingest, nlp, graph, search, query, api, cli}`, plus
-`frontend/`, `eval/`, `tests/`, and `data/{raw, samples, labels}/`.
+## Quick start (Windows, everything local)
 
----
+Requires Git, Python 3.12+ and Node.js. `dev.ps1` creates no global state; it sets caches
+for this shell to folders inside the repo.
 
-## Scope & limitations
-
-**In scope:** a local, free, offline-by-default pipeline that turns ingested chapters into a
-spoiler-fenced knowledge graph and a chapter-scoped semantic search, with an interactive graph
-UI. The design favors **precision over recall** — for a spoiler graph, a *missing* edge is
-safer than a *false* one.
-
-**Deliberately out of scope / known limits (measured, not hidden):**
-
-- **It is not a novel reader** and does not redistribute any copyrighted text.
-- **Extraction quality is bounded by the models.** On the CC0 sample, Tier-2 social-relation
-  recall is ~0.29 (precision 1.00) — many implicit relations need reasoning a small local
-  model can’t reliably provide; lifting it was measured and regressed precision, so it was
-  not shipped.
-- **Identity subtype labels can be imprecise** with a small (7B) local model (e.g.
-  transmigration vs. reincarnation), even when the reveal timing and the edge are correct.
-- **Coreference is conservative.** First/second/third-person self-reference merges into a
-  configured point-of-view character; ambiguous epithets (“the younger soldier”) are left
-  unmerged rather than risk corrupting the graph.
-- **The LLM layer is optional and unverified across genres.** Several enhancements remain
-  gated behind a model larger than the local CPU / 4 GB-GPU target.
-
-The authoritative design lives in [`SPEC.md`](SPEC.md); detailed, dated status and the
-measurement log live in [`PROGRESS.md`](PROGRESS.md).
-
----
-
-## Development
-
-```bash
-ruff check .                    # lint
-mypy                            # strict type-check
-pytest                          # tests (light venv)
-cd frontend && npm run build    # frontend type-check + production build
+```powershell
+git clone https://github.com/Shashank-ssls/StoryWeave.git
+cd StoryWeave
+py -3.12 -m venv .venv
+.\dev.ps1                                   # activates .venv, pins caches inside the repo
+pip install -e ".[dev]"
+python tools/check_local_env.py             # must print PASS
+storyweave seed-demo --no-ninth-house --db storyweave-demo.sqlite
 ```
-CI runs this same gate (ruff · mypy · pytest · frontend build) on every push and PR.
 
----
+The last command prints `seeded 'the-hollow-crown' (work id=1) into storyweave-demo.sqlite`.
+Then run the backend and the frontend in two shells:
 
-## License
+```powershell
+# shell 1
+.\dev.ps1
+$env:STORYWEAVE_DB_PATH = "storyweave-demo.sqlite"
+python -m uvicorn storyweave.api.app:app --port 8000
 
-[MIT](LICENSE) © Shashank Singhal. The bundled sample novel *The Hollow Crown* is released
-under **CC0** (see `data/samples/the-hollow-crown/LICENSE.md`).
+# shell 2
+cd frontend
+npm install
+npm run dev                                 # http://localhost:5173, proxies /api to :8000
+```
+
+`.\run.ps1` is an alternative that builds the frontend and serves it from the API on port 8000.
+
+**Optional ML path** (to process a novel yourself): create `.venv-ml` with Python 3.12, then
+`.\dev.ps1 -Ml`, install `torch` from the CPU index and `pip install -r requirements-ml.txt`.
+GLiNER weights download to the Hugging Face cache on first use. The LLM pass needs Ollama
+running locally with `qwen2.5:7b`; it is off by default. The evaluated database
+(`data/retrofit/ninth_house_r6.db`) is not in the repo; it is rebuilt by the phase scripts
+`tools/build_r3_db.py` to `tools/build_r6_db.py`, and each phase's
+`evidence/retrofit/R*_RESULT.md` gives the exact command.
+
+## Tests
+
+```powershell
+.\dev.ps1
+python -m pytest            # 318 passed, 6 skipped [MEASURED, this commit]
+ruff check .                # All checks passed!
+mypy                        # Success: no issues found in 112 source files
+cd frontend
+npm run build
+npx playwright test         # browser suite, uses the Hollow Crown fixture
+```
+
+CI (`.github/workflows/ci.yml`) runs ruff, mypy, pytest and the frontend build.
+
+## Repository layout
+
+```
+storyweave/   Python package: ingest, extract, db, graph, query (fence), api, cli
+frontend/     React + Cytoscape client and its Playwright tests
+tests/        pytest suite, including the fence tests
+tools/        evaluation, figure and database-build scripts, local-environment check
+eval/         older model probes (NER, relex, identity, LLM gate)
+data/         two CC0 sample novels and their labels; data/raw/ is for your own text (ignored)
+evidence/     frozen v1 baseline, annotation, every phase result, logs, figures, screenshots
+logs/         R7 and R8 run logs cited by the evaluation
+docs/         design specs, retrofit phase documents, the C: drive ledger
+docker/       empty placeholder
+```
+
+## v1 compared with the retrofit
+
+- The co-occurrence relationship rule is off (`relations.cooccurrence_enabled = false`); it
+  produced 160 of v1's 162 wrong relationship lines.
+- Four node types are drawn (Character, Organization, Place, Item) instead of eight; the
+  default view shows characters only.
+- Twelve closed relation types; anything else is rejected in code, and every edge needs a
+  verbatim quote. Implied edges are drawn dashed and labelled "(implied)".
+- Display filters (cast size, node types, grade) are separate SQL clauses after the fence.
+  v1's cast filter ran in the browser and had no effect.
+- Cast size is chosen by a salience rank computed only from chapters up to *n*, so the
+  ranking itself does not leak later chapters.
+- The frontend was reworked so that a non-technical reader can follow the default view.
+
+## How this was built
+
+The work was done in pre-registered phases R0 to R8. The phase prompts, progress log and
+design notes are in [`docs/retrofit/`](docs/retrofit/); every measurement, log and screenshot
+is in [`evidence/`](evidence/). Every C: drive change made during the project is recorded in
+[`docs/retrofit/C_DRIVE_LEDGER.md`](docs/retrofit/C_DRIVE_LEDGER.md).
+
+## Licence and acknowledgements
+
+Code: [MIT](LICENSE), Shashank Singhal. Both sample novels in `data/samples/` are original
+works released under CC0 (see the `LICENSE.md` in each folder).
+
+Models and libraries, with the licences stated in their own metadata:
+GLiNER (Apache-2.0) with the `urchade/gliner_small-v2.1` model (Apache-2.0);
+`knowledgator/gliner-relex-base-v1.0` (Apache-2.0); FastAPI (MIT); Pydantic (MIT);
+Typer (MIT); NetworkX (BSD-3-Clause); React (MIT); Cytoscape.js (MIT).
+Also used: `sentence-transformers/all-MiniLM-L6-v2` for search embeddings, and qwen2.5:7b
+through Ollama for the optional LLM pass; see their model cards for terms.

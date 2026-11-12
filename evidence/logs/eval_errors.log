@@ -1,0 +1,23 @@
+REFERENCE ANNOTATION: model-generated (GPT-5), one fresh session per chapter, single run each; paragraph indices, alias positions and evidence spans verified and corrected by hand; ch09 reindexed from 0- to 1-indexed. Every score below is AGREEMENT between two systems (StoryWeave v1 and GPT-5), NOT accuracy against human ground truth. See evidence/annotation/PROVENANCE.md.
+
+=== entity false positives: 23 ===
+    type_disagreement                  8
+    reference_alias_kept_separate      3
+    reference_rejected_string          4
+    not_in_reference                   8
+=== entity false negatives: 21 ===
+    type_disagreement                  8
+    canonical_name_choice              3
+    partial_span_only                  6
+    absent_from_v1_chapter             4
+=== relation false positives: 162 ===
+    cooccurrence_fallback_RelatedTo    81
+    cooccurrence_type_pair_rule        79
+    curated_tier2_or_tier3             2
+=== relation false negatives: 46 ===
+    endpoint_not_found_by_v1           38
+    tier2_social_not_produced          3
+    tier1_not_produced                 5
+
+rejected strings v1 emitted: 6 of 49
+wrote evidence\errors_v1.md

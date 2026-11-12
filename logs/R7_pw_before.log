@@ -1,0 +1,510 @@
+﻿
+Running 102 tests using 6 workers
+
+node.exe : (node:1452) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+At line:1 char:1
++ & "F:\Apps\NodeJS/node.exe" "F:\Dev\npm-global/node_modules/npm/bin/n ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:1452) War... env being set.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23772) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28232) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:2560) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:28008) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:13120) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓    4 tests\reduced-motion.spec.ts:16:3 › Reduced motion (§4.5) › global motion-duration tokens collapse under prefers-reduced-motion: reduce (2.0s)
+  ✓    5 tests\geometry.spec.ts:17:3 › Dossier geometry (§6.2) › rail 290 / right panel 400 at 1440 (2.7s)
+  ✓    8 tests\geometry.spec.ts:25:3 › Dossier geometry (§6.2) › rail 260 / right panel 320 at the 1280-1439 breakpoint (1.7s)
+  ✘    1 tests\landing.spec.ts:36:3 › Landing (§6.1) — try-it panel obeys the fence › F9 — the mini-graph draws only the current chapter's fenced nodes, at every chapter (4.3s)
+  ✘    3 tests\dossier.spec.ts:111:3 › Dossier (§6.2) — fenced content at every step › walk 1→2→3→4→2: DOM == fixture for Wren at each step; F8 requests only n and n−1 (4.6s)
+  ✓    7 tests\reduced-motion.spec.ts:31:3 › Reduced motion (§4.5) › Stemma physics: the reduced-motion burst actually stops (positions stable within 1px, sampled after its own declared 800ms duration) (3.3s)
+  ✓    6 tests\reveal-choreography.spec.ts:37:3 › Reveal choreography (§8.2) › full motion: t=0/450/1000/1400ms match the timing table (5.1s)
+  ✓    9 tests\geometry.spec.ts:35:3 › Stemma geometry (§6.3) › rail 290 / right panel 350 at 1440 (1.2s)
+(node:27644) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:24472) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   12 tests\geometry.spec.ts:43:3 › Stemma geometry (§6.3) › rail 260 / right panel 320 at the 1280-1439 breakpoint (1.1s)
+  ✓   15 tests\geometry.spec.ts:60:5 › No horizontal scroll at 1280x720 › landing (965ms)
+  ✓   11 tests\reveal-choreography.spec.ts:82:3 › Reveal choreography (§8.2) › reduced motion: everything appears together with a single 200ms fade, no thread drawing, no mural brightening (2.8s)
+  ✓   16 tests\geometry.spec.ts:60:5 › No horizontal scroll at 1280x720 › dossier (1.2s)
+  ✓   13 tests\landing.spec.ts:48:3 › Landing (§6.1) — try-it panel obeys the fence › F2 — no text on the page ever names a later-chapter-only entity (2.5s)
+  ✓   14 tests\dossier.spec.ts:140:3 › Dossier (§6.2) — fenced content at every step › Veris–Sparrow ALIAS block exists at 3, and Veris is absent (§6.7 card, F4 copy) at 2 (2.7s)
+  ✓   18 tests\geometry.spec.ts:60:5 › No horizontal scroll at 1280x720 › stemma (1.1s)
+  ✓   17 tests\reveal-choreography.spec.ts:107:3 › Reveal choreography (§8.2) › full motion DOES brighten the mural attribute for the overlay's duration only (2.4s)
+  ✘    2 tests\fence.spec.ts:79:3 › Spoiler fence (DESIGN_SPEC §9.1) › F1 — first visit defaults to chapter 1 and requests only n=1 (7.8s)
+  ✓   20 tests\dossier.spec.ts:165:3 › Dossier (§6.2) — fenced content at every step › `#/work/:slug` lands on the principal character (highest degree) (1.2s)
+  ✓   21 tests\geometry.spec.ts:83:7 › R9 responsive: no horizontal scroll at 1100x800 and 900x800 › dossier @ 1100px (1.1s)
+  ✓   19 tests\landing.spec.ts:55:3 › Landing (§6.1) — try-it panel obeys the fence › stepper forward crosses a reveal and plays the real overlay; backward shows the sealed-again toast (2.7s)
+  ✓   24 tests\geometry.spec.ts:83:7 › R9 responsive: no horizontal scroll at 1100x800 and 900x800 › stemma @ 1100px (1.1s)
+(node:24580) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   10 tests\reduced-motion.spec.ts:59:3 › Reduced motion (§4.5) › loading glyph is static, in ink/dim/faint order, under reduced motion (6.5s)
+  ✓   26 tests\geometry.spec.ts:83:7 › R9 responsive: no horizontal scroll at 1100x800 and 900x800 › dossier @ 900px (1.2s)
+(node:28076) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   25 tests\landing.spec.ts:67:3 › Landing (§6.1) — try-it panel obeys the fence › "Explore the full book" opens the real Dossier at the same bookmark (2.3s)
+  ✓   28 tests\geometry.spec.ts:83:7 › R9 responsive: no horizontal scroll at 1100x800 and 900x800 › stemma @ 900px (1.1s)
+  ✓   29 tests\landing.spec.ts:77:3 › Landing — state cards (§6.7) › empty shelf: 0 works shows both the footer empty-shelf card and the try-it demo-missing card (1.1s)
+  ✓   27 tests\fence.spec.ts:88:3 › Spoiler fence (DESIGN_SPEC §9.1) › F1 — forward via the dialog requests exactly the confirmed chapter, never above (2.3s)
+  ✓   22 tests\reveal.spec.ts:62:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › 1→2: a NORMAL reveal for Wren/Caelum — headline, quote and kicker all come from the fenced n=2 payload, no 'Before' line (5.8s)
+  ✓   30 tests\geometry.spec.ts:98:3 › R9 responsive: drawer toggles › Dossier: right panel is off-canvas by default at 1100px, opens/closes via toggle + scrim (2.1s)
+  ✓   32 tests\landing.spec.ts:88:3 › Landing — state cards (§6.7) › demo missing specifically: works present but none is the demo slug (1.4s)
+  ✓   33 tests\fence.spec.ts:100:3 › Spoiler fence (DESIGN_SPEC §9.1) › F1 — `]` opens the dialog prefilled with bookmark+1 and fetches nothing by itself (2.3s)
+  ✓   36 tests\landing.spec.ts:98:3 › Landing — state cards (§6.7) › error: /works unreachable shows the error card in both the try-it panel and the footer (1.0s)
+  ✓   35 tests\geometry.spec.ts:110:3 › R9 responsive: drawer toggles › Dossier: rail is a top drawer at 900px, off-canvas until toggled (2.0s)
+  ✓   34 tests\reveal.spec.ts:85:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › 2→3: a NORMAL reveal for Sparrow/Veris; DOM text is fenced-only (no chapter-4-only names) (2.8s)
+  ✓   38 tests\landing.spec.ts:107:3 › Landing — state cards (§6.7) › "How the seal works" opens the explainer panel; Esc closes it (1.3s)
+  ✘   23 tests\dossier.spec.ts:171:3 › Dossier (§6.2) — fenced content at every step › R3 follow-up — backward fetch failure: bookmark commits, no higher data remains, §6.7 error card, Try again (7.5s)
+  ✓   37 tests\fence.spec.ts:116:3 › Spoiler fence (DESIGN_SPEC §9.1) › F1 — no request while typing in the dialog (incl. an out-of-range 2000) (2.6s)
+(node:22736) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   40 tests\reveal.spec.ts:97:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › 3→4: a DEEPENING reveal for Wren/Caelum — new relation's copy + quote, 'Before' line names the ch.2 relation (2.1s)
+  ✓   41 tests\landing.spec.ts:117:3 › Landing — fonts loading (no layout shift) › cumulative layout shift stays at or below 2% through first paint (2.0s)
+  ✘   31 tests\reduced-motion.spec.ts:78:3 › Reduced motion (§4.5) › loading glyph fades in sequence (staggered) without reduced motion (6.7s)
+(node:27596) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   42 tests\fence.spec.ts:136:3 › Spoiler fence (DESIGN_SPEC §9.1) › F1 — rapid double confirm: only the last confirmed chapter ever renders (3.7s)
+  ✓   45 tests\dossier.spec.ts:210:3 › Dossier (§6.2) — fenced content at every step › loading skeleton shows before data, no spinner (2.7s)
+  ✓   46 tests\style.spec.ts:12:1 › Pirata One never renders below 28px (1.2s)
+  ✘   39 tests\shortcuts.spec.ts:19:3 › Global keyboard map (§8.5) › g d / g w navigate the two tabs from anywhere in a work (7.1s)
+  ✓   48 tests\dossier.spec.ts:243:3 › Dossier — synthetic-100 (test-only fixture via interception) › cast overflow: top 12, 'All 70 people →', searchable full list; ties overflow at 12 (1.8s)
+  ✓   49 tests\style.spec.ts:27:1 › no uppercase text-transform with positive letter-spacing (1.1s)
+(node:18940) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   50 tests\style.spec.ts:42:1 › border-radius is 0 everywhere except [data-round] elements (738ms)
+  ✓   47 tests\fence.spec.ts:157:3 › Spoiler fence (DESIGN_SPEC §9.1) › §8.1 — confirm forward, then step back before it resolves: forward response never lands (3.5s)
+  ✓   52 tests\style.spec.ts:63:1 › Pirata One, EB Garamond and Alegreya Sans are actually loaded (not a fallback) (1.1s)
+  ✘   43 tests\reveal.spec.ts:116:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › 1→4 (jump over the deepening step): both pairs surface as NORMAL reveals with a pager, no 'Before' line on either page (7.2s)
+  ✓   54 tests\style.spec.ts:79:1 › no horizontal page scroll at 1280x720 (1.1s)
+(node:17004) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   51 tests\shortcuts.spec.ts:28:3 › Global keyboard map (§8.5) › a lone `g` with no follow-up key expires and does nothing (2.8s)
+  ✓   53 tests\fence.spec.ts:179:3 › Spoiler fence (DESIGN_SPEC §9.1) › §8.1 — a slow older response arriving after a newer one is dropped (interception with delays) (3.7s)
+  ✓   56 tests\shortcuts.spec.ts:36:3 › Global keyboard map (§8.5) › `?` opens the shortcut sheet with a real focus trap; Esc closes it (1.2s)
+  ✓   44 tests\stemma.spec.ts:123:3 › Stemma — fenced canvas at every step › walk 1→2→3→4→2: cy ids == view model of the fenced payload (Everyone), principal ⊆ that; no request above (10.3s)
+  ✓   55 tests\reveal.spec.ts:132:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › 4→2 (backward): no reveal UI fires; the 'sealed again' toast shows instead (2.3s)
+  ✓   57 tests\fence.spec.ts:202:3 › Spoiler fence (DESIGN_SPEC §9.1) › §6.7 — failed fetch keeps the old data, shows the banner, bookmark unchanged (1.6s)
+  ✓   58 tests\shortcuts.spec.ts:51:3 › Global keyboard map (§8.5) › `?` and `g` do nothing while typing in an input (typing-target guard) (1.9s)
+  ✓   61 tests\fence.spec.ts:223:3 › Spoiler fence (DESIGN_SPEC §9.1) › F2 / F3 — at most 5 rows, one sealed row of constant size, no future numbers beyond 'of N' (1.5s)
+  ✓   60 tests\reveal.spec.ts:139:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › reload at chapter 3 fires nothing (not a forward commit) (2.2s)
+  ✓   62 tests\shortcuts.spec.ts:63:3 › Global keyboard map (§8.5) › `?` does nothing while the Change-chapter dialog is open (1.2s)
+  ✓   63 tests\fence.spec.ts:250:3 › Spoiler fence (DESIGN_SPEC §9.1) › F5 — moving back purges cached chapters > new bookmark (re-forward refetches) (1.3s)
+  ✓   59 tests\stemma.spec.ts:154:3 › Stemma — fenced canvas at every step › F4 (Stemma) — searching a later-chapter name at an earlier bookmark: neutral no-match, nothing leaks (4.6s)
+  ✓   64 tests\reveal.spec.ts:144:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › a failed forward fetch fires no reveal (1.9s)
+  ✓   65 tests\fence.spec.ts:270:3 › Spoiler fence (DESIGN_SPEC §9.1) › F5 — `[` at chapter 1 is a no-op (no request, no toast) (1.3s)
+  ✓   67 tests\reveal.spec.ts:155:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › replay: the Dossier's replay button reopens the overlay from cache — zero network requests, and normal vs. deepening depends only on what's cached (2.4s)
+  ✓   66 tests\stemma.spec.ts:171:3 › Stemma — fenced canvas at every step › shared URL ?focus=<unrevealed id> at bookmark 1 falls back to the principal and leaks nothing (3.0s)
+  ✘   68 tests\fence.spec.ts:280:3 › Spoiler fence (DESIGN_SPEC §9.1) › persistence — reload keeps the bookmark and requests only that chapter (+ n−1 for F8 tags) (1.7s)
+(node:24448) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   69 tests\reveal.spec.ts:180:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › quiet mode: persists across reload, and shows a toast instead of the overlay (1.7s)
+  ✓   71 tests\fence.spec.ts:295:5 › Spoiler fence (DESIGN_SPEC §9.1) › tampered localStorage "0" resets to chapter 1 and requests only n=1 (1.1s)
+  ✓   72 tests\reveal.spec.ts:195:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › quiet mode: a deepening reveal's toast uses the deepen kicker, and 'Read the evidence' opens the overlay with zero network requests (1.4s)
+  ✓   73 tests\fence.spec.ts:295:5 › Spoiler fence (DESIGN_SPEC §9.1) › tampered localStorage "-3" resets to chapter 1 and requests only n=1 (1.0s)
+  ✓   74 tests\reveal.spec.ts:231:3 › Reveal moment — synthetic-100 (test-only fixture via interception) › a jump producing >3 reveals shows the summary sheet, not sequential overlays (1.4s)
+  ✓   75 tests\fence.spec.ts:295:5 › Spoiler fence (DESIGN_SPEC §9.1) › tampered localStorage "999" resets to chapter 1 and requests only n=1 (1.1s)
+  ✓   70 tests\stemma.spec.ts:188:3 › Stemma — fenced canvas at every step › bookmark moves back while focused on an entity that vanishes: quiet fallback to the principal (5.3s)
+  ✓   76 tests\fence.spec.ts:295:5 › Spoiler fence (DESIGN_SPEC §9.1) › tampered localStorage "abc" resets to chapter 1 and requests only n=1 (1.0s)
+  ✓   78 tests\fence.spec.ts:295:5 › Spoiler fence (DESIGN_SPEC §9.1) › tampered localStorage "2.5" resets to chapter 1 and requests only n=1 (968ms)
+  ✓   79 tests\fence.spec.ts:295:5 › Spoiler fence (DESIGN_SPEC §9.1) › tampered localStorage "" resets to chapter 1 and requests only n=1 (727ms)
+  ✓   77 tests\stemma.spec.ts:204:3 › Stemma — fenced canvas at every step › edge tooltip (identity: label + 80-char quote; social: label only) and the selection panel (full quote) (4.4s)
+  ✓   81 tests\stemma.spec.ts:236:3 › Stemma — fenced canvas at every step › keyboard: `/` → search; arrows cycle neighbours with the ring; Enter focuses; Esc clears focus (2.6s)
+  ✘   80 tests\fence.spec.ts:306:3 › Spoiler fence (DESIGN_SPEC §9.1) › tab switch during a forward fetch: bookmark still commits, no extra request above it (5.9s)
+(node:26096) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   83 tests\fence.spec.ts:322:3 › Spoiler fence (DESIGN_SPEC §9.1) › keys never fire inside inputs (1.3s)
+  ✓   84 tests\fence.spec.ts:340:3 › Spoiler fence (DESIGN_SPEC §9.1) › dialog: clicking a past row fills the input; Esc cancels without fetching (832ms)
+  ✓   82 tests\stemma.spec.ts:256:3 › Stemma — fenced canvas at every step › R9 §11 — screen-reader mirror of the focused neighbourhood updates on focus change and contains only fenced ties (4.8s)
+  ✓   85 tests\fence.spec.ts:354:3 › Spoiler fence (DESIGN_SPEC §9.1) › dialog: focus is trapped; Tab from the last control wraps to the first (807ms)
+  ✓   87 tests\fence.spec.ts:366:3 › Spoiler fence (DESIGN_SPEC §9.1) › §6.7 — banner 'Try again' re-requests exactly the failed chapter; any move clears the banner (1.4s)
+  ✘   88 tests\fence.spec.ts:391:3 › Spoiler fence (DESIGN_SPEC §9.1) › navigating away (browser back) during a forward fetch: aborted, nothing commits, return refetches only the bookmark (2.6s)
+(node:4076) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   86 tests\stemma.spec.ts:273:3 › Stemma — fenced canvas at every step › lifecycle: Stemma → Dossier → Stemma ×3 leaves exactly one instance and ≤1 layout; leaving the work leaves none (6.2s)
+  ✘   89 tests\fence.spec.ts:414:3 › Spoiler fence (DESIGN_SPEC §9.1) › unknown work: chapter_count unresolvable → zero graph requests, controls disabled (1.2s)
+(node:26964) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   91 tests\fence.spec.ts:427:3 › Spoiler fence (DESIGN_SPEC §9.1) › F4 (dossier, R4) — an entity not yet met shows neutral copy that never confirms a later appearance (792ms)
+  ✓   90 tests\stemma.spec.ts:341:3 › Stemma — fenced canvas at every step › camera-fit regression: Dossier → Stemma tab click lands the focus framed, not off-screen (2.3s)
+  ✓   92 tests\fence.spec.ts:440:3 › Spoiler fence (DESIGN_SPEC §9.1) › F4 (search, R8) — Stemma search no-match copy never confirms a name exists later (950ms)
+  ✓   93 tests\stemma.spec.ts:352:3 › Stemma — fenced canvas at every step › R7: a retired #/…/chronicle link redirects to the graph (714ms)
+  ✓   94 tests\fence.spec.ts:453:3 › Spoiler fence (DESIGN_SPEC §9.1) › F6 (integration phase) — arc names hidden until start <= bookmark, range always visible (1.3s)
+  -   96 tests\fence.spec.ts:497:8 › Spoiler fence (DESIGN_SPEC §9.1) › F7 (R7) — chapter titles, if added, follow F6 (no chapter-title feature exists yet)
+  ✓   95 tests\stemma.spec.ts:361:3 › Stemma — fenced canvas at every step › camera-fit regression: landing → Explore the full book → Stemma tab click lands the focus framed (2.7s)
+  ✘   97 tests\fence.spec.ts:498:3 › Spoiler fence (DESIGN_SPEC §9.1) › F8 (R4) — "changed" tags come from graph(n) and graph(n−1) only: exactly those two requests, both fenced (1.3s)
+(node:14592) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   99 tests\fence.spec.ts:510:3 › Spoiler fence (DESIGN_SPEC §9.1) › F9 (R8) — demo/landing mini-graph obeys F1-F3, no hint of the upcoming reveal edge (1.1s)
+  ✓   98 tests\stemma.spec.ts:373:3 › Stemma — fenced canvas at every step › small-cast fit-all: a dimmed far-tier context node is never clipped at the viewport edge (2.6s)
+  ✓  100 tests\stemma.spec.ts:449:3 › Stemma — synthetic-100 (test-only fixture via interception) › legibility: zero overlaps among principal labels at the default fit (synthetic-100 and the demo), at the 1280×720 minimum (8.2s)
+  ✓  101 tests\stemma.spec.ts:483:3 › Stemma — synthetic-100 (test-only fixture via interception) › R9 label legibility: principal-label effective size (font-size × zoom) ≥ 13px on the default (focused-on-principal) view at 1280×720 (4.9s)
+  ✓  102 tests\stemma.spec.ts:510:3 › Stemma — synthetic-100 (test-only fixture via interception) › settle: positions stable within 1px within 1.5s of a filter change (synthetic-100) (5.9s)
+
+
+  1) tests\dossier.spec.ts:111:3 › Dossier (§6.2) — fenced content at every step › walk 1→2→3→4→2: DOM == fixture for Wren at each step; F8 requests only n and n−1 
+
+    Error: ties @1
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 0
+
+      Array [
+        "2",
+        "4",
+    -   "5",
+      ]
+
+      122 |       expect(got.present, `chapter ${n}`).toBe(true);
+      123 |       expect(got.identityIds, `identity blocks @${n}`).toEqual(exp.identityIds);
+    > 124 |       expect(got.tieOthers, `ties @${n}`).toEqual(exp.tieOthers);
+          |                                           ^
+      125 |       expect(got.people, `cast @${n}`).toEqual(exp.people);
+      126 |       expect(got.egoNodes, `ego nodes @${n}`).toEqual(exp.egoNodes);
+      127 |       expect(got.egoEdges, `ego edges @${n}`).toEqual(exp.egoEdges);
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\dossier.spec.ts:124:43
+
+    Error Context: test-results\dossier-Dossier-§6-2-—-fen-c1ef3--F8-requests-only-n-and-n−1\error-context.md
+
+  2) tests\dossier.spec.ts:171:3 › Dossier (§6.2) — fenced content at every step › R3 follow-up — backward fetch failure: bookmark commits, no higher data remains, §6.7 error card, Try again 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('[data-testid="state-error"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" locator('[data-testid="state-error"]') with timeout 5000ms
+      - waiting for locator('[data-testid="state-error"]')
+
+
+      186 |     await expect(page.locator('[data-testid="chapter-row-bookmark"]')).toHaveAttribute("data-chapter", "1");
+      187 |     const card = page.locator('[data-testid="state-error"]');
+    > 188 |     await expect(card).toBeVisible();
+          |                        ^
+      189 |     await expect(card).toContainText("The archive didn't answer.");
+      190 |     expect(await page.evaluate((k) => localStorage.getItem(k), KEY)).toBe("1");
+      191 |     const got = await page.evaluate(() => ({
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\dossier.spec.ts:188:24
+
+    Error Context: test-results\dossier-Dossier-§6-2-—-fen-ee43c-s-§6-7-error-card-Try-again\error-context.md
+
+  3) tests\fence.spec.ts:79:3 › Spoiler fence (DESIGN_SPEC §9.1) › F1 — first visit defaults to chapter 1 and requests only n=1 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 1
+    Received: 3
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      81 |     await openDossier(page);
+      82 |     expect(await bookmarkOnScreen(page)).toBe(1);
+    > 83 |     await expect.poll(() => log.urls.length).toBe(1);
+         |                                              ^
+      84 |     assertNoGraphRequestAbove(log, 1);
+      85 |     await attachLog(log);
+      86 |   });
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\fence.spec.ts:83:46
+
+    Error Context: test-results\fence-Spoiler-fence-DESIGN-5bdc2-ter-1-and-requests-only-n-1\error-context.md
+
+  4) tests\fence.spec.ts:280:3 › Spoiler fence (DESIGN_SPEC §9.1) › persistence — reload keeps the bookmark and requests only that chapter (+ n−1 for F8 tags) 
+
+    Error: http://localhost:5173/api/v1/works/the-hollow-crown/graph?n=1&cast=all&types=Character%2COrganization%2CPlace%2CItem
+    http://localhost:5173/api/v1/works/the-hollow-crown/graph?n=1&cast=all&types=Character%2COrganization%2CPlace%2CItem
+    http://localhost:5173/api/v1/works/the-hollow-crown/graph?n=3&cast=all&types=Character%2COrganization%2CPlace%2CItem
+    http://localhost:5173/api/v1/works/the-hollow-crown/graph?n=2&cast=all&types=Character%2COrganization%2CPlace%2CItem
+    http://localhost:5173/api/v1/works/the-hollow-crown/graph?n=2&cast=all&types=Character%2COrganization%2CPlace%2CItem
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 3
+
+      Array [
+    +   1,
+    +   1,
+    +   2,
+        2,
+        3,
+      ]
+
+      287 |     await page.waitForTimeout(500);
+      288 |     // Since R4 the model also fetches n−1 (here 2) for the "changed" tags — still ≤ bookmark.
+    > 289 |     expect(log.urls.map(nOf).sort(), log.urls.join("\n")).toEqual([2, 3]);
+          |                                                           ^
+      290 |     assertNoGraphRequestAbove(log, 3);
+      291 |     await attachLog(log);
+      292 |   });
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\fence.spec.ts:289:59
+
+    Error Context: test-results\fence-Spoiler-fence-DESIGN-14e5f-at-chapter-n−1-for-F8-tags-\error-context.md
+
+  5) tests\fence.spec.ts:306:3 › Spoiler fence (DESIGN_SPEC §9.1) › tab switch during a forward fetch: bookmark still commits, no extra request above it 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: locator('[data-testid="stemma-footer"]')
+    Expected substring: "Read to Chapter II of 4"
+    Received string:    "Read to Chapter I of 4 · change"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" locator('[data-testid="stemma-footer"]') with timeout 5000ms
+      - waiting for locator('[data-testid="stemma-footer"]')
+        14 × locator resolved to <div class="_footer_4xz8e_178" data-testid="stemma-footer">…</div>
+           - unexpected value "Read to Chapter I of 4 · change"
+
+
+      315 |     await page.waitForSelector('[data-testid="stemma-root"]');
+      316 |     // the Stemma rail (§6.3, R5) shows the bookmark in its footer rather than the compact list
+    > 317 |     await expect(page.locator('[data-testid="stemma-footer"]')).toContainText("Read to Chapter II of 4");
+          |                                                                 ^
+      318 |     assertNoGraphRequestAbove(log, 2);
+      319 |     await attachLog(log);
+      320 |   });
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\fence.spec.ts:317:65
+
+    Error Context: test-results\fence-Spoiler-fence-DESIGN-39312-s-no-extra-request-above-it\error-context.md
+
+  6) tests\fence.spec.ts:391:3 › Spoiler fence (DESIGN_SPEC §9.1) › navigating away (browser back) during a forward fetch: aborted, nothing commits, return refetches only the bookmark 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 2
+
+      Array [
+        3,
+        1,
+        1,
+    +   1,
+    +   1,
+      ]
+
+      408 |     // and the Dossier's own remount on goForward fetches again independently. Never 3
+      409 |     // again, and never anything above the bookmark from either provider.
+    > 410 |     expect(log.urls.map(nOf)).toEqual([3, 1, 1]);
+          |                               ^
+      411 |     await attachLog(log);
+      412 |   });
+      413 |
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\fence.spec.ts:410:31
+
+    Error Context: test-results\fence-Spoiler-fence-DESIGN-e73f3-refetches-only-the-bookmark\error-context.md
+
+  7) tests\fence.spec.ts:414:3 › Spoiler fence (DESIGN_SPEC §9.1) › unknown work: chapter_count unresolvable → zero graph requests, controls disabled 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 4
+
+    - Array []
+    + Array [
+    +   "http://localhost:5173/api/v1/works/no-such-book/graph?n=1&cast=all&types=Character%2COrganization%2CPlace%2CItem",
+    +   "http://localhost:5173/api/v1/works/no-such-book/graph?n=1&cast=all&types=Character%2COrganization%2CPlace%2CItem",
+    + ]
+
+      420 |     await page.keyboard.press("[");
+      421 |     await page.waitForTimeout(600);
+    > 422 |     expect(log.urls).toEqual([]);
+          |                      ^
+      423 |     await expect(page.locator('[data-testid="chapter-dialog"]')).toHaveCount(0);
+      424 |     await attachLog(log);
+      425 |   });
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\fence.spec.ts:422:22
+
+    Error Context: test-results\fence-Spoiler-fence-DESIGN-fe15b--requests-controls-disabled\error-context.md
+
+  8) tests\fence.spec.ts:498:3 › Spoiler fence (DESIGN_SPEC §9.1) › F8 (R4) — "changed" tags come from graph(n) and graph(n−1) only: exactly those two requests, both fenced 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 5
+
+      Array [
+    +   1,
+    +   1,
+    +   1,
+    +   1,
+    +   2,
+        2,
+        3,
+      ]
+
+      501 |     await expect(page.locator('[data-testid="changed-tag"]').first()).toBeVisible();
+      502 |     await page.waitForTimeout(400);
+    > 503 |     expect(log.urls.map(nOf).sort()).toEqual([2, 3]);
+          |                                      ^
+      504 |     assertNoGraphRequestAbove(log, 3);
+      505 |     // the tags name exactly the chapter-3 arrivals (Sparrow + Veris), nobody else
+      506 |     const tagged = await page.locator('[data-testid="cast-row"]:has([data-testid="changed-tag"])').evaluateAll((els) => els.map((e) => e.getAttribute("data-entity")).sort());
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\fence.spec.ts:503:38
+
+    Error Context: test-results\fence-Spoiler-fence-DESIGN-9cbaa-se-two-requests-both-fenced\error-context.md
+
+  9) tests\landing.spec.ts:36:3 › Landing (§6.1) — try-it panel obeys the fence › F9 — the mini-graph draws only the current chapter's fenced nodes, at every chapter 
+
+    Error: mini-graph nodes @1
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 0
+
+      Array [
+        "1",
+    -   "2",
+    -   "4",
+    -   "5",
+    -   "6",
+      ]
+
+      40 |       const exp = fixture(n).elements.nodes.filter((x) => DRAWN.has(x.data.type)).map((x) => x.data.id).sort();
+      41 |       const got = (await page.locator('[data-testid="landing-mini-graph"]').getAttribute("data-nodes"))?.split(",").filter(Boolean).sort() ?? [];
+    > 42 |       expect(got, `mini-graph nodes @${n}`).toEqual(exp);
+         |                                             ^
+      43 |       assertNoGraphRequestAbove(log, n);
+      44 |     }
+      45 |     await test.info().attach("graph-requests", { body: JSON.stringify(log.urls, null, 2), contentType: "application/json" });
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\landing.spec.ts:42:45
+
+    Error Context: test-results\landing-Landing-§6-1-—-try-5ef6a-nced-nodes-at-every-chapter\error-context.md
+
+  10) tests\reduced-motion.spec.ts:59:3 › Reduced motion (§4.5) › loading glyph is static, in ink/dim/faint order, under reduced motion 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('[data-testid="loading-dots"] span')
+    Expected: 3
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('[data-testid="loading-dots"] span') with timeout 5000ms
+      - waiting for locator('[data-testid="loading-dots"] span')
+        13 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      67 |     await page.reload();
+      68 |     const dots = page.locator('[data-testid="loading-dots"] span');
+    > 69 |     await expect(dots).toHaveCount(3);
+         |                        ^
+      70 |     const styles = await dots.evaluateAll((els) =>
+      71 |       els.map((el) => ({ animationName: getComputedStyle(el).animationName, background: getComputedStyle(el).backgroundColor })),
+      72 |     );
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\reduced-motion.spec.ts:69:24
+
+    Error Context: test-results\reduced-motion-Reduced-mot-af690--order-under-reduced-motion\error-context.md
+
+  11) tests\reduced-motion.spec.ts:78:3 › Reduced motion (§4.5) › loading glyph fades in sequence (staggered) without reduced motion 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('[data-testid="loading-dots"] span')
+    Expected: 3
+    Received: 0
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('[data-testid="loading-dots"] span') with timeout 5000ms
+      - waiting for locator('[data-testid="loading-dots"] span')
+        13 × locator resolved to 0 elements
+           - unexpected value "0"
+
+
+      85 |     await page.reload();
+      86 |     const dots = page.locator('[data-testid="loading-dots"] span');
+    > 87 |     await expect(dots).toHaveCount(3);
+         |                        ^
+      88 |     const info = await dots.evaluateAll((els) =>
+      89 |       els.map((el) => {
+      90 |         const cs = getComputedStyle(el);
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\reduced-motion.spec.ts:87:24
+
+    Error Context: test-results\reduced-motion-Reduced-mot-2af50-ered-without-reduced-motion\error-context.md
+
+  12) tests\reveal.spec.ts:116:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › 1→4 (jump over the deepening step): both pairs surface as NORMAL reveals with a pager, no 'Before' line on either page 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('[data-testid="reveal-pager-label"]')
+    Expected: "1 of 2"
+    Received: "1 of 3"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveText" locator('[data-testid="reveal-pager-label"]') with timeout 5000ms
+      - waiting for locator('[data-testid="reveal-pager-label"]')
+        14 × locator resolved to <span data-testid="reveal-pager-label">1 of 3</span>
+           - unexpected value "1 of 3"
+
+
+      118 |     await confirmChapter(page, 4);
+      119 |     await expect(overlay(page)).toBeVisible();
+    > 120 |     await expect(page.locator('[data-testid="reveal-pager-label"]')).toHaveText("1 of 2");
+          |                                                                      ^
+      121 |     await expect(overlay(page)).toHaveAttribute("data-kind", "normal");
+      122 |     expect(await page.locator('[data-testid="reveal-before"]').count()).toBe(0);
+      123 |     await page.click('[data-testid="reveal-pager-next"]');
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\reveal.spec.ts:120:70
+
+    Error Context: test-results\reveal-Reveal-moment-DESIG-55fe1--Before-line-on-either-page\error-context.md
+
+  13) tests\shortcuts.spec.ts:19:3 › Global keyboard map (§8.5) › g d / g w navigate the two tabs from anywhere in a work 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /#\/work\/the-hollow-crown\/entity/
+    Received string:  "http://localhost:5173/#/work/the-hollow-crown/web?focus=1"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        13 × locator resolved to <html lang="en">…</html>
+           - unexpected value "http://localhost:5173/#/work/the-hollow-crown/web?focus=1"
+
+
+      23 |     await page.keyboard.press("g");
+      24 |     await page.keyboard.press("d");
+    > 25 |     await expect(page).toHaveURL(new RegExp(`#/work/${SLUG}/entity`));
+         |                        ^
+      26 |   });
+      27 |
+      28 |   test("a lone `g` with no follow-up key expires and does nothing", async ({ page }) => {
+        at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\frontend\tests\shortcuts.spec.ts:25:24
+
+    Error Context: test-results\shortcuts-Global-keyboard--08b44-abs-from-anywhere-in-a-work\error-context.md
+
+  13 failed
+    tests\dossier.spec.ts:111:3 › Dossier (§6.2) — fenced content at every step › walk 1→2→3→4→2: DOM == fixture for Wren at each step; F8 requests only n and n−1 
+    tests\dossier.spec.ts:171:3 › Dossier (§6.2) — fenced content at every step › R3 follow-up — backward fetch failure: bookmark commits, no higher data remains, §6.7 error card, Try again 
+    tests\fence.spec.ts:79:3 › Spoiler fence (DESIGN_SPEC §9.1) › F1 — first visit defaults to chapter 1 and requests only n=1 
+    tests\fence.spec.ts:280:3 › Spoiler fence (DESIGN_SPEC §9.1) › persistence — reload keeps the bookmark and requests only that chapter (+ n−1 for F8 tags) 
+    tests\fence.spec.ts:306:3 › Spoiler fence (DESIGN_SPEC §9.1) › tab switch during a forward fetch: bookmark still commits, no extra request above it 
+    tests\fence.spec.ts:391:3 › Spoiler fence (DESIGN_SPEC §9.1) › navigating away (browser back) during a forward fetch: aborted, nothing commits, return refetches only the bookmark 
+    tests\fence.spec.ts:414:3 › Spoiler fence (DESIGN_SPEC §9.1) › unknown work: chapter_count unresolvable → zero graph requests, controls disabled 
+    tests\fence.spec.ts:498:3 › Spoiler fence (DESIGN_SPEC §9.1) › F8 (R4) — "changed" tags come from graph(n) and graph(n−1) only: exactly those two requests, both fenced 
+    tests\landing.spec.ts:36:3 › Landing (§6.1) — try-it panel obeys the fence › F9 — the mini-graph draws only the current chapter's fenced nodes, at every chapter 
+    tests\reduced-motion.spec.ts:59:3 › Reduced motion (§4.5) › loading glyph is static, in ink/dim/faint order, under reduced motion 
+    tests\reduced-motion.spec.ts:78:3 › Reduced motion (§4.5) › loading glyph fades in sequence (staggered) without reduced motion 
+    tests\reveal.spec.ts:116:3 › Reveal moment (DESIGN_SPEC §6.5, §8.2) › 1→4 (jump over the deepening step): both pairs surface as NORMAL reveals with a pager, no 'Before' line on either page 
+    tests\shortcuts.spec.ts:19:3 › Global keyboard map (§8.5) › g d / g w navigate the two tabs from anywhere in a work 
+  1 skipped
+  88 passed (1.5m)

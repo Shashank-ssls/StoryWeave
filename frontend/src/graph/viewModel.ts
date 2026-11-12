@@ -8,7 +8,13 @@
 // `revealed_chapter`, `first_seen_chapter`, `tier`, `relation`).
 
 import type { GraphEdgeData, GraphElements, GraphNodeData } from "../types";
-import { IDENTITY_RELATIONS, RELATION_LABELS } from "../ontology";
+import {
+  DIRECTED_RELATIONS,
+  IDENTITY_RELATIONS,
+  R4_RELATION_INVERSE,
+  R4_RELATION_LABELS,
+  RELATION_LABELS,
+} from "../ontology";
 
 export type NodeKind = "person" | "order" | "place" | "thing";
 export type EdgeKind = "social" | "structural" | "identity";
@@ -37,6 +43,16 @@ export interface VmEdge {
   revealed_chapter: number;
   first_seen_chapter: number;
   evidence_span: string | null;
+  /** R7: "STATED" draws solid, "INFERRED" draws dashed and reads "(implied)". A pre-R4
+   *  payload has no grade at all; those draw solid, as they always did. */
+  grade: string | null;
+  /** The verbatim sentence (rule 4). Falls back to `evidence_span` for pre-R4 rows. */
+  quote: string | null;
+  quoteChapter: number | null;
+  /** How many times the extractor saw this tie; drives line width in 3 steps. */
+  weight: number;
+  /** Arrowheads only on directed relations. */
+  directed: boolean;
 }
 
 export interface ViewModel {
@@ -96,10 +112,65 @@ export const IDENTITY_COPY: Record<string, IdentityCopy> = {
   TRANSMIGRATED_INTO: { sentence: "{a} now lives on as {b}.", kicker: "Transmigration", short: "transmigration" },
 };
 
-/** Short lowercase label for a social/structural tie ("ally of", "in"); unknown → "linked". */
-export function tieLabel(relation: string): string {
+/**
+ * Short lowercase label for a tie, in plain words.
+ *
+ * R7 removes the old `?? "linked"` fallback. "Linked" told the reader nothing the line
+ * itself had not already said, and it was not a rare edge case: R4 replaced v1's
+ * CamelCase vocabulary with R4's SCREAMING_SNAKE one, so after R5 EVERY new relation
+ * missed `RELATION_LABELS` and every label in the graph read "linked". An unrecognised
+ * relation is now humanised (`MENTOR_OF` -> "mentor of") rather than erased, which is
+ * wrong-looking if we ever ship a relation we forgot to name — and visibly so, which is
+ * the point.
+ *
+ * `backwards` reads a directed edge from the target's side ("serves" -> "commands").
+ */
+export function tieLabel(relation: string, backwards = false): string {
+  if (UNLABELLED.has(relation)) return "";
+  if (backwards) {
+    const inverse = R4_RELATION_INVERSE[relation];
+    if (inverse) return inverse;
+  }
   if (IDENTITY_RELATIONS.has(relation)) return IDENTITY_COPY[relation]?.short ?? "identity";
-  return RELATION_LABELS[relation] ?? "linked";
+  return R4_RELATION_LABELS[relation] ?? RELATION_LABELS[relation] ?? humanise(relation);
+}
+
+/**
+ * The one relation that stays wordless. `RelatedTo` is v1's co-occurrence rule: it means
+ * only "these two names appeared near each other", which is not a relationship, and R1
+ * [MEASURED] it producing 160 of v1's 162 false positives. Retrofit rule 5 keeps it out
+ * of the default graph entirely; it survives only in the frozen Hollow Crown demo, where
+ * labelling ~170 lines "related to" would be clutter rather than information. Naming it
+ * here is deliberate: the empty label is a decision, not a lookup that quietly missed.
+ */
+const UNLABELLED = new Set(["RelatedTo"]);
+
+/** Last resort: `MENTOR_OF` -> "mentor of", `AffiliatedWith` -> "affiliated with". */
+export function humanise(relation: string): string {
+  return relation
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * R7: the label a reader sees on the line.
+ *
+ * §7.3 merges parallel edges into ONE line per pair, so a line can stand for several
+ * relations. v1 labelled such a line with the primary relation alone, which silently
+ * hid the rest: at chapter 40 the Rule Zero capture found 18 payload edges drawn as 13
+ * lines, so five relations had no words anywhere on screen. Every merged relation is
+ * therefore named here, and the "(implied)" suffix applies to the line as a whole.
+ */
+export function edgeLabel(edge: VmEdge, backwards = false): string {
+  const seen = new Set<string>();
+  for (const r of edge.relations) {
+    const label = tieLabel(r, backwards);
+    if (label) seen.add(label);
+  }
+  const base = [...seen].join(" · ") || tieLabel(edge.relation, backwards);
+  return edge.grade === "INFERRED" ? `${base} (implied)` : base;
 }
 
 function pairKey(a: string, b: string): string {
@@ -159,11 +230,27 @@ export function buildViewModel(payload: GraphElements, options: ViewModelOptions
         revealed_chapter: data.revealed_chapter,
         first_seen_chapter: data.first_seen_chapter,
         evidence_span: data.evidence_span,
+        grade: data.grade ?? null,
+        quote: data.quote ?? data.evidence_span,
+        quoteChapter: data.quote_chapter ?? null,
+        weight: data.weight ?? 1,
+        directed: DIRECTED_RELATIONS.has(data.relation),
       });
       continue;
     }
     existing.relations.push(data.relation);
-    if (kind === "identity" && existing.kind !== "identity") {
+    // Which identity is CURRENT must not depend on payload row order. Wren-Caelum is
+    // SECRET_IDENTITY at chapter 2 and TRANSMIGRATED_INTO at chapter 4; the line should
+    // read as the later, deeper reveal. Both this merge and the specs' independent
+    // oracle used to take whichever identity edge arrived first, which R7 exposed by
+    // changing the payload query: the same pair started rendering as e12 rather than
+    // e14. The later reveal now wins explicitly (ties broken by id, so it is total).
+    const supersedes =
+      kind === "identity" &&
+      (existing.kind !== "identity" ||
+        data.revealed_chapter > existing.revealed_chapter ||
+        (data.revealed_chapter === existing.revealed_chapter && data.id > existing.id));
+    if (supersedes) {
       // identity absorbs: it becomes the edge's face, direction and quote
       existing.id = data.id;
       existing.source = data.source;
@@ -173,9 +260,20 @@ export function buildViewModel(payload: GraphElements, options: ViewModelOptions
       existing.revealed_chapter = data.revealed_chapter;
       existing.first_seen_chapter = data.first_seen_chapter;
       existing.evidence_span = data.evidence_span;
+      existing.grade = data.grade ?? null;
+      existing.quote = data.quote ?? data.evidence_span;
+      existing.quoteChapter = data.quote_chapter ?? null;
+      existing.directed = DIRECTED_RELATIONS.has(data.relation);
     } else if (existing.kind !== "identity") {
       existing.revealed_chapter = Math.min(existing.revealed_chapter, data.revealed_chapter);
       existing.first_seen_chapter = Math.min(existing.first_seen_chapter, data.first_seen_chapter);
+      // Merged parallels: weight adds up (it drives line width), and the merged line
+      // takes the WEAKEST grade of what it merged. One line now speaks for several
+      // relations, so drawing it solid because one of them was STATED would let the
+      // strong evidence vouch for the weak. Understating is the safe direction: the side
+      // panel's ego list still grades each relation exactly, one row at a time.
+      existing.weight += data.weight ?? 1;
+      if (data.grade === "INFERRED") existing.grade = "INFERRED";
     }
   }
 

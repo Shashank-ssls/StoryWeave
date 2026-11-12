@@ -1,0 +1,53 @@
+﻿==============================================================================
+R4b DIAGNOSIS - common-noun-headed Organizations
+==============================================================================
+
+1. CORPUS: 42 group-noun phrases, 15 distinct
+   of those, MODIFIED by a capitalised word (the shape a proper organization takes): 5 occurrences, 5 distinct
+
+       1  "Cassian's guard"
+       1  'Ashcombe household'
+       1  "The Regent's household"
+       1  'Salt Quarter watch'
+       1  'The chancery'
+
+2. MENTIONS: did the GLiNER floor emit a mention for each?
+
+   no mention at all : 2
+     MISSED  "Cassian's guard"
+     MISSED  'Salt Quarter watch'
+   mention exists    : 3
+     FOUND   'Ashcombe household' as Organization, clustered=True
+     FOUND   "The Regent's household" as Organization, clustered=True
+     FOUND   'The chancery' as Organization, clustered=True
+
+3. NODES: 22 Organization nodes in the R3 graph
+
+     'Ashcombe household'
+     'Ashen Court'
+     'Chancery'
+     'Chancery archives'
+     'Chancery scribes'
+     'Choir'
+     'Choosing'
+     'Council'
+     'Long Silence'
+     'Quarter apothecary'
+     'Regency'
+     'Sallow Concord'
+     "The Regent's household"
+     'The ward'
+     'Thornmere Succession Law'
+     'Wardens'
+     'court'
+     'crown'
+     'household'
+     'servants'
+     'smuggling crew'
+     'smuggling ring'
+
+==============================================================================
+VERDICT
+==============================================================================
+At least one phrase DID produce a mention, so the fault is downstream:
+clustering, significance, or the four-type write check. See the flags above.

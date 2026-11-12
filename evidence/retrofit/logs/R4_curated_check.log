@@ -1,0 +1,43 @@
+﻿==============================================================================
+CURATED SEED EDGES vs THE R4 VALIDATOR
+==============================================================================
+
+These are hand-written records, not extraction output. They are EXCLUDED from
+every R4 score; this table exists so that exclusion is auditable.
+
+curated/llm edges in v1_ninth_house.db: 19
+
+  REJECT  Vey -ALIAS-> Vesper
+            not one of the twelve [BECOMES_LABEL]
+  ACCEPT  Juno Stray -SECRET_IDENTITY-> Sable Vell -> SAME_AS [INFERRED]
+  REJECT  Choirmaster -ALIAS-> Thessaly
+            not one of the twelve [BECOMES_LABEL]
+  ACCEPT  Sorrel -SECRET_IDENTITY-> Aurelia Marrow -> SAME_AS [INFERRED]
+  ACCEPT  Cassian -REINCARNATION-> Kaelen -> SAME_AS [INFERRED]
+  ACCEPT  Sorrel -REINCARNATION-> Aurelia Marrow -> SAME_AS [INFERRED]
+  ACCEPT  Mira -TRANSMIGRATED_INTO-> Wanderer -> SAME_AS [INFERRED]
+  ACCEPT  Cassian -Sibling-> Ione -> KIN_OF [INFERRED]
+  ACCEPT  Meraude -Parent-> Tobin -> KIN_OF [INFERRED]
+  REJECT  Meraude -Parent-> Sable Vell -> KIN_OF
+            KIN_GUARD: no possessive attachment and claimed in only one chapter
+  ACCEPT  Thessaly -Mentor-> Vesper -> MENTOR_OF [INFERRED]
+  REJECT  Thessaly -Mentor-> Mira -> MENTOR_OF
+            QUOTE_NOT_VERBATIM: quote not found verbatim in chapter 7
+  ACCEPT  Ser Robart Kell -Serves-> Cassian -> SERVES [INFERRED]
+  ACCEPT  Thorne -Serves-> Cassian -> SERVES [STATED]
+  ACCEPT  Hask -Serves-> Corwin -> SERVES [INFERRED]
+  REJECT  Meraude -Rival-> Cassian
+            not one of the twelve [DROPPED]
+  REJECT  Ione -Protects-> Sorrel
+            not one of the twelve [DROPPED]
+  REJECT  Drask -Respects-> Juno Stray
+            not one of the twelve [DROPPED]
+  ACCEPT  Vesper -Mentor-> Sorrel -> MENTOR_OF [INFERRED]
+
+summary:
+  ACCEPT (INFERRED)                        11
+  NOT_IN_THE_TWELVE (DROPPED)              3
+  NOT_IN_THE_TWELVE (BECOMES_LABEL)        2
+  ACCEPT (STATED)                          1
+  REJECT (KIN_GUARD)                       1
+  REJECT (QUOTE_NOT_VERBATIM)              1

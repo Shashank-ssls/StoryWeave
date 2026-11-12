@@ -46,6 +46,13 @@ export function assertNoGraphRequestAbove(log: GraphRequestLog, bookmark: number
  *  same way a reader would (Esc), so fence/content tests stay about fence/content. */
 export async function dismissRevealIfShown(page: Page): Promise<void> {
   const overlay = page.locator('[data-testid="reveal-overlay"], [data-testid="reveal-summary-sheet"]');
+  // R7: wait briefly for an overlay that is ABOUT to appear, rather than sampling once.
+  // The reveal is set when the payload lands, which is a beat after the bookmark
+  // attribute this is called behind — so a single `count()` could read 0 and leave the
+  // overlay to open afterwards and block the NEXT click (measured: the Dossier walk timed
+  // out on `change-chapter` with the backdrop intercepting pointer events). The wait is
+  // short and optional: a step that legitimately fires no reveal just falls through.
+  await overlay.first().waitFor({ state: "visible", timeout: 1500 }).catch(() => {});
   if ((await overlay.count()) > 0) {
     await page.keyboard.press("Escape");
     await overlay.first().waitFor({ state: "hidden" }).catch(() => {});

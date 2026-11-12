@@ -1,0 +1,65 @@
+﻿python : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv\Lib\site-packages\fastapi\testclient.py:1: 
+StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+At line:1 char:313
++ ...  .\dev.ps1; python tools/r6_report.py > evidence/retrofit/logs/R6_rep ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...ttpx2` instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  from starlette.testclient import TestClient as TestClient  # noqa
+==========================================================================
+R6 REPORT -- ninth_house_r6.db  (through the API)
+==========================================================================
+
+1. THE CAST DIAL -- v1's was a client-side no-op (defect D3)
+
+    chapter          cast=20          cast=50         cast=all
+   ------------------------------------------------------------
+         10          (10, 4)          (10, 4)         (32, 10)
+         20           (7, 5)          (14, 8)         (41, 14)
+         30         (11, 10)         (21, 16)         (43, 21)
+         40          (12, 7)         (24, 21)         (53, 27)
+
+   ch40 payloads differ across 20 / 50 / all: True
+
+2. DEFAULT VIEW (Characters only, cast 20) -- dots and lines
+
+    chapter   dots  lines
+   ------------------------
+         10     10      4
+         20      7      5
+         30     11     10
+         40     12      7
+
+3. OVERLAYS at ch40 (each is opt-in; the default is Characters only)
+
+   Character                                dots= 12 lines=  7
+   Character,Organization                   dots= 14 lines= 18
+   Character,Place                          dots= 18 lines= 10
+   Character,Organization,Place,Item        dots= 20 lines= 21
+
+4. GRADE MIX in the default view at ch40
+
+   STATED   1
+   INFERRED 6
+   INFERRED share: 85.7%
+   SAME_AS served: 0 (all STATED: True)
+   every edge has a quote: True
+
+5. EGO ENDPOINT
+
+   ego of 'Sorrel' at ch40 -> 200
+     LOCATED_IN     The Undercroft         [STATED] 'They salvaged what they could from the Undercroft by lamplig'
+     MENTOR_OF      Thessaly               [INFERRED] 'when Sorrel came asking, and Sorrel would later be grateful '
+     MENTOR_OF      Vesper                 [INFERRED] "returned with a name Sorrel had not heard before: Kaelen's G"
+     MEMBER_OF      The Choir              [INFERRED] "Sorrel's first instinct was to run. Her second, stronger one"
+     MEMBER_OF      the Council            [INFERRED] 'The Regency Council met for the first time three days after '
+     KIN_OF         Ione                   [INFERRED] 'His sister, Ione Ashcombe'
+   ego of a non-existent entity -> 404 (expect 404)
+
+6. D3 -- the status count now goes through the fence
+
+   n=  1: node_count=17
+   n= 10: node_count=86
+   n= 40: node_count=191
+   (v1 returned the same total at every chapter)

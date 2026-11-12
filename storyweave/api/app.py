@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from storyweave import __version__
 from storyweave.api import jobs
@@ -22,9 +24,13 @@ from storyweave.api.schemas import (
     AnalysisStatusResponse,
     AppendRequest,
     AppendResponse,
+    ArcModel,
+    ArcsResponse,
     ChapterPreview,
     CitationModel,
     EdgeModel,
+    EgoNeighbourModel,
+    EgoResponse,
     EntitiesResponse,
     EntityDetailResponse,
     EntityModel,
@@ -42,7 +48,11 @@ from storyweave.api.schemas import (
     WorksResponse,
 )
 from storyweave.config import get_settings
-from storyweave.db.models import Work
+from storyweave.db.models import (
+    GRAPH_NODE_TYPES,
+    SYMMETRIC_R4_RELATIONS,
+    Work,
+)
 from storyweave.db.repository import Repository
 from storyweave.demo.seed import DEMO_SLUG
 from storyweave.graph.serialize import graph_json
@@ -56,6 +66,13 @@ from storyweave.search.store import BaseVectorStore
 
 API_PREFIX = "/api/v1"
 router = APIRouter(prefix=API_PREFIX)
+
+# One-origin serving (integration phase Part C.1): if the frontend has been built
+# (`npm run build` -> frontend/dist), serve it from this same FastAPI process so the
+# app needs no CORS and no second dev server. `run.ps1`/`run.bat` build then start
+# this way; the two-server dev mode (Vite's own proxy) keeps working unchanged.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_FRONTEND_DIST = _REPO_ROOT / "frontend" / "dist"
 
 # Mandatory reading-position param: required (no default) + non-negative => missing or
 # out-of-range yields 422 automatically.
@@ -137,10 +154,19 @@ def ingest_work(body: IngestRequest, repo: RepoDep) -> IngestResponse:
 
 
 @router.get("/works/{slug}/status", response_model=AnalysisStatusResponse)
-def work_status(slug: str, repo: RepoDep) -> AnalysisStatusResponse:
-    """Analysis progress for in-app ingest; node_count > 0 means the graph is viewable."""
+def work_status(
+    slug: str,
+    repo: RepoDep,
+    n: Annotated[int, Query(ge=0, description="Reading position N; defaults to 1.")] = 1,
+) -> AnalysisStatusResponse:
+    """Analysis progress for in-app ingest; node_count > 0 means the graph is viewable.
+
+    Retrofit R6 fixes defect D3: the count goes THROUGH THE FENCE. It used to be
+    `count_nodes`, every row regardless of chapter, which told a reader at chapter 3 how
+    large the cast eventually becomes. That is a number leak even though no name escapes.
+    """
     work = repo.get_work_by_slug(slug)
-    node_count = repo.count_nodes(work.id) if work and work.id else 0
+    node_count = fence.visible_node_count(repo, work.id, n) if work and work.id else 0
     status = jobs.get_status(slug)
     # A pre-seeded work (e.g. the demo) has no job; it is ready iff it already has nodes.
     state = status.state if status else ("ready" if node_count > 0 else "unknown")
@@ -240,11 +266,91 @@ def list_entities(slug: str, n: ChapterParam, repo: RepoDep) -> EntitiesResponse
     return EntitiesResponse(slug=slug, n=n, count=len(entities), entities=entities)
 
 
-@router.get("/works/{slug}/graph", response_model=GraphResponse)
-def get_graph(slug: str, n: ChapterParam, repo: RepoDep) -> GraphResponse:
+@router.get("/works/{slug}/arcs", response_model=ArcsResponse)
+def get_arcs(slug: str, n: ChapterParam, repo: RepoDep) -> ArcsResponse:
+    """D6/F6: named chapter-range arcs, fenced — an arc's NAME is sent only once its
+    `start_chapter <= n`; a not-yet-started arc still reports its range (chapter
+    numbers alone aren't spoiler-bearing) with `name: null`. A work with no arcs
+    configured returns an empty list — the frontend falls back to blocks-of-100."""
     work = _require_work(repo, slug)
-    payload = graph_json(repo, work.id or 0, n)  # fenced projection
+    arcs = fence.visible_arcs(repo, work.id or 0, n)
+    return ArcsResponse(slug=slug, n=n, arcs=[ArcModel.from_arc(a) for a in arcs])
+
+
+@router.get("/works/{slug}/graph", response_model=GraphResponse)
+def get_graph(
+    slug: str,
+    n: ChapterParam,
+    repo: RepoDep,
+    cast: Annotated[str, Query(pattern="^(20|50|all)$")] = "20",
+    types: Annotated[str, Query(max_length=120)] = "Character",
+) -> GraphResponse:
+    """The fenced graph payload at chapter ``n``.
+
+    ``cast`` and ``types`` are DISPLAY parameters: they are applied in SQL after the
+    fence, never merged with it (retrofit rule 1), and the client does no filtering of
+    its own (rule 6) -- changing either re-requests this endpoint. Default is the main
+    twenty Characters, which is retrofit rule 2's default graph.
+    """
+    work = _require_work(repo, slug)
+    requested = [x.strip() for x in types.split(",") if x.strip()]
+    allowed = {t.value for t in GRAPH_NODE_TYPES}
+    chosen = [x for x in requested if x in allowed] or ["Character"]
+    payload = graph_json(
+        repo, work.id or 0, n, cast_size=fence.CAST_SIZES[cast], types=chosen
+    )
     return GraphResponse(slug=slug, n=n, elements=GraphElements.model_validate(payload["elements"]))
+
+
+@router.get("/works/{slug}/entity/{entity_id}/ego", response_model=EgoResponse)
+def get_ego(
+    slug: str,
+    entity_id: int,
+    n: ChapterParam,
+    repo: RepoDep,
+    limit: Annotated[int, Query(ge=1, le=50)] = 12,
+) -> EgoResponse:
+    """One entity and its 1-hop neighbours at chapter ``n``, each with its quote.
+
+    404 when the entity is not revealed at ``n`` -- an unrevealed entity must not be
+    distinguishable from one that does not exist, or the 404/200 split itself leaks.
+    Neighbours are capped by salience rank so a hub does not return the whole cast.
+    """
+    work = _require_work(repo, slug)
+    work_id = work.id or 0
+    node = next((x for x in fence.visible_nodes(repo, work_id, n) if x.id == entity_id), None)
+    if node is None:
+        raise HTTPException(status_code=404, detail="entity not found or not yet revealed")
+
+    visible = {x.id: x for x in fence.visible_nodes(repo, work_id, n) if x.id is not None}
+    rank = {x.id: i for i, x in enumerate(fence.visible_cast_ranked(repo, work_id, n))}
+    names = fence.visible_display_names(repo, work_id, n)
+
+    neighbours: list[EgoNeighbourModel] = []
+    for edge in fence.visible_payload_edges(repo, work_id, n, list(visible)):
+        if entity_id not in (edge.source_id, edge.target_id):
+            continue
+        outgoing = edge.source_id == entity_id
+        other_id = edge.target_id if outgoing else edge.source_id
+        other = visible.get(other_id)
+        if other is None:
+            continue
+        neighbours.append(EgoNeighbourModel(
+            entity_id=other_id,
+            name=names.get(other_id, other.name),
+            type=other.type.value,
+            relation=edge.relation,
+            grade=edge.grade.value if edge.grade is not None else None,
+            directed=edge.relation not in {r.value for r in SYMMETRIC_R4_RELATIONS},
+            outgoing=outgoing,
+            quote=edge.quote or edge.evidence_span,
+            quote_chapter=edge.quote_chapter,
+            weight=edge.weight,
+        ))
+    neighbours.sort(key=lambda x: (rank.get(x.entity_id, 10**6), x.entity_id))
+    return EgoResponse(
+        slug=slug, n=n, entity=EntityModel.from_node(node), neighbours=neighbours[:limit]
+    )
 
 
 @router.get("/works/{slug}/entity/{entity_id}", response_model=EntityDetailResponse)
@@ -308,6 +414,34 @@ def create_app() -> FastAPI:
         description="A spoiler-aware knowledge engine for web novels.",
     )
     app.include_router(router)
+
+    # Skipped when dist/ doesn't exist: every existing test that calls create_app()
+    # directly, and the two-server dev mode, are both unaffected. Registered AFTER
+    # the API router, so /api/v1/* always matches first — Starlette checks routes
+    # in registration order, first match wins, regardless of a later route's own
+    # path breadth.
+    if _FRONTEND_DIST.is_dir():
+        app.mount(
+            "/assets", StaticFiles(directory=_FRONTEND_DIST / "assets"), name="assets"
+        )
+
+        @app.get("/favicon.svg", include_in_schema=False)
+        def _favicon() -> FileResponse:
+            return FileResponse(_FRONTEND_DIST / "favicon.svg")
+
+        @app.get("/og-image.png", include_in_schema=False)
+        def _og_image() -> FileResponse:
+            return FileResponse(_FRONTEND_DIST / "og-image.png")
+
+        @app.get("/{full_path:path}", include_in_schema=False)
+        def _spa_fallback(full_path: str) -> FileResponse:
+            # The app's own router is hash-based (#/work/...), so the fragment
+            # never reaches the server at all — in practice this only ever serves
+            # index.html for "/". Kept as a genuine catch-all anyway (not just a
+            # "/" route), for a future history-API router and for any client that
+            # requests the pre-hash path directly.
+            return FileResponse(_FRONTEND_DIST / "index.html")
+
     return app
 
 

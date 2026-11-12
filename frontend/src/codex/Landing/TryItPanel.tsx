@@ -5,7 +5,7 @@ import { EyeIcon } from "../../icons";
 import { codexTheme, fillTemplate } from "../theme";
 import { roman } from "../chapter/roman";
 import { DEMO_SLUG } from "../../ontology";
-import { ChapterProvider, useChapter } from "../chapter/ChapterProvider";
+import { ChapterProvider, FULL_VIEW, useChapter } from "../chapter/ChapterProvider";
 import ChapterChrome from "../chapter/ChapterChrome";
 import RevealChrome from "../reveal/RevealChrome";
 import StateCard from "../states/StateCard";
@@ -17,7 +17,7 @@ import styles from "./Landing.module.css";
 // DESIGN_SPEC.md §6.1 "Try the sample" panel. Wrapped in its OWN ChapterProvider (keyed
 // to the demo slug) so the stepper reads and writes the SAME per-work bookmark
 // (`storyweave:bookmark:the-hollow-crown`) through the SAME fetch/cache/reveal machinery
-// as the Dossier/Stemma/Chronicle — not a second implementation of any of it. Stepping
+// as the Dossier and the Stemma — not a second implementation of any of it. Stepping
 // forward therefore plays the real R6 reveal overlay unchanged when it crosses one.
 function TryItInner(): JSX.Element {
   const m = useChapter();
@@ -69,7 +69,11 @@ function TryItInner(): JSX.Element {
 
 export default function TryItPanel(): JSX.Element {
   return (
-    <ChapterProvider slug={DEMO_SLUG}>
+    // R7: the landing teaser shows the whole fenced graph, as it always has — it is a
+    // sample of what the book looks like, not the Stemma's default view, and it has no
+    // controls with which a reader could widen it. Without this it inherited the
+    // Characters-only default and drew nothing at chapter 1 (landing.spec F9).
+    <ChapterProvider slug={DEMO_SLUG} initialView={FULL_VIEW}>
       <RevealChrome>
         <TryItInner />
       </RevealChrome>

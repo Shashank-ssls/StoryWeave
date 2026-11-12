@@ -65,10 +65,22 @@ function sortedPair(a: string, b: string): [string, string] {
   return a < b ? [a, b] : [b, a];
 }
 
+/** The identity edge that represents each pair: the latest-revealed one, ties broken by
+ *  id. R7: a pair can legitimately carry several (the demo's layered Wren/Caelum reveal),
+ *  so "last one in payload order" would make the prior state depend on row order. */
 function identityByPair(payload: GraphElements | null | undefined): Map<string, GraphEdgeData> {
   const map = new Map<string, GraphEdgeData>();
   for (const { data } of payload?.edges ?? []) {
-    if (isRevealable(data)) map.set(pairKey(data.source, data.target), data);
+    if (!isRevealable(data)) continue;
+    const key = pairKey(data.source, data.target);
+    const held = map.get(key);
+    if (
+      !held ||
+      data.revealed_chapter > held.revealed_chapter ||
+      (data.revealed_chapter === held.revealed_chapter && data.id > held.id)
+    ) {
+      map.set(key, data);
+    }
   }
   return map;
 }
@@ -95,10 +107,36 @@ export function diffGraphs(prev: GraphElements | null, next: GraphElements): Gra
   const newEdges = next.edges.map((e) => e.data).filter((e) => !prevEdgeIds.has(e.id));
 
   const prevByPair = identityByPair(prev);
-  const reveals: Reveal[] = [];
+
+  // R7: one reveal per PAIR, even when several new identity edges arrive for it at once.
+  //
+  // The header above keys reveals by pair, but only the LOOKUP was keyed that way — the
+  // output was one reveal per new edge. That was invisible while the payload carried at
+  // most one identity edge per pair, which is what the R0 fixtures captured. R4's D1 fix
+  // (build the payload from rows instead of an `nx.DiGraph`, which was collapsing
+  // parallel edges) means both now arrive, exactly as the demo seeds them: Wren/Caelum is
+  // SECRET_IDENTITY@2 *and* TRANSMIGRATED_INTO@4. Jumping 1→4 therefore produced two
+  // "normal" reveals for one pair and a pager reading "1 of 3" instead of "1 of 2".
+  //
+  // The winner is the latest-revealed edge — the same "later reveal is the current truth"
+  // rule `viewModel.ts` uses to decide which identity a merged line shows.
+  const newestByPair = new Map<string, GraphEdgeData>();
   for (const edge of newEdges) {
     if (!isRevealable(edge)) continue;
-    const prevEdge = prevByPair.get(pairKey(edge.source, edge.target));
+    const key = pairKey(edge.source, edge.target);
+    const held = newestByPair.get(key);
+    if (
+      !held ||
+      edge.revealed_chapter > held.revealed_chapter ||
+      (edge.revealed_chapter === held.revealed_chapter && edge.id > held.id)
+    ) {
+      newestByPair.set(key, edge);
+    }
+  }
+
+  const reveals: Reveal[] = [];
+  for (const [key, edge] of newestByPair) {
+    const prevEdge = prevByPair.get(key);
     const pair = sortedPair(edge.source, edge.target);
     if (!prevEdge) reveals.push({ kind: "normal", pair, edge });
     else if (prevEdge.relation !== edge.relation) reveals.push({ kind: "deepen", pair, edge, previousEdge: prevEdge });

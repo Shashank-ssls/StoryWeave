@@ -28,6 +28,27 @@ class CleaningConfig(BaseModel):
     # silently. Applied case-insensitively to each stripped line.
     cruft_patterns: list[str] = Field(default_factory=list)
 
+    # --- Stage-0 watermark removal (retrofit R2). Knobs are DATA, per work. ---
+    # Fold Greek/Cyrillic look-alike letters to Latin before the watermark patterns
+    # run, so one regex catches every obfuscated spelling of the same watermark.
+    # See storyweave/ingest/homoglyphs.py for the table and its limits.
+    fold_homoglyphs: bool = True
+    # Watermark wrapper tag NAMES (not regexes). Both the opening and closing tag are
+    # removed and the text between them is KEPT: these sites wrap real story prose,
+    # which is exactly what defeats a cleaner that deletes the whole block.
+    watermark_tags: list[str] = Field(
+        default_factory=lambda: ["novelsnext", "novelnext", "novelbin", "novelfire"]
+    )
+    # Domain-like tokens removed AFTER folding. The default requires a real TLD, so a
+    # sentence that merely contains the word "novel" is never touched.
+    watermark_token_patterns: list[str] = Field(
+        default_factory=lambda: [r"\b\w*(?:novel|novels)\w*\.(?:com|net|org)\b"]
+    )
+    # Curly quotes -> straight, PRESERVING KIND: " " -> ", ' ' -> '. A single quote is
+    # never promoted to a double one, and brackets are never stripped, because both
+    # carry meaning in this corpus (dialogue vs. thought; [system messages]).
+    straighten_quotes: bool = True
+
 
 class SplittingConfig(BaseModel):
     # "auto": dir -> one file per chapter; single file -> try headings, else whole
@@ -45,6 +66,20 @@ class ChunkingConfig(BaseModel):
     overlap_sentences: int = 1
 
 
+class ClusteringConfig(BaseModel):
+    """Alias clustering knobs (retrofit R3). DATA, per work, never hardcoded."""
+
+    # How many chapters after the full form's first appearance a shortening may still be
+    # folded into it. A shortening that turns up much later is more likely a different
+    # person who happens to share a name token, so the merge is refused instead. 40
+    # chapters of a serial with a large cast wants this narrow; a short novella can
+    # widen it.
+    abbreviation_chapter_window: int = 6
+    # Enable the contiguous-subsequence abbreviation merge at all. Off means every
+    # surface variant stays its own entity (maximum precision, minimum alias recall).
+    merge_abbreviations: bool = True
+
+
 class ExtractionConfig(BaseModel):
     # Override the global GLiNER model/threshold per work if needed (knobs are data).
     model: str | None = None
@@ -54,9 +89,27 @@ class ExtractionConfig(BaseModel):
     # {"power system": "Concept"}. Helps recall for genre-specific common nouns.
     extra_labels: dict[str, str] = Field(default_factory=dict)
 
+    # --- retrofit R4b: common-noun-headed Organization recovery. ---
+    # GLiNER returns the PLACE nested inside "the Salt Quarter watch" and never proposes
+    # the longer organization span; four candidate label-prompt additions were measured
+    # and none recovered the class (evidence/retrofit/R4b_RESULT.md §2). The head-noun
+    # rule in storyweave/nlp/orgs.py does. ON by default: it is a general English
+    # pattern, not a per-book hack, and it only ADDS spans the model missed.
+    promote_group_nouns: bool = True
+    # Override the English collective-noun list. Empty -> orgs.GROUP_NOUNS. Knob is
+    # DATA, per work, for a book whose organizations are headed by invented nouns.
+    group_nouns: list[str] = Field(default_factory=list)
+
 
 class RelationConfig(BaseModel):
     # --- Tier-1 structural (Phase 3): co-occurrence rules, zero ML. ---
+    # OFF BY DEFAULT (retrofit rule 5). Co-occurrence is proximity, not a relationship:
+    # the v1 evaluation measured 160 of 162 relation false positives coming from this
+    # builder, at micro-precision 0.030 (evidence/EVAL_V1.md §11, re-confirmed in
+    # evidence/retrofit/R0_baseline_rerun.md §2.3). The builder stays in the tree, behind
+    # this flag, so the before/after comparison can be re-measured on demand — it is
+    # evidence, not dead code. Turn it on only to reproduce a v1-shaped graph.
+    cooccurrence_enabled: bool = False
     # Two entities co-occurring within this many characters (gap between their
     # mention spans, same chapter) become a candidate Tier-1 edge.
     window_chars: int = 250
@@ -68,6 +121,21 @@ class RelationConfig(BaseModel):
     relex_model: str | None = None
     relex_ner_threshold: float | None = None
     relex_rel_threshold: float | None = None
+
+    # --- retrofit R4: per-relation cue words for the STATED grade rule. ---
+    # Keyed by one of the twelve relation names; REPLACES that relation's default list
+    # from storyweave/extract/cues.py. Empty by default: the shipped run uses the
+    # defaults, which were written from SPEC.md §5.3 and general English before any
+    # scoring run and were NOT tuned against the answer key.
+    cues: dict[str, list[str]] = Field(default_factory=dict)
+
+    # --- retrofit R4c: ground relex spans by character overlap with stored mentions. ---
+    # relex re-runs its own NER and returns spans like "Drask" or "watch" that no stored
+    # surface matches, so the relation is discarded as ENDPOINT_NOT_STORED. Its documented
+    # `input_spans` argument would have avoided this, but this build ACCEPTS AND IGNORES it
+    # (measured: tools/r4c_api_probe2.py). Snapping is the fallback. ON by default; the
+    # surface lookup still runs first, so this only ever rescues a span that had failed.
+    snap_spans_to_mentions: bool = True
 
 
 class IdentityConfig(BaseModel):
@@ -102,16 +170,34 @@ class CorefConfig(BaseModel):
     )
 
 
+class ArcConfig(BaseModel):
+    """One named chapter range (D6, integration phase). `[[arcs]]` in
+    storyweave.toml, e.g. `name = "The Mourning Bell"`, `start_chapter = 1`,
+    `end_chapter = 8`. Arc names are the one thing fenced (F6) about arcs — see
+    `query.fence.visible_arcs` — so an arc's name should read as a chapter-range
+    label, not a plot summary, since the range itself is always visible even before
+    the name is."""
+
+    name: str
+    start_chapter: int
+    end_chapter: int
+
+
 class WorkConfig(BaseModel):
     title: str | None = None
     slug: str | None = None
     cleaning: CleaningConfig = Field(default_factory=CleaningConfig)
     splitting: SplittingConfig = Field(default_factory=SplittingConfig)
     chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
+    clustering: ClusteringConfig = Field(default_factory=ClusteringConfig)
     extraction: ExtractionConfig = Field(default_factory=ExtractionConfig)
     relations: RelationConfig = Field(default_factory=RelationConfig)
     identity: IdentityConfig = Field(default_factory=IdentityConfig)
     coref: CorefConfig = Field(default_factory=CorefConfig)
+    # Ordered by definition order in the TOML (not re-sorted) — a work with none
+    # configured (e.g. Hollow Crown, or any plain-text ingest) gets an empty list,
+    # and the frontend falls back to blocks-of-100 (DESIGN_SPEC D6 fallback).
+    arcs: list[ArcConfig] = Field(default_factory=list)
 
 
 def load_work_config(path: Path | str | None) -> WorkConfig:

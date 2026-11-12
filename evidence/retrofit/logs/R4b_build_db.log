@@ -1,0 +1,23 @@
+﻿python : 
+F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv-ml\Lib\site-packages\huggingface_hub\utils\_validators.py:189: 
+UserWarning: The `resume_download` argument is deprecated and ignored in `snapshot_download`. Downloads always resume 
+whenever possible.
+At line:1 char:340
++ ... _OFFLINE=1; python tools/build_r4_db.py --source-db data/retrofit/nin ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...never possible.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+source db : data\retrofit\ninth_house_r4b_entities.db
+output    : data\retrofit\ninth_house_r4b.db
+config    : relex_rel_threshold=None (None = the configured default), cue overrides=[]
+migration : added edge columns (none needed)
+work      : the-ninth-house (id=1)
+entities  : 191
+proposals : dumped to evidence\retrofit\R4b_proposals.jsonl
+relations : work id=1: 306 proposals -> 64 edges (+61 reinforcements), 181 rejected. [LEADS:2, LOCATED_IN:20, MEMBER_OF:22, OWNS:16, SERVES:4] grades [INFERRED:31, STATED:33]
+rejections by reason:
+  ENDPOINT_NOT_STORED    137
+  DOMAIN_RANGE           44
+edges     : 64 total, 37 STATED

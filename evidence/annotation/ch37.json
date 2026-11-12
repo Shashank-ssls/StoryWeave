@@ -1,0 +1,69 @@
+{
+  "schema_version": "storyweave-v1-annotation-1",
+  "work_slug": "the-ninth-house",
+  "chapter": 37,
+  "chapter_title": "The Grey Road's Threshold",
+  "annotator": "gpt-5",
+  "source_model": "gpt-5",
+  "entities": [
+    {"name":"Mira Quell","type":"Character","subtype":null,"first_paragraph":1,"surface_forms":["Mira","Mira Quell","she","her"],"significant":true,"notes":"A young-looking person who reveals that she is a Wanderer who arrived from outside Thornmere and inhabits the body of a Choir initiate. She possesses knowledge of places she has never physically visited and remembers arriving in her current body without choosing it. Named in full in paragraph 7."},
+    {"name":"Undercroft","type":"Place","subtype":null,"first_paragraph":1,"surface_forms":["Undercroft"],"significant":true,"notes":"The location of the collapse mentioned at the beginning of the chapter and the rebuilt archive. Mira describes it as a place containing the Grey Road's threshold."},
+    {"name":"Choir","type":"Organization","subtype":null,"first_paragraph":1,"surface_forms":["Choir"],"significant":true,"notes":"An organization to which Mira belongs as an initiate. Its members call the archive doorway the Grey Road. Thessaly is associated with the Choir."},
+    {"name":"Thessaly","type":"Character","subtype":null,"first_paragraph":1,"surface_forms":["Thessaly"],"significant":true,"notes":"A person who previously described Mira's wordless tune as older than the Choir. Mira has not disclosed her unusual origins to Thessaly."},
+    {"name":"Grey Road","type":"Place","subtype":null,"first_paragraph":1,"surface_forms":["Grey Road","Grey Road's","the threshold","doorway"],"significant":true,"notes":"The name given by the Choir to the rebuilt archive's doorway. Mira feels a particular affinity for its threshold, describing it as a place between things. The exact nature of the Grey Road remains unexplained."},
+    {"name":"Sorrel","type":"Character","subtype":null,"first_paragraph":1,"surface_forms":["Sorrel","you"],"significant":true,"notes":"A confidante to whom Mira reveals her origins. Sorrel recognizes the nature of Mira's confession, listens to her and takes her hand. Sorrel also alludes to carrying a name that is not exclusively her own."},
+    {"name":"Thornmere","type":"Place","subtype":null,"first_paragraph":7,"surface_forms":["Thornmere"],"significant":true,"notes":"The place from which Mira's origins are distinguished. She reveals that she arrived from outside Thornmere altogether."},
+    {"name":"Wanderer","type":"Concept","subtype":null,"first_paragraph":7,"surface_forms":["Wanderer"],"significant":true,"notes":"A type of being or identity associated with Mira's origin. Mira describes herself as a Wanderer poured into the body of a Choir initiate. The precise nature of Wanderers is not explained."},
+    {"name":"Choir initiate","type":"Concept","subtype":null,"first_paragraph":7,"surface_forms":["Choir initiate","initiate"],"significant":true,"notes":"A position within the Choir. Mira's current body originally belonged to a young Choir initiate, although the chapter does not establish whether the initiate was a separate person."}
+  ],
+  "aliases": [
+    {"canonical":"Mira Quell","alias":"Mira","first_paragraph":1,"kind":"shortening"},
+    {"canonical":"Mira Quell","alias":"she","first_paragraph":1,"kind":"pronoun-stable"},
+    {"canonical":"Mira Quell","alias":"her","first_paragraph":1,"kind":"pronoun-stable"},
+    {"canonical":"Grey Road","alias":"the threshold","first_paragraph":3,"kind":"other"},
+    {"canonical":"Grey Road","alias":"doorway","first_paragraph":1,"kind":"other"}
+  ],
+  "rejected_mentions": [
+    {"surface":"Undercroft collapse","paragraph":1,"why":"The collapse is described as a past occurrence but is not given a distinct event name in the chapter. The location itself is annotated separately."},
+    {"surface":"rebuilt archive","paragraph":1,"why":"A generic description of a building rather than an independently named place."},
+    {"surface":"archive","paragraph":1,"why":"A generic noun referring to the rebuilt archive, not a distinct named entity."},
+    {"surface":"wordless tune","paragraph":1,"why":"An unnamed melody described through sensory and auditory characteristics. It is not established as a named ability or concept."},
+    {"surface":"older than the Choir","paragraph":1,"why":"A comparative description of the tune's perceived age, not a separate entity."},
+    {"surface":"one evening","paragraph":1,"why":"A generic time expression."},
+    {"surface":"nothing","paragraph":1,"why":"An indefinite reference to what Mira stares at, not an entity."},
+    {"surface":"between-places","paragraph":3,"why":"A descriptive expression for locations perceived as being between things. The chapter does not establish it as a distinct named place or formal concept."},
+    {"surface":"between things","paragraph":3,"why":"An abstract description of the threshold's perceived character rather than an independently established concept."},
+    {"surface":"children","paragraph":4,"why":"A generic category of people, not a specific character or formally established species."},
+    {"surface":"eleven years","paragraph":5,"why":"An age and temporal measurement rather than an entity."},
+    {"surface":"names of places","paragraph":5,"why":"A generic reference to geographical names rather than individual named locations."},
+    {"surface":"confession","paragraph":6,"why":"A generic description of Mira's disclosure, not a named event."},
+    {"surface":"small body","paragraph":7,"why":"A generic physical description of Mira's current body, not a distinct entity established by the text."},
+    {"surface":"small hand","paragraph":9,"why":"A physical body part described generically, not an independently identifiable item."},
+    {"surface":"name that isn't only your own","paragraph":9,"why":"A metaphorical description of Sorrel's experience. Its precise meaning is not established sufficiently to create a separate concept."}
+  ],
+  "relations": [
+    {"source":"Mira Quell","target":"Undercroft","relation":"LocatedIn","tier":1,"paragraph":1,"evidence":"sitting alone near the rebuilt archive's threshold","directed":true},
+    {"source":"Mira Quell","target":"Choir","relation":"MemberOf","tier":1,"paragraph":7,"evidence":"a Choir initiate's small body","directed":true},
+    {"source":"Choir","target":"Undercroft","relation":"LocatedIn","tier":1,"paragraph":3,"evidence":"the only place in the Undercroft that feels like it's between things","directed":true},
+    {"source":"Grey Road","target":"Undercroft","relation":"LocatedIn","tier":1,"paragraph":1,"evidence":"the doorway the Choir had taken to calling the Grey Road","directed":true},
+    {"source":"Mira Quell","target":"Thessaly","relation":"RelatedTo","tier":1,"paragraph":1,"evidence":"the wordless tune Thessaly had once called older than the Choir","directed":false},
+    {"source":"Mira Quell","target":"Sorrel","relation":"RelatedTo","tier":1,"paragraph":2,"evidence":"\"You don't have to sit out here alone,\" Sorrel said, settling beside her.","directed":false},
+    {"source":"Mira Quell","target":"Sorrel","relation":"Respects","tier":2,"paragraph":8,"evidence":"I don't know why I'm telling you first.","directed":true},
+    {"source":"Sorrel","target":"Mira Quell","relation":"Protects","tier":2,"paragraph":9,"evidence":"taking her small hand","directed":true},
+    {"source":"Mira Quell","target":"Thessaly","relation":"RelatedTo","tier":1,"paragraph":8,"evidence":"I never told Thessaly.","directed":false},
+    {"source":"Mira Quell","target":"Wanderer","relation":"RelatedTo","tier":1,"paragraph":7,"evidence":"a Wanderer poured into a Choir initiate's small body","directed":false},
+    {"source":"Mira Quell","target":"Thornmere","relation":"RelatedTo","tier":1,"paragraph":7,"evidence":"she had walked in from outside Thornmere altogether","directed":false},
+    {"source":"Mira Quell","target":"Choir initiate","relation":"RelatedTo","tier":1,"paragraph":7,"evidence":"a Choir initiate's small body","directed":false}
+  ],
+  "events": [],
+  "uncertain": [
+    {"item":"Undercroft collapse","paragraph":1,"question":"Is the Undercroft collapse an established, named event elsewhere in the work, or merely a generic reference to a past incident? The chapter does not provide enough information to establish it as a named Event."},
+    {"item":"Mira's arrival in her current body","paragraph":7,"question":"Does Mira's arrival constitute a reincarnation, transmigration, possession, or another phenomenon? The text establishes that she arrived in a body without remembering choosing it, but does not define the mechanism."},
+    {"item":"Wanderer","paragraph":7,"question":"Is Wanderer a species, a rank, a social designation, or a broader metaphysical category? The chapter identifies Mira as one but does not explain the classification."},
+    {"item":"Grey Road","paragraph":1,"question":"Is the Grey Road simply the Choir's name for the archive doorway, or does it refer to a metaphysical passage or distinct location? The chapter leaves its nature unexplained."},
+    {"item":"Thessaly","paragraph":1,"question":"What is Thessaly's precise relationship to Mira? Thessaly knows about Mira's tune, but the chapter does not establish whether Thessaly is a mentor, guardian, family member, or merely an acquaintance."},
+    {"item":"Sorrel's name","paragraph":9,"question":"What does Sorrel mean by carrying a name that isn't only her own? The statement suggests a possible parallel with Mira's unusual identity, but the nature of Sorrel's experience remains unspecified."},
+    {"item":"Mira's original body","paragraph":7,"question":"Was the Choir initiate whose body Mira occupies a distinct individual with an independent identity, or was the body created for Mira? The chapter does not resolve this distinction."},
+    {"item":"Mira's age","paragraph":5,"question":"Mira questions whether she is the age she appears to be, but her actual age is not provided. The chapter establishes only that she looks eleven."}
+  ]
+}

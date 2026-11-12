@@ -1,0 +1,210 @@
+=== salience (structural) — the-ninth-house ===
+database: F:\Dev\Claude_folder_project_and_stuff\StoryWeave\storyweave-demo.sqlite (mode=ro)
+mentions rows for this work: 887
+  of which unclustered (node_id IS NULL, excluded): 103
+
+--- chapter 10: 90 fenced-visible entities ---
+
+Top 20 by DEGREE
+  #  name             type                 degree  rank
+  1  Sorrel           Character                57  1.0
+  2  Cassian          Character                37  2.0
+  3  Meraude          Character                32  3.0
+  4  Bone Market      Place                    30  4.0
+  5  Warden           Character                28  5.0
+  6  Juno Stray       Character                27  6.0
+  7  Chancery         Organization             24  7.0
+  8  Denna            Character                21  8.0
+  9  Undercroft       Place                    19  9.0
+ 10  Council          Organization             18  10.5
+ 11  ledger           Item                     18  10.5
+ 12  Ser Robart Kell  Character                17  12.5
+ 13  quiet            Concept                  17  12.5
+ 14  Council chamber  Place                    16  15.0
+ 15  Thessaly         Character                16  15.0
+ 16  Vey              Character                16  15.0
+ 17  Master Vane      Character                15  17.5
+ 18  Salt Quarter     Place                    15  17.5
+ 19  Corwin           Character                14  19.5
+ 20  realm            Place                    14  19.5
+
+Top 20 by MENTION COUNT
+  #  name             type          mention_count  rank
+  1  Sorrel           Character                32  1.0
+  2  Cassian          Character                 9  2.5
+  3  Vey              Character                 9  2.5
+  4  Meraude          Character                 8  4.0
+  5  Bone Market      Place                     7  6.0
+  6  Chancery         Organization              7  6.0
+  7  Denna            Character                 7  6.0
+  8  Thessaly         Character                 6  9.0
+  9  Vesper           Character                 6  9.0
+ 10  Warden           Character                 6  9.0
+ 11  Council          Organization              5  11.5
+ 12  Juno Stray       Character                 5  11.5
+ 13  Choir            Organization              4  14.5
+ 14  Ninth House      Place                     4  14.5
+ 15  Undercroft       Place                     4  14.5
+ 16  ledger           Item                      4  14.5
+ 17  Corwin           Character                 3  20.5
+ 18  Master Vane      Character                 3  20.5
+ 19  Salt Quarter     Place                     3  20.5
+ 20  Ser Robart Kell  Character                 3  20.5
+
+Spearman rho (degree vs mention_count, all 90 entities): 0.7508
+Entities tied on degree within the top 20: 11 (in 5 tied group(s); 14 distinct degree values)
+
+--- chapter 20: 138 fenced-visible entities ---
+
+Top 20 by DEGREE
+  #  name                 type                 degree  rank
+  1  Sorrel               Character                83  1.0
+  2  Meraude              Character                48  2.0
+  3  Bone Market          Place                    42  3.0
+  4  Cassian              Character                37  4.5
+  5  Chancery             Organization             37  4.5
+  6  Juno Stray           Character                32  6.0
+  7  Corwin               Character                31  7.5
+  8  Undercroft           Place                    31  7.5
+  9  Vesper               Character                30  9.0
+ 10  Warden               Character                28  10.0
+ 11  Thessaly             Character                27  11.0
+ 12  Tobin                Character                25  12.0
+ 13  Council              Organization             23  13.0
+ 14  Denna                Character                22  14.0
+ 15  ledger               Item                     21  15.0
+ 16  Choir                Organization             18  17.0
+ 17  Drask                Character                18  17.0
+ 18  Lord Fennick Oswald  Character                18  17.0
+ 19  House Ashcombe       Place                    17  20.0
+ 20  Ser Robart Kell      Character                17  20.0
+
+Top 20 by MENTION COUNT
+  #  name         type          mention_count  rank
+  1  Sorrel       Character                63  1.0
+  2  Vesper       Character                18  2.0
+  3  Meraude      Character                13  3.0
+  4  Thessaly     Character                12  4.0
+  5  Juno Stray   Character                11  5.0
+  6  Chancery     Organization             10  6.5
+  7  Undercroft   Place                    10  6.5
+  8  Bone Market  Place                     9  9.0
+  9  Cassian      Character                 9  9.0
+ 10  Vey          Character                 9  9.0
+ 11  Choir        Organization              8  12.0
+ 12  Corwin       Character                 8  12.0
+ 13  Denna        Character                 8  12.0
+ 14  Ninth House  Place                     7  14.0
+ 15  Council      Organization              6  16.5
+ 16  Drask        Character                 6  16.5
+ 17  Warden       Character                 6  16.5
+ 18  ledger       Item                      6  16.5
+ 19  Ettie Marsh  Character                 5  19.5
+ 20  Tobin        Character                 5  19.5
+
+Spearman rho (degree vs mention_count, all 138 entities): 0.7378
+Entities tied on degree within the top 20: 9 (in 4 tied group(s); 15 distinct degree values)
+
+--- chapter 30: 167 fenced-visible entities ---
+
+Top 20 by DEGREE
+  #  name             type                 degree  rank
+  1  Sorrel           Character                96  1.0
+  2  Thessaly         Character                54  2.0
+  3  Meraude          Character                48  3.0
+  4  Cassian          Character                46  4.5
+  5  Vesper           Character                46  4.5
+  6  Bone Market      Place                    43  6.0
+  7  Chancery         Organization             40  7.0
+  8  Corwin           Character                35  8.0
+  9  Juno Stray       Character                34  9.0
+ 10  Undercroft       Place                    33  10.0
+ 11  Thorne           Character                29  11.0
+ 12  Warden           Character                28  12.0
+ 13  Denna            Character                26  13.5
+ 14  Ser Robart Kell  Character                26  13.5
+ 15  Choir            Organization             25  16.0
+ 16  Council          Organization             25  16.0
+ 17  Tobin            Character                25  16.0
+ 18  Ione             Character                23  18.5
+ 19  Ninth House      Place                    23  18.5
+ 20  Drask            Character                22  20.0
+
+Top 20 by MENTION COUNT
+  #  name             type          mention_count  rank
+  1  Sorrel           Character                86  1.0
+  2  Thessaly         Character                27  2.0
+  3  Vesper           Character                25  3.0
+  4  Cassian          Character                15  4.0
+  5  Meraude          Character                13  5.0
+  6  Chancery         Organization             12  7.0
+  7  Corwin           Character                12  7.0
+  8  Juno Stray       Character                12  7.0
+  9  Ninth House      Place                    11  10.0
+ 10  Thorne           Character                11  10.0
+ 11  Undercroft       Place                    11  10.0
+ 12  Bone Market      Place                    10  12.5
+ 13  Choir            Organization             10  12.5
+ 14  Denna            Character                 9  15.5
+ 15  Drask            Character                 9  15.5
+ 16  Ione             Character                 9  15.5
+ 17  Vey              Character                 9  15.5
+ 18  Council          Organization              7  19.0
+ 19  Ser Robart Kell  Character                 7  19.0
+ 20  Ysolde           Character                 7  19.0
+
+Spearman rho (degree vs mention_count, all 167 entities): 0.7347
+Entities tied on degree within the top 20: 9 (in 4 tied group(s); 15 distinct degree values)
+
+--- chapter 40: 206 fenced-visible entities ---
+
+Top 20 by DEGREE
+  #  name         type                 degree  rank
+  1  Sorrel       Character               121  1.0
+  2  Cassian      Character                68  2.0
+  3  Meraude      Character                64  3.0
+  4  Thessaly     Character                62  4.0
+  5  Vesper       Character                60  5.0
+  6  Chancery     Organization             55  6.0
+  7  Corwin       Character                48  7.0
+  8  Bone Market  Place                    46  8.0
+  9  Thorne       Character                45  9.5
+ 10  Undercroft   Place                    45  9.5
+ 11  Council      Organization             42  11.0
+ 12  ledger       Item                     37  12.0
+ 13  Regent       Character                36  13.0
+ 14  Hask         Character                35  14.0
+ 15  Ione         Character                34  15.5
+ 16  Juno Stray   Character                34  15.5
+ 17  Choir        Organization             28  17.5
+ 18  Warden       Character                28  17.5
+ 19  Denna        Character                26  20.5
+ 20  Master Vane  Character                26  20.5
+
+Top 20 by MENTION COUNT
+  #  name         type          mention_count  rank
+  1  Sorrel       Character               108  1.0
+  2  Thessaly     Character                35  2.0
+  3  Vesper       Character                29  3.0
+  4  Cassian      Character                27  4.0
+  5  Corwin       Character                23  5.0
+  6  Undercroft   Place                    19  6.0
+  7  Meraude      Character                18  7.0
+  8  Chancery     Organization             16  8.0
+  9  Hask         Character                14  9.0
+ 10  Choir        Organization             13  10.5
+ 11  Thorne       Character                13  10.5
+ 12  Bone Market  Place                    12  13.0
+ 13  Juno Stray   Character                12  13.0
+ 14  Ninth House  Place                    12  13.0
+ 15  Council      Organization             11  15.5
+ 16  Ione         Character                11  15.5
+ 17  ledger       Item                     10  17.0
+ 18  Denna        Character                 9  19.5
+ 19  Drask        Character                 9  19.5
+ 20  Vey          Character                 9  19.5
+
+Spearman rho (degree vs mention_count, all 206 entities): 0.7166
+Entities tied on degree within the top 20: 8 (in 4 tied group(s); 16 distinct degree values)
+
+wrote evidence\salience_v1.csv (601 rows)

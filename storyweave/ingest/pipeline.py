@@ -13,7 +13,7 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from storyweave.db.models import Chapter, Chunk
+from storyweave.db.models import Arc, Chapter, Chunk
 from storyweave.db.repository import Repository
 from storyweave.ingest.cleaner import clean_text
 from storyweave.ingest.splitter import RawChapter, chunk_chapter, detect_chapters
@@ -144,5 +144,20 @@ def ingest(
                 )
             )
             report.chunks_added += 1
+
+    if cfg.arcs:
+        repo.set_arcs(
+            work_id,
+            [
+                Arc(
+                    work_id=work_id,
+                    ordinal=i,
+                    name=a.name,
+                    start_chapter=a.start_chapter,
+                    end_chapter=a.end_chapter,
+                )
+                for i, a in enumerate(cfg.arcs, start=1)
+            ],
+        )
 
     return report

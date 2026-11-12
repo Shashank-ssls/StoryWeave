@@ -1,0 +1,189 @@
+﻿python : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv\Lib\site-packages\fastapi\testclient.py:1: 
+StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+At line:1 char:326
++ ... | Out-Null; python tools/eval_fence.py --db evidence/v1_ninth_house.d ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...ttpx2` instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  from starlette.testclient import TestClient as TestClient  # noqa
+=== TESTED SURFACE ===
+  [TESTED    ] GET /works/{slug}/entities?n=
+               element kinds: entity
+               EntityModel carries revealed_chapter directly.
+  [TESTED    ] GET /works/{slug}/graph?n=
+               element kinds: graph_node, graph_edge, graph_node_property
+               Cytoscape elements; node.properties is a bare key->value dict with no reveal stamp on the wire, so it is resolved back to node_properties rows read-only.
+  [TESTED    ] GET /works/{slug}/entity/{id}?n=
+               element kinds: detail_entity, detail_edge, detail_property
+               Requested for EVERY node id of the work at every chapter, so a not-yet-revealed id must 404 rather than serve; a 200 on an unrevealed id is itself a violation.
+  [TESTED    ] GET /works/{slug}/arcs?n=
+               element kinds: arc_name
+               Arcs carry no revealed_chapter. Their fence rule (F6) is name redaction: an arc with start_chapter > n must send name=null. That rule is what is checked.
+  [not tested] GET /works/{slug}/search?n=&q=
+               element kinds: -
+               NOT TESTED: the vector store directory (.chroma) does not exist in this checkout, so there is no index to query and the route cannot be exercised without first building one. Its fence key is chunk chapter_ordinal <= n.
+  [not tested] GET /works/{slug}/status?n/a
+               element kinds: -
+               NOT TESTED as a leak surface: it returns no story element, only an UNFENCED node_count (repository.count_nodes ignores the chapter). That is a count, not an element carrying revealed_chapter, so it is out of this metric's scope -- recorded here because it is a real side channel the checker does not cover.
+  [not tested] GET /works
+               element kinds: -
+               NOT TESTED: work slug/title/chapter_count only; no reveal-stamped element.
+  [not tested] GET /health
+               element kinds: -
+               NOT TESTED: liveness only; no story content.
+  [not tested] POST /works, POST /works/preview, POST /works/{slug}/chapters, DELETE /works/{slug}
+               element kinds: -
+               NOT TESTED: write/ingest routes. They return counts and echo the caller's own submitted text; they serve no reveal-stamped element from the graph.
+
+=== MEASUREMENT RUN ===
+database: F:\Dev\Claude_folder_project_and_stuff\StoryWeave\evidence\v1_ninth_house.db (opened mode=ro)
+  the-hollow-crown: chapters 1..4
+  the-ninth-house: chapters 1..40
+total queries issued:    8424
+total elements inspected: 105243
+    arc_name: 200
+    detail_edge: 59764
+    detail_entity: 5210
+    detail_property: 7
+    entity: 5210
+    graph_edge: 29635
+    graph_node: 5210
+    graph_node_property: 7
+TOTAL VIOLATIONS: 0
+
+=== NEGATIVE CONTROLS (throwaway copy; measured DB never written) ===
+  injected: 3 synthetic elements revealed at chapter 6, payload fetched at 6, checked against n=5
+    queries=4 elements=362 violations_detected=123
+      entity 62: entity 'Thessaly' revealed at 6 served at n=5
+      entity 63: entity 'Thorne' revealed at 6 served at n=5
+      entity 64: entity 'Aldenreach' revealed at 6 served at n=5
+      entity 65: entity 'House Ashcombe' revealed at 6 served at n=5
+      entity 66: entity 'household' revealed at 6 served at n=5
+      entity 67: entity 'scribe' revealed at 6 served at n=5
+      entity 68: entity 'succession' revealed at 6 served at n=5
+      entity 220: entity 'SYNTHETIC LEAK CANARY' revealed at 6 served at n=5
+      graph_node 62: node 'Thessaly' revealed at 6
+      graph_node 63: node 'Thorne' revealed at 6
+      graph_node 64: node 'Aldenreach' revealed at 6
+      graph_node 65: node 'House Ashcombe' revealed at 6
+      graph_node 66: node 'household' revealed at 6
+      graph_node 67: node 'scribe' revealed at 6
+      graph_node 68: node 'succession' revealed at 6
+      graph_node 220: node 'SYNTHETIC LEAK CANARY' revealed at 6
+      graph_node_property 220:canary: property canary='synthetic' on node 220 is revealed no earlier than 6
+      graph_edge e1341: edge RelatedTo 14->220
+      graph_edge e1341: edge target 220 revealed at 6
+      graph_edge e232: edge LocatedIn 17->64
+      graph_edge e232: edge target 64 revealed at 6
+      graph_edge e243: edge AffiliatedWith 17->66
+      graph_edge e243: edge target 66 revealed at 6
+      graph_edge e247: edge RelatedTo 17->68
+      graph_edge e247: edge target 68 revealed at 6
+      graph_edge e248: edge LocatedIn 17->65
+      graph_edge e248: edge target 65 revealed at 6
+      graph_edge e226: edge RelatedTo 30->67
+      graph_edge e226: edge target 67 revealed at 6
+      graph_edge e227: edge RelatedTo 30->62
+      graph_edge e227: edge target 62 revealed at 6
+      graph_edge e230: edge LocatedIn 30->64
+      graph_edge e230: edge target 64 revealed at 6
+      graph_edge e234: edge RelatedTo 30->63
+      graph_edge e234: edge target 63 revealed at 6
+      graph_edge e239: edge MemberOf 30->66
+      graph_edge e239: edge target 66 revealed at 6
+      graph_edge e240: edge ParticipatedIn 30->68
+      graph_edge e240: edge target 68 revealed at 6
+      graph_edge e241: edge LocatedIn 30->65
+      graph_edge e241: edge target 65 revealed at 6
+      graph_edge e246: edge RelatedTo 35->66
+      graph_edge e246: edge target 66 revealed at 6
+      graph_edge e250: edge RelatedTo 35->68
+      graph_edge e250: edge target 68 revealed at 6
+      graph_edge e216: edge RelatedTo 60->62
+      graph_edge e216: edge target 62 revealed at 6
+      graph_edge e219: edge RelatedTo 60->67
+      graph_edge e219: edge target 67 revealed at 6
+      graph_edge e223: edge LocatedIn 60->64
+      graph_edge e223: edge target 64 revealed at 6
+      graph_edge e224: edge RelatedTo 60->63
+      graph_edge e224: edge target 63 revealed at 6
+      graph_edge e211: edge LocatedIn 61->44
+      graph_edge e213: edge LocatedIn 61->43
+      graph_edge e210: edge LocatedIn 62->44
+      graph_edge e210: edge source 62 revealed at 6
+      graph_edge e212: edge LocatedIn 62->43
+      graph_edge e212: edge source 62 revealed at 6
+      graph_edge e215: edge MemberOf 62->61
+      graph_edge e215: edge source 62 revealed at 6
+      graph_edge e217: edge RelatedTo 62->67
+      graph_edge e217: edge source 62 revealed at 6
+      graph_edge e217: edge target 67 revealed at 6
+      graph_edge e221: edge LocatedIn 62->64
+      graph_edge e221: edge source 62 revealed at 6
+      graph_edge e221: edge target 64 revealed at 6
+      graph_edge e222: edge RelatedTo 62->63
+      graph_edge e222: edge source 62 revealed at 6
+      graph_edge e222: edge target 63 revealed at 6
+      graph_edge e228: edge LeaderOf 62->66
+      graph_edge e228: edge source 62 revealed at 6
+      graph_edge e228: edge target 66 revealed at 6
+      graph_edge e1332: edge Mentor 62->60
+      graph_edge e1332: edge source 62 revealed at 6
+      graph_edge e225: edge RelatedTo 63->67
+      graph_edge e225: edge source 63 revealed at 6
+      graph_edge e225: edge target 67 revealed at 6
+      graph_edge e229: edge LocatedIn 63->64
+      graph_edge e229: edge source 63 revealed at 6
+      graph_edge e229: edge target 64 revealed at 6
+      graph_edge e235: edge LeaderOf 63->66
+      graph_edge e235: edge source 63 revealed at 6
+      graph_edge e235: edge target 66 revealed at 6
+      graph_edge e236: edge LeaderOf 63->17
+      graph_edge e236: edge source 63 revealed at 6
+      graph_edge e237: edge ParticipatedIn 63->68
+      graph_edge e237: edge source 63 revealed at 6
+      graph_edge e237: edge target 68 revealed at 6
+      graph_edge e238: edge LocatedIn 63->65
+      graph_edge e238: edge source 63 revealed at 6
+      graph_edge e238: edge target 65 revealed at 6
+      graph_edge e242: edge ParticipatedIn 63->35
+      graph_edge e242: edge source 63 revealed at 6
+      graph_edge e1335: edge Serves 63->30
+      graph_edge e1335: edge source 63 revealed at 6
+      graph_edge e233: edge ParticipatedIn 64->68
+      graph_edge e233: edge source 64 revealed at 6
+      graph_edge e233: edge target 68 revealed at 6
+      graph_edge e249: edge ParticipatedIn 65->68
+      graph_edge e249: edge source 65 revealed at 6
+      graph_edge e249: edge target 68 revealed at 6
+      graph_edge e251: edge ParticipatedIn 65->35
+      graph_edge e251: edge source 65 revealed at 6
+      graph_edge e231: edge LocatedIn 66->64
+      graph_edge e231: edge source 66 revealed at 6
+      graph_edge e231: edge target 64 revealed at 6
+      graph_edge e244: edge RelatedTo 66->68
+      graph_edge e244: edge source 66 revealed at 6
+      graph_edge e244: edge target 68 revealed at 6
+      graph_edge e245: edge LocatedIn 66->65
+      graph_edge e245: edge source 66 revealed at 6
+      graph_edge e245: edge target 65 revealed at 6
+      graph_edge e214: edge LocatedIn 67->43
+      graph_edge e214: edge source 67 revealed at 6
+      graph_edge e218: edge MemberOf 67->61
+      graph_edge e218: edge source 67 revealed at 6
+      graph_edge e220: edge LocatedIn 67->64
+      graph_edge e220: edge source 67 revealed at 6
+      graph_edge e220: edge target 64 revealed at 6
+      detail_entity 220: entity 'SYNTHETIC LEAK CANARY' served at n=5
+      detail_edge 1341: edge RelatedTo on entity 220
+      detail_property 220:canary: property canary='synthetic'
+  sabotaged: fenced reads replaced with unfenced ones, payload fetched at n=5 as a client would
+    queries=43 elements=2694 violations_detected=3556
+      detail_edge: 569
+      entity: 158
+      graph_edge: 2671
+      graph_node: 158
+
+DETECTOR VERIFIED TO FIRE: True
+wrote evidence\retrofit\R0_fence_leaks.csv (3679 rows)

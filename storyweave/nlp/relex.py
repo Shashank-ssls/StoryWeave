@@ -30,6 +30,7 @@ module imports cleanly under the light ``.venv``; the model only loads under
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
@@ -66,6 +67,72 @@ RELATION_PROMPTS: dict[str, str] = {
     "fears": "Fears",
     "respects": "Respects",
 }
+
+# --------------------------------------------------------------------------- #
+# Retrofit R4 — the SHIPPED prompt set, targeting the twelve closed relations.
+#
+# `RELATION_PROMPTS` above stays exactly as it was: it belongs to the Phase-7a Tier-2
+# producer, which the frozen v1 database and the Hollow Crown fixture were built with,
+# and rewriting it would change what those historical paths do. R4's builder uses the
+# map below instead. The value is (relation, reverse_endpoints) — "student of" is the
+# same edge as "mentor of" with the endpoints swapped, which is why MENTOR_OF needs no
+# second relation.
+#
+# Prompts for MEMBER_OF, LEADS, OWNS and LOCATED_IN are new in R4: v1 produced those
+# four from the co-occurrence rule, which R1 switched off, so relex has to state them.
+# --------------------------------------------------------------------------- #
+R4_RELATION_PROMPTS: dict[str, tuple[str, bool]] = {
+    "ally of": ("ALLY_OF", False),
+    "allied with": ("ALLY_OF", False),
+    "friend of": ("ALLY_OF", False),
+    "enemy of": ("ENEMY_OF", False),
+    "mentor of": ("MENTOR_OF", False),
+    "teacher of": ("MENTOR_OF", False),
+    "trained": ("MENTOR_OF", False),
+    "raised": ("MENTOR_OF", False),
+    "student of": ("MENTOR_OF", True),
+    "apprentice of": ("MENTOR_OF", True),
+    "parent of": ("KIN_OF", False),
+    "father of": ("KIN_OF", False),
+    "mother of": ("KIN_OF", False),
+    "child of": ("KIN_OF", False),
+    "son of": ("KIN_OF", False),
+    "daughter of": ("KIN_OF", False),
+    "sibling of": ("KIN_OF", False),
+    "brother of": ("KIN_OF", False),
+    "sister of": ("KIN_OF", False),
+    "uncle of": ("KIN_OF", False),
+    "aunt of": ("KIN_OF", False),
+    "relative of": ("KIN_OF", False),
+    "spouse of": ("KIN_OF", False),
+    "married to": ("KIN_OF", False),
+    "in love with": ("ROMANTIC_WITH", False),
+    "lover of": ("ROMANTIC_WITH", False),
+    "serves": ("SERVES", False),
+    "works for": ("SERVES", False),
+    "serves under": ("SERVES", False),
+    "killed": ("KILLED", False),
+    # --- new in R4: the ring-2 structural relations the co-occurrence rule used to
+    # guess at. These must now be STATED by the text like any other edge.
+    "member of": ("MEMBER_OF", False),
+    "belongs to": ("MEMBER_OF", False),
+    "leader of": ("LEADS", False),
+    "commands": ("LEADS", False),
+    "rules": ("LEADS", False),
+    "owns": ("OWNS", False),
+    "carries": ("OWNS", False),
+    "wields": ("OWNS", False),
+    "located in": ("LOCATED_IN", False),
+    "lives in": ("LOCATED_IN", False),
+    "from": ("LOCATED_IN", False),
+}
+
+#: The v1 prompts R4 deliberately does NOT ask for, because their relations are outside
+#: the closed twelve (retrofit rule 3). Logged in the phase report, not silently absent.
+R4_DROPPED_PROMPTS: tuple[str, ...] = (
+    "rival of", "betrayed", "protects", "fears", "respects",
+)
+
 
 # Relations with no inherent direction — their endpoints are stored order-independent
 # so A–Ally–B and B–Ally–A collapse to one edge.
@@ -106,13 +173,23 @@ ENTITY_LABELS: list[str] = [
 
 @dataclass
 class RelationSpan:
-    """One directed relation from relex, before anchoring to canonical nodes."""
+    """One directed relation from relex, before anchoring to canonical nodes.
+
+    The four offset fields are retrofit R4 and default to 0 so the Phase-7a callers and
+    their fake extractors are unaffected. R4 needs them because its quote has to be a
+    VERBATIM slice of the chapter's clean text (validator check (a)), which a
+    whitespace-collapsed ``evidence`` string can never be.
+    """
 
     source_surface: str
     relation: str  # canonical Tier-2 relation
     target_surface: str
     score: float
     evidence: str = ""
+    source_start: int = 0
+    source_end: int = 0
+    target_start: int = 0
+    target_end: int = 0
 
 
 class RelexProtocol(Protocol):
@@ -131,7 +208,20 @@ class RelexExtractor:
         rel_threshold: float | None = None,
         device: str | None = None,
         settings: Settings | None = None,
+        prompts: Sequence[str] | None = None,
+        canonical_map: Mapping[str, str] | None = None,
     ) -> None:
+        # `prompts`/`canonical_map` are retrofit R4 and both default to the Phase-7a
+        # behaviour, so the historical Tier-2 producer is bit-for-bit unaffected.
+        # R4 passes its own prompt list and NO canonical map, which makes `extract`
+        # return the prompt phrase itself ("sister of") rather than a Tier-2 name -
+        # the builder needs the phrase, both to pick the relation and to keep it as
+        # the edge's `kin_role`.
+        self._prompts = list(prompts) if prompts is not None else list(RELATION_PROMPTS)
+        self._canonical_map = (
+            dict(canonical_map) if canonical_map is not None
+            else (dict(RELATION_PROMPTS) if prompts is None else None)
+        )
         self._settings = settings or get_settings()
         self.model_name = model_name or self._settings.relex_model
         self.ner_threshold = (
@@ -159,7 +249,7 @@ class RelexExtractor:
         if not text.strip():
             return []
         model = self._ensure_loaded()
-        prompts = list(RELATION_PROMPTS.keys())
+        prompts = self._prompts
         _entities, relations = model.inference(
             texts=[text],
             labels=ENTITY_LABELS,
@@ -171,9 +261,12 @@ class RelexExtractor:
         )
         out: list[RelationSpan] = []
         for rel in relations[0]:
-            canonical = RELATION_PROMPTS.get(rel["relation"])
+            if self._canonical_map is None:
+                canonical: str | None = str(rel["relation"])  # R4: the prompt itself
+            else:
+                canonical = self._canonical_map.get(rel["relation"])
             if canonical is None:
-                continue  # unknown prompt -> stay within the Tier-2 vocabulary
+                continue  # unknown prompt -> stay within the closed vocabulary
             head: dict[str, Any] = rel["head"]
             tail: dict[str, Any] = rel["tail"]
             out.append(
@@ -183,6 +276,10 @@ class RelexExtractor:
                     target_surface=tail["text"],
                     score=float(rel["score"]),
                     evidence=_evidence(text, head, tail),
+                    source_start=int(head.get("start", 0)),
+                    source_end=int(head.get("end", 0)),
+                    target_start=int(tail.get("start", 0)),
+                    target_end=int(tail.get("end", 0)),
                 )
             )
         return out

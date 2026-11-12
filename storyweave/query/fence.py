@@ -12,6 +12,9 @@ world-truth. Everything a client can see passes through here. The fence keys on
   (e.g. Wren == Prince Caelum revealed at ch2; Zhou Mingrui ⇄ Klein at ch1).
 * **Node properties** — visible when the property AND its node are revealed (the
   property-level both-rule), so a secret stat on a hidden character stays hidden.
+* **Entity labels** — visible when the label AND its entity are revealed (retrofit
+  R3; the same both-rule as properties). A name is spoiler-bearing: linking the title
+  "the Warden" to a person at chapter 5 must not show at chapter 4.
 * **Search hits** — visible when ``chapter_ordinal <= N`` (chunk reveal key).
 
 Enforcement lives at the data layer: SQL ``WHERE``/``JOIN`` clauses in
@@ -25,9 +28,10 @@ coverage, guarded by the permanent P0 regression in ``tests/test_fence.py``.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from storyweave.db.models import Edge, Node, NodeProperty
+from storyweave.db.models import Arc, Edge, EntityLabel, Node, NodeProperty
 from storyweave.db.repository import Repository
 
 if TYPE_CHECKING:  # pragma: no cover - typing only (avoids a runtime import cycle)
@@ -47,11 +51,78 @@ def visible_edges(repo: Repository, work_id: int, chapter: int) -> list[Edge]:
     return repo.list_edges_revealed(work_id, chapter)
 
 
+#: The grades the graph serves (rule 4 as amended in R7). SAME_AS is additionally
+#: restricted to STATED inside the query itself.
+SERVED_GRADES: tuple[str, ...] = ("STATED", "INFERRED")
+
+#: The cast sizes the dial offers. None means "everyone the fence allows".
+CAST_SIZES: dict[str, int | None] = {"20": 20, "50": 50, "all": None}
+
+
+def visible_payload_nodes(
+    repo: Repository, work_id: int, chapter: int,
+    cast_size: int | None, types: Sequence[str],
+) -> list[Node]:
+    """Retrofit R6: the fenced, ranked, type-filtered cast. The sanctioned entry point."""
+    return repo.graph_payload_nodes(work_id, chapter, cast_size, types)
+
+
+def visible_payload_edges(
+    repo: Repository, work_id: int, chapter: int,
+    node_ids: Sequence[int], grades: Sequence[str] = SERVED_GRADES,
+) -> list[Edge]:
+    """Retrofit R6: fenced edges between drawn nodes, filtered by served grade."""
+    return repo.graph_payload_edges(work_id, chapter, node_ids, grades)
+
+
+def visible_cast_ranked(
+    repo: Repository, work_id: int, chapter: int, limit: int | None = None
+) -> list[Node]:
+    """The fenced salience ranking at ``chapter``. A node unrevealed at n is absent."""
+    return repo.list_salience_ranked(work_id, chapter, limit)
+
+
+def visible_node_count(repo: Repository, work_id: int, chapter: int) -> int:
+    """Fenced node count (retrofit R6 fixes defect D3: the status count leaked totals)."""
+    return repo.count_nodes_revealed(work_id, chapter)
+
+
+def visible_graph_nodes(repo: Repository, work_id: int, chapter: int) -> list[Node]:
+    """Nodes for the GRAPH payload: fenced, then narrowed to the four drawable types.
+
+    Separate from :func:`visible_nodes` on purpose. ``visible_nodes`` is the fence and
+    nothing else, and other surfaces (entity detail, eval) still want every revealed
+    node whatever its type. This one additionally applies retrofit R3's DISPLAY filter,
+    as a second, separately-commented SQL clause after the fence clause — never merged
+    with it (retrofit rule 1).
+    """
+    return repo.list_graph_nodes_revealed(work_id, chapter)
+
+
+def visible_entity_labels(
+    repo: Repository, work_id: int, chapter: int
+) -> list[EntityLabel]:
+    """Entity labels the reader may see at chapter N (label + entity revealed)."""
+    return repo.list_entity_labels_revealed(work_id, chapter)
+
+
+def visible_display_names(repo: Repository, work_id: int, chapter: int) -> dict[int, str]:
+    """entity_id -> the name to show at chapter N. Fenced; see ``display_names_at``."""
+    return repo.display_names_at(work_id, chapter)
+
+
 def visible_node_properties(
     repo: Repository, work_id: int, chapter: int
 ) -> list[NodeProperty]:
     """Node properties the reader may see at chapter N (property + node revealed)."""
     return repo.list_node_properties_revealed(work_id, chapter)
+
+
+def visible_arcs(repo: Repository, work_id: int, chapter: int) -> list[Arc]:
+    """Arcs at chapter N (D6/F6): every arc's chapter RANGE, but the NAME redacted
+    (empty string) for any arc whose ``start_chapter > chapter`` — an arc name can
+    be spoiler-bearing (it's a title), the range alone is not."""
+    return repo.list_arcs_fenced(work_id, chapter)
 
 
 def visible_chunk_hits(

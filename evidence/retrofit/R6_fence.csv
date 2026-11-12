@@ -1,0 +1,211 @@
+run,slug,chapter,endpoint,element_kind,element_id,element_revealed_chapter,detail
+negative_injected,the-ninth-house,5,GET /works/{slug}/entities,entity,52,6,entity 'Thessaly' revealed at 6 served at n=5
+negative_injected,the-ninth-house,5,GET /works/{slug}/entities,entity,53,6,entity 'Thorne' revealed at 6 served at n=5
+negative_injected,the-ninth-house,5,GET /works/{slug}/entities,entity,54,6,entity 'House Ashcombe' revealed at 6 served at n=5
+negative_injected,the-ninth-house,5,GET /works/{slug}/entities,entity,55,6,entity 'Ashcombe household' revealed at 6 served at n=5
+negative_injected,the-ninth-house,5,GET /works/{slug}/entities,entity,56,6,entity 'Beneath the Bone Market' revealed at 6 served at n=5
+negative_injected,the-ninth-house,5,GET /works/{slug}/entities,entity,192,6,entity 'SYNTHETIC LEAK CANARY' revealed at 6 served at n=5
+negative_injected,the-ninth-house,5,GET /works/{slug}/graph,graph_node_label,1:SYNTHETIC LABEL CANARY,6,label 'SYNTHETIC LABEL CANARY' (epithet) on node 1 is revealed at 6
+negative_injected,the-ninth-house,5,GET /works/{slug}/status,status_count,node_count,57,"status reported 57 nodes at n=5, fence allows 0"
+negative_injected,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_entity,192,6,entity 'SYNTHETIC LEAK CANARY' served at n=5
+negative_injected,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,102,6,edge RelatedTo on entity 192
+negative_injected,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_property,192:canary,6,property canary='synthetic'
+negative_injected,the-ninth-house,5,GET /works/{slug}/entity/{id}/ego,ego_entity,192,6,ego of 'SYNTHETIC LEAK CANARY' served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,52,6,entity 'Thessaly' revealed at 6 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,53,6,entity 'Thorne' revealed at 6 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,54,6,entity 'House Ashcombe' revealed at 6 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,55,6,entity 'Ashcombe household' revealed at 6 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,56,6,entity 'Beneath the Bone Market' revealed at 6 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,57,7,entity 'Mira' revealed at 7 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,58,7,entity 'Oswin' revealed at 7 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,59,7,entity 'Pello Ashcombe' revealed at 7 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,60,7,entity 'chamber' revealed at 7 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,61,7,entity 'nursery' revealed at 7 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,62,7,entity 'letters' revealed at 7 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,63,7,entity 'market stalls' revealed at 7 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,64,8,entity 'Tobin Vell' revealed at 8 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,65,8,"entity ""The Regent's household"" revealed at 8 served at n=5"
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,66,8,entity 'water-stained ledger' revealed at 8 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,67,9,entity 'Hask' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,68,9,entity 'Drask' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,69,9,entity 'Pryn Voss' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,70,9,entity 'Ettie Marsh' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,71,9,entity 'Casimir Lowe' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,72,9,entity 'Captain' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,73,9,entity 'coin purse' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,74,9,entity 'trader' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,75,9,entity 'Across the Quarter' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,76,9,entity 'Salt Quarter watch' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,77,9,entity 'certain goods' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,78,9,entity 'eastern docks' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,79,9,entity 'market row' revealed at 9 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,80,10,entity 'Vell' revealed at 10 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,81,10,entity 'Sable Vell' revealed at 10 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,82,10,entity 'record' revealed at 10 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,83,10,entity 'S. Vell' revealed at 10 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,84,10,entity 'Vell family' revealed at 10 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,85,10,entity 'chancery girl' revealed at 10 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,86,10,entity 'hood' revealed at 10 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,87,11,entity 'empty room' revealed at 11 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,88,11,entity 'mother' revealed at 11 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,89,11,entity 'old room' revealed at 11 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,90,12,entity 'note' revealed at 12 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,91,12,entity 'crown' revealed at 12 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,92,12,entity 'somewhere safer' revealed at 12 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,93,12,entity 'Quarter' revealed at 12 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,94,12,entity 'Salt Tithe rolls' revealed at 12 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,95,12,entity 'afternoon crowd' revealed at 12 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,96,13,entity 'good officer' revealed at 13 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,97,13,entity 'eastern stalls' revealed at 13 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,98,13,entity 'smuggling ring' revealed at 13 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,99,13,entity 'untaxed salt' revealed at 13 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,100,14,entity 'Alden' revealed at 14 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,101,14,entity 'Keep' revealed at 14 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,102,14,entity 'founding houses' revealed at 14 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,103,14,entity 'household' revealed at 14 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,104,14,entity 'slate' revealed at 14 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,105,15,entity 'Chancery steps' revealed at 15 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,106,15,entity 'laundress' revealed at 15 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,107,16,entity 'old woman' revealed at 16 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,108,16,entity 'Choirmaster' revealed at 16 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,109,16,entity 'Choir accounting book' revealed at 16 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,110,16,entity 'Undercroft itself' revealed at 16 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,111,17,entity 'House Vell' revealed at 17 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,112,17,entity 'invitation' revealed at 17 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,113,17,entity 'House Oswald' revealed at 17 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,114,17,entity 'rooms' revealed at 17 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,115,18,entity 'Ysolde' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,116,18,entity 'Vell Hall' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,117,18,entity 'borrowed gown' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,118,18,entity 'folded cloth' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,119,18,entity 'front doors' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,120,18,entity 'garden doors' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,121,18,entity 'mask' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,122,18,entity 'masked faces' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,123,18,entity 'masked guest' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,124,18,entity 'service entrance' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,125,18,entity 'side room' revealed at 18 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,126,19,entity 'Kaelen' revealed at 19 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,127,19,entity 'Grimoire' revealed at 19 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,128,19,entity 'Chancery archives' revealed at 19 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,129,19,entity 'Old Ninth House' revealed at 19 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,130,20,entity 'Marrow' revealed at 20 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,131,20,entity 'Quill' revealed at 20 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,132,20,entity 'Aldenreach orphan house' revealed at 20 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,133,20,entity 'Aurelia Marrow' revealed at 20 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,134,20,entity 'orphan house ledger' revealed at 20 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,135,21,entity 'blood' revealed at 21 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,136,21,entity 'ciphers' revealed at 21 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,137,23,entity 'Wardens' revealed at 23 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,138,23,entity 'guardroom' revealed at 23 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,139,23,entity 'smuggling crew' revealed at 23 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,140,24,entity 'seal' revealed at 24 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,141,24,entity 'Marrowfall' revealed at 24 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,142,24,entity 'cellar room' revealed at 24 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,143,24,entity 'manor house' revealed at 24 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,144,24,entity 'tapestries' revealed at 24 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,145,25,entity 'Kaelen the Unmaker' revealed at 25 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,146,25,entity 'Long Silence' revealed at 25 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,147,27,entity 'Vell Masque' revealed at 27 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,148,28,entity 'Regent' revealed at 28 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,149,28,entity 'Conventional physic' revealed at 28 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,150,28,entity 'Quarter apothecary' revealed at 28 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,151,28,entity 'servants' revealed at 28 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,152,29,entity 'archive' revealed at 29 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,153,30,entity 'familiar room' revealed at 30 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,154,31,entity 'Mistress Quill' revealed at 31 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,155,31,entity 'audit chamber' revealed at 31 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,156,31,entity 'quiet place' revealed at 31 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,157,32,entity 'girl' revealed at 32 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,158,32,entity 'half-finished letter' revealed at 32 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,159,32,entity 'tax rolls' revealed at 32 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,160,33,entity 'Stone' revealed at 33 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,161,33,entity 'The ward' revealed at 33 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,162,33,entity 'books' revealed at 33 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,163,33,entity 'east wall' revealed at 33 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,164,33,entity 'empty drawer' revealed at 33 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,165,33,entity 'loosened brick' revealed at 33 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,166,33,entity 'old fault line' revealed at 33 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,167,33,entity 'ordinary locks' revealed at 33 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,168,33,entity 'side alcove' revealed at 33 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,169,34,entity 'cracked ledger box' revealed at 34 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,170,35,entity 'Sallowmere' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,171,35,entity 'Petra Hollis' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,172,35,entity 'Lord Regent' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,173,35,entity 'court' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,174,35,entity 'Envoy Hollis' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,175,35,entity 'Aldenreach Keep' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,176,35,entity 'guest quarters' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,177,35,entity 'outer hall' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,178,35,entity 'shared coast' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,179,35,entity 'stack of Accord-related paperwork' revealed at 35 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,180,36,entity 'Ashen Court' revealed at 36 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,181,36,entity 'Magistrate Wyle' revealed at 36 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,182,36,entity 'Sallow Concord' revealed at 36 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,183,36,entity 'southern circuit courts' revealed at 36 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,184,37,entity 'Grey Road' revealed at 37 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,185,37,entity 'Wanderer' revealed at 37 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,186,39,entity 'child' revealed at 39 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,187,39,entity 'rebuilt archive' revealed at 39 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,188,40,entity 'Chancery scribes' revealed at 40 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,189,40,entity 'certification' revealed at 40 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,190,40,entity 'gallery' revealed at 40 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entities,entity,191,40,entity 'king' revealed at 40 served at n=5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/status,status_count,node_count,51,"status reported 51 nodes at n=5, fence allows 0"
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,25,8,edge OWNS on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,33,22,edge MEMBER_OF on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,38,24,edge LOCATED_IN on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,50,31,edge OWNS on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,51,32,edge OWNS on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,52,32,edge OWNS on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,53,32,edge OWNS on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,56,34,edge LOCATED_IN on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,59,35,edge OWNS on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,68,40,edge MEMBER_OF on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,81,19,edge MEMBER_OF on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,82,19,edge MENTOR_OF on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,83,20,edge MENTOR_OF on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,87,26,edge SERVES on entity 1
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,49,31,edge SERVES on entity 2
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,84,21,edge MENTOR_OF on entity 5
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,63,37,edge LOCATED_IN on entity 6
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,36,24,edge LOCATED_IN on entity 7
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,37,24,edge LOCATED_IN on entity 7
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,38,24,edge LOCATED_IN on entity 7
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,50,31,edge OWNS on entity 9
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,53,32,edge OWNS on entity 15
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,47,30,edge LOCATED_IN on entity 18
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,49,31,edge SERVES on entity 18
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,64,38,edge LEADS on entity 18
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,76,7,edge KIN_OF on entity 18
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,88,27,edge ENEMY_OF on entity 18
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,89,27,edge ENEMY_OF on entity 18
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,90,28,edge MENTOR_OF on entity 18
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,24,8,edge OWNS on entity 19
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,41,26,edge OWNS on entity 19
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,26,11,edge MEMBER_OF on entity 20
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,77,7,edge ENEMY_OF on entity 20
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,32,22,edge MEMBER_OF on entity 21
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,95,35,edge MENTOR_OF on entity 21
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,96,35,edge SERVES on entity 21
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,97,35,edge SERVES on entity 21
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,22,7,edge MEMBER_OF on entity 22
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,23,7,edge MEMBER_OF on entity 22
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,29,17,edge MEMBER_OF on entity 22
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,46,30,edge MEMBER_OF on entity 22
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,61,36,edge MEMBER_OF on entity 22
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,65,39,edge MEMBER_OF on entity 22
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,66,39,edge MEMBER_OF on entity 22
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,67,39,edge MEMBER_OF on entity 22
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,101,38,edge ENEMY_OF on entity 22
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,24,8,edge OWNS on entity 23
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,84,21,edge MENTOR_OF on entity 23
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,29,17,edge MEMBER_OF on entity 26
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,27,13,edge LEADS on entity 33
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,56,34,edge LOCATED_IN on entity 33
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,57,34,edge LOCATED_IN on entity 33
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,62,37,edge LOCATED_IN on entity 33
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,79,13,edge SERVES on entity 34
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,14,6,edge LOCATED_IN on entity 35
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,15,6,edge LOCATED_IN on entity 35
+negative_sabotaged,the-ninth-house,5,GET /works/{slug}/entity/{id},detail_edge,31,18,edge LOCATED_IN on entity 40

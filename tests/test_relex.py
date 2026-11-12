@@ -22,6 +22,7 @@ from storyweave.db.models import (
 )
 from storyweave.db.repository import Repository
 from storyweave.graph.builder import build_relationships
+from storyweave.ingest.work_config import RelationConfig, WorkConfig
 from storyweave.nlp.relex import (
     RELATION_PROMPTS,
     RelationSpan,
@@ -149,7 +150,9 @@ def test_tier1_floor_untouched_and_tier2_idempotent() -> None:
             text="Wren joined the Coil.",
         )
         # Tier-1 structural floor (rule edges).
-        t1 = build_relationships(wid, repo)
+        t1 = build_relationships(
+            wid, repo, WorkConfig(relations=RelationConfig(cooccurrence_enabled=True))
+        )
         assert t1.edges_added >= 1
         tier1_count = repo.count_edges(wid)
 
@@ -195,7 +198,9 @@ def test_graceful_degradation_keeps_the_floor() -> None:
             [("Wren", NodeType.CHARACTER, 1), ("the Coil", NodeType.ORGANIZATION, 1)],
             text="Wren joined the Coil.",
         )
-        build_relationships(wid, repo)
+        build_relationships(
+            wid, repo, WorkConfig(relations=RelationConfig(cooccurrence_enabled=True))
+        )
         tier1_count = repo.count_edges(wid)
 
         broken = FakeRelex([], raise_on_call=True)

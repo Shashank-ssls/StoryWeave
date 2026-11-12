@@ -15,7 +15,12 @@ const KEY = `storyweave:bookmark:${SLUG}`;
 
 interface Node { id: string; type: string }
 interface Payload { elements: { nodes: { data: Node }[]; edges: { data: unknown }[] } }
-const DRAWN = new Set(["Character", "Organization", "Place", "Item", "Ability"]);
+// R7: Ability is no longer drawable. Retrofit rule 2 fixes the drawable ontology at four
+// types — Character, Organization, Place, Item — and says Ability / Concept / Event /
+// Title are never drawn; R6 made `/graph` honour that. The Hollow Crown's `Glass-sight`
+// (node 5) is still fenced and still seeded (integration rule I2 untouched); it is simply
+// not a type the canvas asks for. Same change as `stemma.spec.ts`.
+const DRAWN = new Set(["Character", "Organization", "Place", "Item"]);
 const fixture = (n: number): Payload =>
   JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures", "hollow-crown", `graph-n${n}.json`), "utf8")) as Payload;
 

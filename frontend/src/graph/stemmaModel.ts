@@ -2,76 +2,83 @@
 // R4 view model, unit-tested in stemmaModel.test.ts. The canvas component only draws what
 // these return, so every rule about WHAT is visible lives here, not in Cytoscape code.
 
-import type { NodeKind, ViewModel, VmEdge, VmNode } from "./viewModel";
+import type { ViewModel, VmEdge, VmNode } from "./viewModel";
 
-export interface ShowFilter {
-  people: boolean;
-  orders: boolean;
-  places: boolean; // places + things ("Places & Relics")
-}
-export const SHOW_ALL: ShowFilter = { people: true, orders: true, places: true };
-
-export type CastSize = "principal" | "everyone";
+/**
+ * R7 removed everything that used to live here: `ShowFilter`, `SHOW_ALL`, `CastSize`,
+ * `kindShown` and `visibleGraph`, which filtered the payload by node kind and by degree
+ * before drawing it.
+ *
+ * That was a violation of retrofit rule 6 (the client renders what it receives) and the
+ * reason defect D3 looked like a UI bug: the server sent the whole fenced cast at every
+ * setting, and the rail's "Principal / Everyone" switch just hid rows of it locally, so
+ * the payload never changed and the dial could not be measured from outside the browser.
+ * The cast dial and the type overlays are now query parameters (`ChapterProvider.setView`)
+ * and the SQL decides, where the fence can be read beside them.
+ *
+ * `folded` ("+N members") went too: it counted members the local filter had hidden, and
+ * with no local filter there is nothing to count.
+ */
 
 export interface VisibleGraph {
   nodes: VmNode[];
   edges: VmEdge[];
-  /** Organization id → number of hidden members folded into it (fenced payload only). */
-  folded: Map<string, number>;
 }
 
-function kindShown(kind: NodeKind, show: ShowFilter): boolean {
-  if (kind === "person") return show.people;
-  if (kind === "order") return show.orders;
-  return show.places;
-}
-
-const MEMBERSHIP = new Set(["MemberOf", "AffiliatedWith", "LeaderOf"]);
-
-/** Ids of nodes that touch an identity edge. */
+/** Ids of nodes that touch an identity edge. Not a filter — the canvas styles them. */
 export function identityEndpoints(vm: ViewModel): Set<string> {
   const out = new Set<string>();
   for (const e of vm.edges) if (e.kind === "identity") { out.add(e.source); out.add(e.target); }
   return out;
 }
 
+/** The payload, unfiltered. Kept as a named function so the canvas has one entry point
+ *  and so `rendered === payload` is a property some code actually asserts. */
+export function visibleGraph(vm: ViewModel): VisibleGraph {
+  return { nodes: vm.nodes, edges: vm.edges };
+}
+
 /**
- * §6.3 item 4 — Principal = degree ≥ 2 OR any identity edge OR is the focus. Hidden
- * organisation members fold into their organisation as a "+N" count. N counts ONLY
- * members present in the fenced payload (nothing beyond the bookmark exists client-side),
- * so the badge is a count of what the reader has already met, not of the future — F2 holds.
+ * Cytoscape `data` for one edge, shared by EVERY canvas that uses `codexStyle`.
+ *
+ * The stylesheet maps `width: data(thickness)` and `target-arrow-shape: data(arrow)`.
+ * The Landing mini graph and the Dossier ego graph each built their own edge data and
+ * omitted both keys, so those mappers resolved to `undefined` and Cytoscape drew the
+ * lines at arbitrary slab widths with no arrowheads (reported and reproduced: the thick
+ * brown bars behind the Hollow Crown mini graph, and the beige spokes in the ego graph).
+ * One builder means a missing key cannot happen again.
+ *
+ * `label` is passed in rather than derived here: the Stemma draws relation words on
+ * every line (R7), while the two small panel graphs have no room for them.
  */
-export function visibleGraph(vm: ViewModel, opts: { show: ShowFilter; cast: CastSize; focusId: string | null }): VisibleGraph {
-  const ids = identityEndpoints(vm);
-  const visible = new Set<string>();
-  for (const n of vm.nodes) {
-    if (!kindShown(n.kind, opts.show)) continue;
-    if (opts.cast === "everyone" || n.degree >= 2 || ids.has(n.id) || n.id === opts.focusId) visible.add(n.id);
-  }
-  const folded = new Map<string, number>();
-  if (opts.cast === "principal") {
-    for (const e of vm.edges) {
-      if (!MEMBERSHIP.has(e.relation)) continue;
-      // member → org: the org is whichever endpoint is an order
-      const src = vm.byId.get(e.source);
-      const tgt = vm.byId.get(e.target);
-      if (!src || !tgt) continue;
-      const [member, org] = tgt.kind === "order" ? [src, tgt] : src.kind === "order" ? [tgt, src] : [null, null];
-      if (!member || !org) continue;
-      if (visible.has(org.id) && !visible.has(member.id) && kindShown(member.kind, opts.show)) {
-        folded.set(org.id, (folded.get(org.id) ?? 0) + 1);
-      }
-    }
-  }
+export function edgeData(e: VmEdge, label = ""): Record<string, unknown> {
+  const thick = e.weight >= 5 ? 3 : e.weight >= 2 ? 2 : 1;
   return {
-    nodes: vm.nodes.filter((n) => visible.has(n.id)),
-    edges: vm.edges.filter((e) => visible.has(e.source) && visible.has(e.target)),
-    folded,
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    kind: e.kind,
+    relation: e.relation,
+    revealed_chapter: e.revealed_chapter,
+    label,
+    grade: e.grade ?? "STATED",
+    arrow: e.directed ? "triangle" : "none",
+    // Bucketed to 3 steps rather than mapped continuously, so a pair mentioned forty
+    // times cannot draw a line so thick it reads as a different kind of relationship.
+    thickness: thick,
+    // Cytoscape sizes an arrowhead as `arrow-scale` x the edge WIDTH, so the old fixed
+    // 0.8 drew a head smaller than the 1px line it sat on: present in the DOM, invisible
+    // on screen. A fixed scale is the wrong shape of fix too — it makes a weight-1 tie's
+    // head three times smaller than a weight-5 tie's, and weight-1 is most of the graph.
+    // The scale therefore falls as the line thickens, which keeps the drawn head roughly
+    // constant. [MEASURED] at the ch40 default fit (zoom 1.05, 1280x720): every one of
+    // the 11 directed ties shows a head, and both ENEMY_OF ties show none.
+    arrowScale: [3.2, 2.0, 1.6][thick - 1],
   };
 }
 
 /** §8.3 focus set: the focus node plus everything within `steps` hops over VISIBLE edges. */
-export function focusSet(edges: VmEdge[], focusId: string, steps: 1 | 2): Set<string> {
+export function focusSet(edges: VmEdge[], focusId: string, steps: number): Set<string> {
   const adj = new Map<string, Set<string>>();
   for (const e of edges) {
     (adj.get(e.source) ?? adj.set(e.source, new Set()).get(e.source)!).add(e.target);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildViewModel } from "./viewModel";
-import { declutterLabels, focusSet, LABEL_BUDGET, labelVisible, minorLabelIds, neighboursOf, nodeSize, searchNames, SHOW_ALL, visibleGraph, zoomTier } from "./stemmaModel";
+import { buildViewModel, kindOf } from "./viewModel";
+import { declutterLabels, focusSet, LABEL_BUDGET, labelVisible, minorLabelIds, neighboursOf, nodeSize, searchNames, visibleGraph, zoomTier } from "./stemmaModel";
 import type { GraphElements } from "../types";
 import raw1 from "../../tests/fixtures/hollow-crown/graph-n1.json";
 import raw3 from "../../tests/fixtures/hollow-crown/graph-n3.json";
@@ -24,36 +24,69 @@ const orgWorld = buildViewModel({
   ],
 });
 
-describe("principal filter + folding (§6.3 item 4)", () => {
-  it("keeps degree ≥ 2, identity endpoints and the focus; folds hidden members into their org with a count", () => {
-    const v = visibleGraph(orgWorld, { show: SHOW_ALL, cast: "principal", focusId: null });
-    expect(v.nodes.map((n) => n.id).sort()).toEqual(["hub", "org"]); // pl has degree 1, solo 0
-    expect(v.folded.get("org")).toBe(2);
-    expect(v.edges.map((e) => e.id)).toEqual(["m1"]);
+// R7 replaced the "principal filter + folding" suite. Those tests asserted that
+// `visibleGraph` DROPPED nodes by degree and by kind — exactly the client-side filtering
+// retrofit rule 6 forbids, and the reason defect D3 could not be measured from outside
+// the browser. The property worth pinning is now the opposite one.
+describe("no client-side filtering (retrofit rule 6)", () => {
+  it("renders every node and every edge the payload contained", () => {
+    const v = visibleGraph(orgWorld);
+    expect(v.nodes).toHaveLength(orgWorld.nodes.length);
+    expect(v.edges).toHaveLength(orgWorld.edges.length);
+    expect(v.nodes.map((n) => n.id).sort()).toEqual(
+      ["hub", "leaf1", "leaf2", "org", "pl", "solo"],
+    );
   });
-  it("the focus is always visible, even at degree 1", () => {
-    const v = visibleGraph(orgWorld, { show: SHOW_ALL, cast: "principal", focusId: "leaf1" });
-    expect(v.nodes.map((n) => n.id)).toContain("leaf1");
-    expect(v.folded.get("org")).toBe(1); // only leaf2 still folded
+
+  it("keeps low-degree and unconnected nodes, which the old principal filter removed", () => {
+    const ids = visibleGraph(orgWorld).nodes.map((n) => n.id);
+    expect(ids).toContain("solo"); // degree 0
+    expect(ids).toContain("leaf1"); // degree 1
+    expect(ids).toContain("pl"); // degree 1, and not a person
   });
-  it("identity endpoints are principal regardless of degree (real n=3: Veris/Sparrow)", () => {
+
+  it("keeps organisations and places: which TYPES are drawn is the server's decision", () => {
+    const v = visibleGraph(orgWorld);
+    expect(v.nodes.find((n) => n.kind === "order")).toBeDefined();
+    expect(v.nodes.find((n) => n.kind === "place")).toBeDefined();
+  });
+
+  it("holds on a real fenced payload too, not just the synthetic world", () => {
     const vm = buildViewModel(g(raw3));
-    const v = visibleGraph(vm, { show: SHOW_ALL, cast: "principal", focusId: null });
-    const ids = v.nodes.map((n) => n.id);
-    expect(ids).toContain("12"); // Lady Veris, degree 1 but ALIAS endpoint
-    expect(ids).toContain("11");
+    const v = visibleGraph(vm);
+    expect(v.nodes).toHaveLength(vm.nodes.length);
+    expect(v.edges).toHaveLength(vm.edges.length);
   });
-  it("Everyone shows all drawn nodes and folds nothing", () => {
-    const v = visibleGraph(orgWorld, { show: SHOW_ALL, cast: "everyone", focusId: null });
-    expect(v.nodes).toHaveLength(6);
-    expect(v.folded.size).toBe(0);
-  });
-  it("Show checkboxes remove kinds and their edges; a hidden org never gets a badge", () => {
-    const v = visibleGraph(orgWorld, { show: { people: true, orders: false, places: true }, cast: "everyone", focusId: null });
-    expect(v.nodes.find((n) => n.kind === "order")).toBeUndefined();
-    expect(v.edges.map((e) => e.id)).toEqual(["l"]);
-    const p = visibleGraph(orgWorld, { show: { people: true, orders: false, places: true }, cast: "principal", focusId: null });
-    expect(p.folded.size).toBe(0);
+
+  // The honest form of "rendered count == payload count". Node counts ARE equal. Edge
+  // counts are NOT, and saying so matters: §7.3 merges parallel edges into one line per
+  // pair, so 18 payload edges can draw as 13 lines. That is a drawing decision, not a
+  // filter -- nothing is dropped, and R7 makes the merged line name every relation it
+  // absorbed (see edgeLabel). What must hold is that the drawn set is a faithful
+  // re-grouping of the payload: same node ids, and every payload edge accounted for by
+  // exactly one drawn line between its endpoints.
+  it("draws every payload node, and accounts for every payload edge", () => {
+    const payload = g(raw4);
+    const vm = buildViewModel(payload);
+    const v = visibleGraph(vm);
+
+    const drawable = payload.nodes.filter((x) => kindOf(x.data.type) !== null);
+    expect(v.nodes.map((n) => n.id).sort()).toEqual(drawable.map((x) => x.data.id).sort());
+
+    const pairOf = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+    const drawnPairs = new Set(v.edges.map((e) => pairOf(e.source, e.target)));
+    const totalRelations = v.edges.reduce((sum, e) => sum + e.relations.length, 0);
+    let accounted = 0;
+    for (const { data } of payload.edges) {
+      const endpointsDrawn = v.nodes.some((n) => n.id === data.source) && v.nodes.some((n) => n.id === data.target);
+      if (!endpointsDrawn) continue; // the server never sent one of these endpoints
+      expect(drawnPairs.has(pairOf(data.source, data.target))).toBe(true);
+      accounted += 1;
+    }
+    // Every payload edge with drawn endpoints is inside exactly one line's relation list.
+    expect(totalRelations).toBe(accounted);
+    // And no line was invented: there are never MORE lines than payload edges.
+    expect(v.edges.length).toBeLessThanOrEqual(payload.edges.length);
   });
 });
 

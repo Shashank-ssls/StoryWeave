@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from storyweave.db.models import Edge, Node, NodeProperty
+from storyweave.db.models import Arc, Edge, Node, NodeProperty
 from storyweave.search.store import SearchHit
 
 
@@ -167,11 +167,79 @@ class EntityDetailResponse(BaseModel):
     properties: list[PropertyModel]
 
 
+class EgoNeighbourModel(BaseModel):
+    """One 1-hop neighbour of an entity, with the evidence for the tie (retrofit R6).
+
+    ``relation``, ``grade`` and ``quote`` are all present because the side panel's job is
+    to answer "how are these two related, and where does the book say so?". v1's panel
+    said only "linked", which R4c's screenshots showed is not an answer.
+    """
+
+    entity_id: int
+    name: str
+    type: str
+    relation: str
+    grade: str | None
+    directed: bool
+    outgoing: bool
+    quote: str | None
+    quote_chapter: int | None
+    weight: int
+
+
+class EgoResponse(BaseModel):
+    slug: str
+    n: int
+    entity: EntityModel
+    neighbours: list[EgoNeighbourModel]
+
+
+# --- arcs (D6, integration phase) ------------------------------------------ #
+
+
+class ArcModel(BaseModel):
+    ordinal: int
+    name: str | None  # null when this arc hasn't started yet (F6 — name redacted)
+    start_chapter: int
+    end_chapter: int
+
+    @classmethod
+    def from_arc(cls, a: Arc) -> ArcModel:
+        return cls(
+            ordinal=a.ordinal,
+            name=a.name or None,  # repo.list_arcs_fenced sends "" for a redacted name
+            start_chapter=a.start_chapter,
+            end_chapter=a.end_chapter,
+        )
+
+
+class ArcsResponse(BaseModel):
+    slug: str
+    n: int
+    arcs: list[ArcModel]
+
+
 # --- graph (Cytoscape, but fully typed) ------------------------------------ #
+
+
+class GraphLabelModel(BaseModel):
+    """One chapter-gated name the reader has been given (retrofit R3).
+
+    Reveal-stamped, so it is part of the payload the fence harness audits: a label in
+    here must be revealed at or before the requested chapter, and so must its node.
+    """
+
+    label: str
+    kind: str
+    revealed_chapter: int
+    is_primary: bool = False
+    quote: str | None = None
 
 
 class GraphNodeData(BaseModel):
     id: str
+    #: the display name AT THIS CHAPTER - the most recently revealed naming label, not
+    #: the extraction-time canonical string (which carries no reveal stamp of its own).
     label: str
     type: str
     subtype: str | None = None
@@ -181,6 +249,9 @@ class GraphNodeData(BaseModel):
     extraction_method: str
     evidence_span: str | None = None
     properties: dict[str, str] = {}
+    #: every label revealed by this chapter. Empty for a pre-R3 database, which has no
+    #: entity_labels table; `label` then falls back to the node's stored name.
+    labels: list[GraphLabelModel] = []
 
 
 class GraphEdgeData(BaseModel):
@@ -193,6 +264,18 @@ class GraphEdgeData(BaseModel):
     revealed_chapter: int
     extraction_method: str
     evidence_span: str | None = None
+    # --- retrofit R4 fields, surfaced by R6 ---
+    # These were being SILENTLY DROPPED: the serializer emitted them and this response
+    # model, which has no extra fields, removed them again. `grade` and `quote` are not
+    # optional extras -- rule 4 as amended requires every served edge to carry its
+    # verbatim quote, and the UI cannot draw STATED and INFERRED differently without the
+    # grade. All default, so a pre-R4 database still validates.
+    weight: int = 1
+    grade: str | None = None
+    quote: str | None = None
+    quote_chapter: int | None = None
+    kin_role: str | None = None
+    subtype: str | None = None
 
 
 class GraphNode(BaseModel):

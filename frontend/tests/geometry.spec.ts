@@ -49,81 +49,13 @@ test.describe("Stemma geometry (§6.3)", () => {
   });
 });
 
-test.describe("Chronicle geometry (§6.4)", () => {
-  test("76px header bar, 330 right panel, no left rail", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(`/#/work/${SLUG}/chronicle`);
-    await page.waitForSelector('[data-testid="chronicle-root"]');
-    const header = await page.locator('[data-testid="chronicle-header"]').boundingBox();
-    expect(Math.round(header?.height ?? 0)).toBe(76);
-    expect(await widthOf(page, '[data-testid="chronicle-right-panel"]')).toBe(330);
-  });
-});
-
-test.describe("Landing geometry (§6.1)", () => {
-  test("left column 580, 64px gap to the try-it panel", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/#/");
-    await page.waitForSelector('[data-testid="landing-root"]');
-    // The main row is the second direct child of the root (header, mainRow, footer) —
-    // its two children are the left column and the try-it panel, in that order.
-    const { leftWidth, gap } = await page.evaluate(() => {
-      const root = document.querySelector('[data-testid="landing-root"]');
-      const mainRow = root?.children[1];
-      const [leftCol, rightPanel] = Array.from(mainRow?.children ?? []) as HTMLElement[];
-      const leftRect = leftCol.getBoundingClientRect();
-      const rightRect = rightPanel.getBoundingClientRect();
-      return {
-        leftWidth: Math.round(leftRect.width),
-        gap: Math.round(rightRect.left - leftRect.right),
-      };
-    });
-    expect(leftWidth).toBe(580);
-    expect(gap).toBe(64);
-  });
-});
-
-test.describe("Mural / vignette / canvas mask (§4.6)", () => {
-  test("mural + vignette are fixed, non-interactive layers", async ({ page }) => {
-    await page.goto("/#/");
-    await page.waitForSelector('[data-testid="landing-root"]');
-    const mural = await page.evaluate(() => {
-      const el = document.querySelector(".mural");
-      if (!el) return null;
-      const cs = getComputedStyle(el);
-      return { position: cs.position, pointerEvents: cs.pointerEvents, zIndex: cs.zIndex };
-    });
-    expect(mural).toEqual({ position: "fixed", pointerEvents: "none", zIndex: "0" });
-  });
-
-  test("Stemma canvas carries the web-canvas-mask class", async ({ page }) => {
-    await page.goto(`/#/work/${SLUG}/web`);
-    await page.waitForSelector('[data-testid="stemma-canvas"]');
-    const hasMask = await page
-      .locator('[data-testid="stemma-canvas"]')
-      .evaluate((el) => el.classList.contains("web-canvas-mask"));
-    expect(hasMask).toBe(true);
-  });
-});
-
-test.describe("#/add (R9 step 8 — the ingest form ported off the deleted legacy app)", () => {
-  test("renders the create-mode form and the Add-a-novel links route to it", async ({ page }) => {
-    await page.goto("/#/");
-    await page.click('[data-testid="add-novel"]');
-    await expect(page).toHaveURL(/#\/add$/);
-    await page.waitForSelector('[data-testid="compose-root"]');
-    await expect(page.locator('[data-testid="compose-title"]')).toBeVisible();
-    await expect(page.locator('[data-testid="compose-text"]')).toBeVisible();
-    await expect(page.locator('[data-testid="compose-submit"]')).toBeDisabled();
-  });
-});
+// R7 removed the Chronicle route, so its geometry test went with it.
 
 test.describe("No horizontal scroll at 1280x720", () => {
   for (const [name, hash] of [
     ["landing", "#/"],
     ["dossier", `#/work/${SLUG}/entity/1`],
     ["stemma", `#/work/${SLUG}/web`],
-    ["chronicle", `#/work/${SLUG}/chronicle`],
   ] as const) {
     test(name, async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 720 });
@@ -138,7 +70,7 @@ test.describe("No horizontal scroll at 1280x720", () => {
   }
 });
 
-// R9 §11 responsive: 1024-1279 the Dossier/Stemma right panels and the Chronicle panel
+// R9 §11 responsive: 1024-1279 the Dossier/Stemma right panels
 // become toggle drawers (closed by default, off-canvas); below 1024 the Dossier/Stemma
 // rail becomes a top drawer too, single column. Shot widths per the brief: 1100 (inside
 // the drawer breakpoint) and 900 (below the single-column breakpoint).
@@ -147,7 +79,6 @@ test.describe("R9 responsive: no horizontal scroll at 1100x800 and 900x800", () 
     for (const [name, hash] of [
       ["dossier", `#/work/${SLUG}/entity/1`],
       ["stemma", `#/work/${SLUG}/web`],
-      ["chronicle", `#/work/${SLUG}/chronicle`],
     ] as const) {
       test(`${name} @ ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 800 });
@@ -186,13 +117,4 @@ test.describe("R9 responsive: drawer toggles", () => {
     await expect.poll(async () => (await rail.boundingBox())!.y).toBeGreaterThanOrEqual(0);
   });
 
-  test("Chronicle: right panel is a bottom sheet at 1100px, off-canvas until toggled", async ({ page }) => {
-    await page.setViewportSize({ width: 1100, height: 800 });
-    await page.goto(`/#/work/${SLUG}/chronicle`);
-    await page.waitForSelector('[data-testid="chronicle-right-panel"]');
-    const panel = page.locator('[data-testid="chronicle-right-panel"]');
-    expect((await panel.boundingBox())!.y).toBeGreaterThanOrEqual(800); // off-canvas below
-    await page.click('[data-testid="panel-toggle"]');
-    await expect.poll(async () => (await panel.boundingBox())!.y).toBeLessThan(800);
-  });
 });

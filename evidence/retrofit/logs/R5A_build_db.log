@@ -1,0 +1,27 @@
+﻿source : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\retrofit\ninth_house_r4c.db
+output : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\retrofit\ninth_house_r5.db
+model  : qwen2.5:7b   cap/chapter: 8   cache: F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\llm_cache
+
+candidates: 118 found, 118 after the cap (0 dropped)
+  20/118 candidates (20 calls, 0 cached)
+  40/118 candidates (40 calls, 0 cached)
+  60/118 candidates (60 calls, 0 cached)
+  80/118 candidates (80 calls, 0 cached)
+  100/118 candidates (100 calls, 0 cached)
+
+calls: 118 live, 0 cached
+raw LLM proposals: 74
+edges added: 40 (40 graded) -> {'KILLED': 3, 'MENTOR_OF': 10, 'SERVES': 11, 'KIN_OF': 4, 'ENEMY_OF': 5, 'MEMBER_OF': 1, 'LEADS': 1, 'LOCATED_IN': 2, 'ROMANTIC_WITH': 1, 'ALLY_OF': 1, 'SAME_AS': 1}
+grades: {'INFERRED': 35, 'STATED': 5}
+
+LLM proposal outcomes by reason:
+  ENDPOINT_NOT_STORED      9
+  KIN_GUARD                9
+  MALFORMED_JSON           6
+  DOMAIN_RANGE             5
+  RELATION_NOT_CLOSED      5
+  REINFORCED_EXISTING      4
+  QUOTE_NOT_VERBATIM       1
+  SELF_LOOP                1
+
+total edges: 108 (45 STATED, 40 from the LLM)

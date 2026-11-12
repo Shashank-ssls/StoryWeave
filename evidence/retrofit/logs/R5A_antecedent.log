@@ -1,0 +1,24 @@
+﻿==============================================================================
+R5 DIAGNOSTIC — 'named antecedent within the 2 context sentences'
+==============================================================================
+
+accepted proposals in the dump : 44
+of those, INFERRED             : 38
+
+outcome                                              n
+--------------------------------------------------------
+not recoverable from context either                 22
+already had both names (grade set by cue)           14
+WOULD PROMOTE (antecedent named in context)          2
+
+WOULD BE PROMOTED TO STATED: 2
+
+  ch 1  Denna -SERVES-> Sorrel
+      quote  : "and she kept the sealed box near her elbow the whole while, and once, sorting through a courtier's returned le"
+      context: '"It might be worth your evening, is what it might be worth." Sorrel catalogued the jewelry first, because Denn'
+
+  ch 5  Mistress Vey -MEMBER_OF-> Choir
+      quote  : 'under it she wore the grey sash of the Choir'
+      context: 'It was a poor lie even by her own standards, and she knew it, and went anyway. Vey did not go home.'
+
+NOT SHIPPED. Diagnostic only — see this tool's docstring.

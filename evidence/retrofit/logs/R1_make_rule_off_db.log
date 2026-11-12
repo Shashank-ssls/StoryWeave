@@ -1,0 +1,8 @@
+﻿source F:\Dev\Claude_folder_project_and_stuff\StoryWeave\evidence\v1_ninth_house.db
+  work: the-ninth-house (work_id=2)
+  edges by method: {'curated': 19, 'rule': 1307} (total 1326)
+output F:\Dev\Claude_folder_project_and_stuff\StoryWeave\evidence\retrofit\r1_rule_off.db
+  deleted 1307 edges with extraction_method='rule'
+  edges by method: {'curated': 19} (total 19)
+  other works' edges: {'llm': 3, 'rule': 11} (unchanged)
+  PRAGMA integrity_check: ok

@@ -1,0 +1,58 @@
+﻿python : 
+F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv-ml\Lib\site-packages\huggingface_hub\utils\_validators.py:189: 
+UserWarning: The `resume_download` argument is deprecated and ignored in `snapshot_download`. Downloads always resume 
+whenever possible.
+At line:1 char:340
++ ... _OFFLINE=1; python tools/r4c_api_probe.py > evidence/retrofit/logs/R4 ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...never possible.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+==============================================================================
+R4c API PROBE -- does input_spans work on this relex build?
+==============================================================================
+
+model: knowledgator/gliner-relex-base-v1.0
+text : Warden-Captain Orin Drask ran the Salt Quarter watch, and Juno Stray served under him for three years.
+
+--- A. free NER (what R4/R4b did) ---
+  entities:
+    [  0, 14] 'Warden-Captain'             title
+    [  0, 25] 'Warden-Captain Orin Drask'  person
+    [ 15, 25] 'Orin Drask'                 person
+    [ 15, 19] 'Orin'                       person
+    [ 20, 25] 'Drask'                      person
+    [ 34, 52] 'Salt Quarter watch'         organization
+    [ 34, 46] 'Salt Quarter'               location
+    [ 47, 52] 'watch'                      organization
+    [ 58, 68] 'Juno Stray'                 person
+    [ 58, 62] 'Juno'                       person
+    [ 63, 68] 'Stray'                      person
+    [ 82, 85] 'him'                        person
+  relations:
+    (none)
+
+supplied spans: ['Orin Drask', 'Salt Quarter watch', 'Juno Stray']
+
+--- B. WITH input_spans (the R4c primary path) ---
+  entities:
+    [  0, 14] 'Warden-Captain'             title
+    [  0, 25] 'Warden-Captain Orin Drask'  person
+    [ 15, 25] 'Orin Drask'                 person
+    [ 15, 19] 'Orin'                       person
+    [ 20, 25] 'Drask'                      person
+    [ 34, 52] 'Salt Quarter watch'         organization
+    [ 34, 46] 'Salt Quarter'               location
+    [ 47, 52] 'watch'                      organization
+    [ 58, 68] 'Juno Stray'                 person
+    [ 58, 62] 'Juno'                       person
+    [ 63, 68] 'Stray'                      person
+    [ 82, 85] 'him'                        person
+  relations:
+    (none)
+
+  supplied spans returned as entities: ['Juno Stray', 'Orin Drask', 'Salt Quarter watch']
+  entities NOT among the supplied spans: ['Drask', 'Juno', 'Orin', 'Salt Quarter', 'Stray', 'Warden-Captain', 'Warden-Captain Orin Drask', 'him', 'watch']
+
+VERDICT: input_spans is ACCEPTED by this build.

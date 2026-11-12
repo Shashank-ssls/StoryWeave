@@ -1,0 +1,12 @@
+﻿
+=== r1_rule_off (api_payload) — the-ninth-house ===
+label       | config      | slug            | chapter | nodes | edges | distinct_pairs | parallel_edges | self_loops | mean_degree | median_degree | max_degree | edge_density | isolated_nodes | degree1_nodes
+------------+-------------+-----------------+---------+-------+-------+----------------+----------------+------------+-------------+---------------+------------+--------------+----------------+--------------
+r1_rule_off | api_payload | the-ninth-house | 10      | 90    | 10    | 10             | 0              | 0          | 0.2222      | 0.0           | 4          | 0.002497     | 78             | 6            
+r1_rule_off | api_payload | the-ninth-house | 20      | 138   | 14    | 14             | 0              | 0          | 0.2029      | 0.0           | 4          | 0.001481     | 122            | 9            
+r1_rule_off | api_payload | the-ninth-house | 30      | 167   | 17    | 17             | 0              | 0          | 0.2036      | 0.0           | 5          | 0.001226     | 148            | 11           
+r1_rule_off | api_payload | the-ninth-house | 40      | 206   | 18    | 18             | 0              | 0          | 0.1748      | 0.0           | 5          | 0.000852     | 186            | 11           
+
+wrote evidence\retrofit\R1_graph_metrics_rule_off.csv
+wrote evidence\retrofit\R1_graph_metrics_rule_off_by_node_type.csv
+wrote evidence\retrofit\R1_graph_metrics_rule_off_by_relation.csv

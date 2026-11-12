@@ -1,0 +1,31 @@
+﻿=== shadow-slave (F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\samples\shadow-slave) ===
+  NOT MEASURED: no chapter files in F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\samples\shadow-slave - this corpus' text is gitignored (data/raw/) and is not present on this machine
+
+=== the-hollow-crown (F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\samples\the-hollow-crown) ===
+  chapters measured        : 4
+  clean-text characters    : 4,647
+  watermark hits (total)   : 0
+    tag markup stripped    : none
+    domain tokens removed  : none
+  homoglyphs folded        : none
+  residual Greek/Cyrillic  : none
+  cruft lines stripped     : 2
+  clean text changed by R2 : 0 of 4 chapters
+
+=== the-ninth-house (F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\samples\the-ninth-house) ===
+  chapters measured        : 40
+  clean-text characters    : 65,255
+  watermark hits (total)   : 0
+    tag markup stripped    : none
+    domain tokens removed  : none
+  homoglyphs folded        : none
+  residual Greek/Cyrillic  : none
+  cruft lines stripped     : 0
+  clean text changed by R2 : 0 of 40 chapters
+
+residual Greek/Cyrillic code points across all measured corpora: 0
+
+=== injection round-trip check ===
+  shadow-slave: skipped (no text)
+  the-hollow-crown: 4 chapters, 69 watermark hits removed -> OK
+  the-ninth-house: 40 chapters, 994 watermark hits removed -> OK

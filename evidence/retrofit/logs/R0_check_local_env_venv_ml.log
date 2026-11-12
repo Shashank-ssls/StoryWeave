@@ -1,0 +1,20 @@
+﻿repo root: F:\Dev\Claude_folder_project_and_stuff\StoryWeave
+variable                    path                                                                     status  note
+--------------------------  -----------------------------------------------------------------------  ------  ----
+sys.prefix                  F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv-ml               OK      in <repo>\.venv or .venv-ml
+PIP_CACHE_DIR               F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\pip_cache       OK      inside <repo>\.local
+TORCH_HOME                  F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\torch_cache     OK      inside <repo>\.local
+npm_config_cache            F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\npm_cache       OK      inside <repo>\.local
+PLAYWRIGHT_BROWSERS_PATH    F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\ms-playwright   OK      inside <repo>\.local
+OLLAMA_MODELS               F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\ollama_models   OK      inside <repo>\.local
+TEMP                        F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\tmp             OK      inside <repo>\.local
+TMP                         F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\tmp             OK      inside <repo>\.local
+HF_HOME                     F:\Dev\shared\hf-cache                                                   OK      exists, off C: (outside the repo by decision)
+pip config :env:.cache-dir  F:\\Dev\\Claude_folder_project_and_stuff\\StoryWeave\\.local\\pip_cache  OK      off C:
+
+Ollama (report only - nothing is installed, pulled or moved):
+  where ollama        : not found on PATH
+  OLLAMA_MODELS       : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\ollama_models
+  C:\Users\space\.ollama\models: absent
+
+PASS: all 10 checks are on the project drive.

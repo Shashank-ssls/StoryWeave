@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import cytoscape, { type ElementDefinition } from "cytoscape";
 import { codexStyle } from "../../graph/codexStyle";
 import type { ViewModel } from "../../graph/viewModel";
-import { nodeSize } from "../../graph/stemmaModel";
+import { edgeData, nodeSize } from "../../graph/stemmaModel";
 import { cyRegistry } from "../../graph/cyRegistry";
 
 // DESIGN_SPEC.md §6.1 Landing — the try-it panel's mini graph: "non-interactive except
@@ -23,7 +23,7 @@ export default function MiniGraph({ vm, className }: { vm: ViewModel; className?
       })),
       ...vm.edges.map((e) => ({
         group: "edges" as const,
-        data: { id: e.id, source: e.source, target: e.target, kind: e.kind, relation: e.relation, revealed_chapter: e.revealed_chapter },
+        data: edgeData(e),
       })),
     ];
     const cy = cytoscape({

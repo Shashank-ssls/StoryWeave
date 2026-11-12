@@ -1,0 +1,41 @@
+﻿python : F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.venv\Lib\site-packages\fastapi\testclient.py:1: 
+StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+At line:1 char:371
++ ...  .\dev.ps1; python tools/r8_compare.py > logs/R8_compare.log 2>&1; "e ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (F:\Dev\Claude_f...ttpx2` instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  from starlette.testclient import TestClient as TestClient  # noqa
+==========================================================================
+R8 LIKE-FOR-LIKE: what the client is handed, and how long it waits
+==========================================================================
+
+v1  = F:\Dev\Claude_folder_project_and_stuff\StoryWeave\evidence\v1_ninth_house.db
+final = F:\Dev\Claude_folder_project_and_stuff\StoryWeave\data\retrofit\ninth_house_r6.db
+
+   (scratch copy of the frozen DB at F:\Dev\Claude_folder_project_and_stuff\StoryWeave\.local\tmp\r8_v1_9x45jiy6\v1_ninth_house.db; the original is untouched)
+
+--- v1: the whole fenced graph (it had no display controls) ---
+   ch10  dots=  71  lines=  363
+   ch20  dots= 104  lines=  556
+   ch40  dots= 152  lines=  976
+
+--- final: the DEFAULT view (Characters, cast 20) ---
+   ch10  dots=  10  lines=    4   (v1 was 71/363)
+   ch20  dots=  14  lines=    8   (v1 was 104/556)
+   ch40  dots=  20  lines=   18   (v1 was 152/976)
+
+--- final: 'Everyone', every type — the widest it goes ---
+   ch10  dots=  86  lines=   33
+   ch20  dots= 134  lines=   43
+   ch40  dots= 191  lines=   99
+
+--- median graph request, 15 calls each (same process) ---
+    chapter     v1 (all)   final default    final all
+         10        17.7ms           10.2ms        12.7ms
+         20        20.6ms           10.7ms        14.3ms
+         40        28.2ms           11.3ms        16.9ms
+
+NOTE: TestClient timings, one process, no network. Comparable to each other,
+not a production latency figure.

@@ -7,7 +7,7 @@ import { ArchDoorIcon } from "../../icons";
 import { codexTheme, fillTemplate } from "../theme";
 import { tabItems, navigateToTab } from "../tabs";
 import { roman } from "../chapter/roman";
-import { useChapter } from "../chapter/ChapterProvider";
+import { FULL_VIEW, useChapter } from "../chapter/ChapterProvider";
 import ChapterListCompact from "../chapter/ChapterListCompact";
 import StateCard from "../states/StateCard";
 import { useDossier } from "./useDossier";
@@ -30,6 +30,13 @@ export default function Dossier({ route }: { route: WorkRoute }): JSX.Element {
   // drawer classes apply, since the toggles themselves are display:none outside range).
   const [panelOpen, setPanelOpen] = useState(false);
   const [railOpen, setRailOpen] = useState(false);
+
+  // R7: the Dossier needs the whole fenced graph, not the Stemma's top-twenty people —
+  // a page reached by entity URL must never answer "not present" about someone the
+  // reader has actually met. Declared on mount; `setView` is idempotent, so re-declaring
+  // the view already loaded costs nothing.
+  const setView = m.setView;
+  useEffect(() => { setView(FULL_VIEW); }, [setView]);
   useEffect(() => {
     if (!panelOpen && !railOpen) return;
     const onKey = (e: KeyboardEvent): void => {
