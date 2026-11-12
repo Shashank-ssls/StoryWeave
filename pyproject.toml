@@ -35,6 +35,14 @@ dev = [
 figures = [
     "matplotlib>=3.8",
 ]
+# Evaluation and screenshot scripts in tools/ (eval_score.py, eval_salience.py,
+# make_figures.py, verify_shots.py, capture.py). Light venv. Playwright's Python package
+# drives the system Chrome; no browser download is needed.
+tools = [
+    "numpy>=2.0",
+    "pillow>=10.0",
+    "playwright>=1.40",
+]
 
 [project.scripts]
 storyweave = "storyweave.cli.main:main"
