@@ -20,6 +20,7 @@ drive without touching this machine's real settings.
 from __future__ import annotations
 
 import argparse
+import ntpath
 import os
 import shutil
 import subprocess
@@ -81,9 +82,13 @@ def _is_within(child: str, parent: Path) -> bool:
 
 
 def _looks_like_c_drive_path(value: str) -> bool:
-    """True only for an explicit C: path; a non-path value like 'true' is not one."""
-    drive, _rest = os.path.splitdrive(value)
-    return os.path.normcase(drive) == os.path.normcase("c:")
+    """True only for an explicit C: path; a non-path value like 'true' is not one.
+
+    ``ntpath`` rather than ``os.path``: a drive letter is a Windows concept, and on
+    Linux (CI) ``os.path.splitdrive`` never finds one. On Windows the two are the same.
+    """
+    drive, _rest = ntpath.splitdrive(value)
+    return drive.lower() == "c:"
 
 
 def evaluate(
@@ -132,7 +137,7 @@ def evaluate(
             results.append(CheckResult(name, "<unset>", False, "not set - run dev.ps1 / dev.bat"))
             continue
         exists = Path(value).is_dir()
-        off_c = _drive(value) != os.path.normcase("c:")
+        off_c = _drive(value) != os.path.normcase("c:") and not _looks_like_c_drive_path(value)
         ok = exists and off_c
         if not off_c:
             detail = "ON C: - forbidden"

@@ -7,6 +7,7 @@ fake F:-style repo and a fake C: leak can both be constructed here.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from tools.check_local_env import IN_LOCAL_VARS, CheckResult, evaluate, format_table, human
@@ -95,7 +96,9 @@ def test_hf_home_may_live_outside_the_repo() -> None:
 
 def test_hf_home_on_c_drive_fails() -> None:
     env = _good_env()
-    env["HF_HOME"] = str(Path.home())  # a real directory, but on C:
+    # On Windows: a real directory that is on C:. Elsewhere there is no C: drive to point
+    # at, so use a literal C: path; the checker reports "ON C:" before it checks existence.
+    env["HF_HOME"] = str(Path.home()) if sys.platform == "win32" else r"C:\Users\someone"
     result = _by_name(_run(env))["HF_HOME"]
     assert not result.ok
     assert "C:" in result.detail
