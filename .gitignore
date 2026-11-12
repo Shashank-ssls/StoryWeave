@@ -23,8 +23,27 @@ data/raw/*
 # --- Session-seed prompt files (local working notes; never committed) ---
 *-prompt.md
 
-# --- Secrets ---
+# --- Secrets (only the empty template is tracked) ---
 .env
+.env.*
+!.env.example
+
+# --- Model weights (downloaded on demand, never committed) ---
+*.safetensors
+*.gguf
+*.onnx
+*.bin
+
+# --- OS / editor / temp files ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.tmp
+*.swp
+
+# --- Optional drop folder for report files before they are filed under docs/ ---
+_incoming/
 
 # --- Python ---
 __pycache__/
