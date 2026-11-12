@@ -136,8 +136,20 @@ ruff check .                # All checks passed!
 mypy                        # Success: no issues found in 112 source files
 cd frontend
 npm run build
-npx playwright test         # browser suite, uses the Hollow Crown fixture
+npx playwright test --workers=1   # browser suite; needs the API on :8000 (see below)
 ```
+
+The browser suite drives the installed Chrome and needs the API from the quick start running
+on port 8000. The database must contain both sample works, because the arcs test asks for
+chapter 5 and the Hollow Crown has only 4 chapters. Building the Ninth House runs the GLiNER
+pipeline, so seed from the ML environment: `.\dev.ps1 -Ml`, then
+`storyweave seed-demo --db storyweave-demo.sqlite`. Last full run [MEASURED, 2026-11-12, `evidence/retrofit/FINAL_COMPLETION.md`]:
+100 passed, 1 skipped, 1 failed. The failure was an animation timing assertion
+(`reveal-choreography.spec.ts`), which passed on each of 3 reruns. It is timing-sensitive
+under load, not a fixed defect.
+
+The evaluation and screenshot scripts in `tools/` need `pip install -e ".[figures,tools]"`
+(matplotlib, numpy, pillow, playwright).
 
 CI (`.github/workflows/ci.yml`) runs ruff, mypy, pytest and the frontend build.
 
