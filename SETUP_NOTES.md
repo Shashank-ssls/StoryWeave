@@ -1,5 +1,7 @@
 # SETUP_NOTES — local environment setup (Windows, GTX 1650)
 
+> **Superseded by the retrofit (4 node types). Kept for history.** Current setup steps are in [`README.md`](README.md#quick-start-windows-everything-local).
+
 Session goal: get this ZIP-downloaded copy of StoryWeave running locally. No feature work.
 
 ## Phase 0 — Recon findings

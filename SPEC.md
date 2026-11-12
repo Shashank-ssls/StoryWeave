@@ -1,4 +1,6 @@
 # StoryWeave — SPEC (authoritative, single source of truth)
+
+> **Superseded by the retrofit (4 node types, 12 closed relations, co-occurrence edges off). Kept for history.** The current design is in [`README.md`](README.md) and [`docs/retrofit/design/`](docs/retrofit/design/).
 ### A spoiler-aware knowledge engine for web novels
 
 > **Status:** fresh from-scratch build. A previous version existed but was lost with no backup. This document is the ONE authoritative spec — it folds in everything (infrastructure + the 8-type ontology + GLiNER extraction + the universal reveal fence). There is no separate v2 file; this is the whole design. `CLAUDE.md` holds the standing rules; `PROGRESS.md` (created in Phase 0) tracks live status.

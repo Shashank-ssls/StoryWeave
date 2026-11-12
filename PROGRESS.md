@@ -1,5 +1,7 @@
 # PROGRESS — StoryWeave
 
+> **Superseded by the retrofit (4 node types). Kept for history.** This is the log of the original build; the retrofit's progress log is [`docs/retrofit/RETROFIT_PROGRESS.md`](docs/retrofit/RETROFIT_PROGRESS.md).
+
 > Live status. Resume cold from this file. Read with CLAUDE.md + SPEC.md each session.
 
 ## Current phase
