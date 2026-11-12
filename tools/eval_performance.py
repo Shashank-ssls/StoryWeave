@@ -103,27 +103,35 @@ class _MEMORYSTATUSEX(ctypes.Structure):
 
 
 def peak_rss_bytes() -> int:
-    """Peak working set of this process, in bytes (Windows ``PeakWorkingSetSize``)."""
-    counters = _PROCESS_MEMORY_COUNTERS()
-    counters.cb = ctypes.sizeof(counters)
-    kernel32 = ctypes.windll.kernel32
-    kernel32.GetCurrentProcess.restype = wintypes.HANDLE
-    # K32GetProcessMemoryInfo is kernel32's forwarder for the psapi entry point; it is
-    # the one that exists on every supported Windows without an extra DLL dependency.
-    fn = kernel32.K32GetProcessMemoryInfo
-    fn.argtypes = [wintypes.HANDLE, ctypes.POINTER(_PROCESS_MEMORY_COUNTERS), wintypes.DWORD]
-    fn.restype = wintypes.BOOL
-    if not fn(kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb):
-        raise ctypes.WinError(ctypes.get_last_error())
-    return int(counters.PeakWorkingSetSize)
+    """Peak working set of this process, in bytes (Windows ``PeakWorkingSetSize``).
+
+    Windows only. Elsewhere it raises instead of returning a number that was not measured.
+    """
+    if sys.platform == "win32":
+        counters = _PROCESS_MEMORY_COUNTERS()
+        counters.cb = ctypes.sizeof(counters)
+        kernel32 = ctypes.windll.kernel32
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+        # K32GetProcessMemoryInfo is kernel32's forwarder for the psapi entry point; it is
+        # the one that exists on every supported Windows without an extra DLL dependency.
+        fn = kernel32.K32GetProcessMemoryInfo
+        fn.argtypes = [wintypes.HANDLE, ctypes.POINTER(_PROCESS_MEMORY_COUNTERS), wintypes.DWORD]
+        fn.restype = wintypes.BOOL
+        if not fn(kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return int(counters.PeakWorkingSetSize)
+    raise OSError(f"peak_rss_bytes is Windows-only; not measured on {sys.platform}")
 
 
 def total_ram_bytes() -> int:
-    status = _MEMORYSTATUSEX()
-    status.dwLength = ctypes.sizeof(status)
-    if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
-        raise OSError("GlobalMemoryStatusEx failed")
-    return int(status.ullTotalPhys)
+    """Total physical RAM, in bytes. Windows only, like ``peak_rss_bytes``."""
+    if sys.platform == "win32":
+        status = _MEMORYSTATUSEX()
+        status.dwLength = ctypes.sizeof(status)
+        if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+            raise OSError("GlobalMemoryStatusEx failed")
+        return int(status.ullTotalPhys)
+    raise OSError(f"total_ram_bytes is Windows-only; not measured on {sys.platform}")
 
 
 def gpu_description() -> str:
